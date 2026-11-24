@@ -26,9 +26,9 @@ jobs:
         run: |
           export APP=$(cat app.txt 2>/dev/null || echo tree); N=$(cat $APP/frames.txt 2>/dev/null || echo 1786); A=$(( ${{ matrix.part }} * 240 ))
           for k in 0 1 2 3; do S=$(( A + k * 60 )); E=$(( S + 60 )); [ $E -gt $N ] && E=$N; [ $S -lt $N ] && node $APP/tools/par_render_mb.cjs good $S $E out/seg > log_$k.txt 2>&1 & done
-          wait; cat log_*.txt; mkdir -p out/seg; ls out/seg
+          wait; cat log_*.txt 2>/dev/null || true; mkdir -p out/seg; ls out/seg
       - uses: actions/upload-artifact@v4
-        with: { name: 'seg-${{ matrix.part }}', path: 'out/seg/*.mp4' }
+        with: { name: 'seg-${{ matrix.part }}', path: 'out/seg/*.mp4', if-no-files-found: ignore }
   join:
     needs: seg
     runs-on: ubuntu-latest
