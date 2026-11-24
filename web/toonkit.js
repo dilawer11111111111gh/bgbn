@@ -117,7 +117,12 @@ function placeMarks(P, t) { P.userData.marks.forEach(([k, a, b], i) => { const g
 export function makeStickPerson(world, spec, head = {}, act = {}) {
   W = world; const P = new Person({ skin: '#f6f4ee', hair: '#141414', hairStyle: 'crop', shoe: '#141414', bottom: spec.top, sleeve: spec.top, build: { w: 1.22, belly: 0, arm: 1 }, height: 0.62, headScale: 1.24, ...spec });
   world.add(P.root); const h = new ToonHead(P, { skin: '#f6f4ee', egg: true, ...head }); h.skinHex = 0xf6f4ee; h.eggK = head.eggK ?? 0.95; if (head.browMax) h.browMax = head.browMax;
-  stickify(P); const up = P.update.bind(P); P.update = (pose) => { up(pose); stickPose(P); h.update(pose, pose.t || 0); };
+  stickify(P); const up = P.update.bind(P);
+  // HAND-IN-FACE GUARD: the toon head is big, so after every update check both palms; a palm inside the head is moved to just outside the head surface and the arm is re-solved
+  const headR = () => 0.235 * 1.75 * 1.08 * (P.height || 0.62);
+  P.update = (pose) => { up(pose); let fix = false; const hw = P.headWorld(), R = headR();
+    for (const s of ['L', 'R']) { const pw = P.palmWorld(s); const d = pw.distanceTo(hw); if (d < R * 1.18) { const dir = pw.clone().sub(hw); if (dir.lengthSq() < 1e-6) dir.set(s === 'L' ? -1 : 1, 0, 0); dir.normalize(); pose['hand' + s] = { w: hw.clone().addScaledVector(dir, R * 1.28), k: 1 }; fix = true; } }
+    if (fix) { pose.reachAssist = false; up(pose); } stickPose(P); h.update(pose, pose.t || 0); };
   P.userData = { hits: act.hits || [], loops: act.loops || [], marks: act.marks || [] }; P.userData.markMesh = P.userData.marks.map(([k]) => makeMark(k)); P.toonHead = h; return P;
 }
 export { placeMarks, EXPR };
