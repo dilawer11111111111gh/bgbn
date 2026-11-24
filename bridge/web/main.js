@@ -74,11 +74,11 @@ const CHILD = makeStickPerson(W, { top: '#f08a2a', height: 0.46, seed: 50 }, { h
 const CROWD = [0, 1, 2, 3].map((i) => makeStickPerson(W, { top: ['#e85a8a', '#3aa86a', '#e8b020', '#8a5ad8'][i], height: 0.56 + i * 0.02, seed: 60 + i }, i % 2 ? { hat: 'cap', hatCol: [0x2a8a5a, 0xe8a020][i >> 1], browMax: 0.135 } : { hair: '#1a120e' }, { hits: [[15.34, 'take', 0.7]], loops: [[6.6, 8.0, 'laugh'], [29.96, 30.6, 'laugh']], marks: [] }));
 const ALL = [KING, DRUMMER, CAPT, ...SOL, CHILD, ...CROWD];
 const B = (arr) => arr.map(([t, emo, trans]) => ({ t, emo, trans: trans ?? 0.14 }));
-const perf = new Map([[KING, new Performer(1, { intensity: 1.5, auto: false }).beats(B([[0, 'proud'], [2.0, 'shock', 0.08], [2.6, 'smug'], [4.3, 'proud'], [6.6, 'joy'], [7.8, 'happy'], [15.34, 'shock', 0.08], [16.6, 'worried'], [18.34, 'panic', 0.08], [19.5, 'worried'], [29.96, 'relief'], [30.7, 'happy'], [33.7, 'joy']]))],
+const perf = new Map([[KING, new Performer(1, { intensity: 1.5, auto: false }).beats(B([[0, 'proud'], [2.0, 'shock', 0.06], [2.6, 'smug'], [3.5, 'proud'], [4.9, 'grin'], [6.0, 'smug'], [6.6, 'joy'], [7.4, 'laugh'], [7.8, 'happy'], [15.34, 'shock', 0.06], [16.0, 'worried'], [16.9, 'scared'], [18.34, 'panic', 0.06], [19.0, 'shock'], [19.6, 'worried'], [29.96, 'relief', 0.1], [30.4, 'happy'], [31.6, 'joy'], [33.7, 'laugh'], [35.0, 'joy'], [36.6, 'laugh']]))],
   [DRUMMER, new Performer(2, { intensity: 1.4, auto: false }).beats(B([[0, 'determined'], [7.8, 'proud'], [15.34, 'shock', 0.08], [16.0, 'determined'], [19.96, 'joy'], [21.04, 'smug'], [44.48, 'happy'], [45.3, 'smug']]))],
   [CAPT, new Performer(4, { intensity: 1.5, auto: false }).beats(B([[0, 'stern'], [9.84, 'proud'], [15.34, 'shock', 0.08], [16.6, 'worried'], [22.16, 'panic', 0.08], [23.86, 'angry', 0.08], [24.7, 'determined'], [27.0, 'worried'], [29.96, 'relief'], [30.5, 'proud']]))],
   [CHILD, new Performer(50, { intensity: 1.5, auto: false }).beats(B([[0, 'happy'], [33.7, 'joy'], [36.5, 'laugh']]))]]);
-SOL.forEach((P, i) => perf.set(P, new Performer(30 + i, { intensity: 1.4, auto: false }).beats(B([[0, 'determined'], [15.34, 'shock', 0.08], [16.0, 'worried'], [17.2, 'scared'], [24.0, 'blank'], [25.3, 'curious'], [27.0, 'happy'], [29.96, 'relief'], [42.2, 'happy']]))));
+SOL.forEach((P, i) => perf.set(P, new Performer(30 + i, { intensity: 1.4, auto: false }).beats(B([[0, 'determined'], [11.0, 'proud'], [12.3, 'determined'], [15.34, 'shock', 0.06], [15.9, 'worried'], [16.6, 'scared'], [17.3, 'panic', 0.08], [18.4, 'scared'], [19.4, 'worried'], [20.5, 'panic'], [21.6, 'scared'], [22.6, 'worried'], [24.0, 'blank', 0.08], [24.7, 'curious'], [25.4, 'blank'], [26.2, 'curious'], [27.0, 'happy'], [28.1, 'grin'], [29.96, 'relief'], [38.8, 'determined'], [40.0, 'scared'], [42.2, 'happy'], [43.3, 'grin']]))));
 CROWD.forEach((P, i) => perf.set(P, new Performer(60 + i, { intensity: 1.4, auto: false }).beats(B([[0, 'happy'], [6.6, 'joy'], [15.34, 'shock', 0.08], [16.5, 'scared'], [29.96, 'relief'], [30.3, 'laugh']]))));
 const STEPS = [11.58, 12.32, 13.16, 14.02];  // "Left. Right. Left. Right."
 const marchPhase = (t) => { if (t < STEPS[0]) return (t - 9.84) * 0.62; const per = 0.82; return (STEPS[0] - 9.84) * 0.62 + (t - STEPS[0]) / per * 0.5 + 0.0; };
@@ -90,6 +90,17 @@ function solState(i, t) { const row = Math.floor(i / 2), col = i % 2; const z = 
   else if (t < 30.6) { x = 1.2 - row * 1.1 + (t - 24.6) * 0.95; mode = 'waddle'; } else if (t >= 38.7 && t < 41.9) { x = -1.6 + (t - 38.7) * 0.0 - row * 1.1; } else if (t >= 42.1 && t < 44.5) { x = -5 + (t - 42.1) * 1.3 - row * 1.1 + hash(i) * 0.4; mode = 'casual'; } else x = 1.2 - row * 1.1 + 6 * 0.95;
   return { x, z: z + (mode === 'waddle' ? 0.12 * Math.sin(t * 7 + i) : 0) + (mode === 'casual' ? (hash(i * 3) - 0.5) * 0.4 : 0), mode, ph }; }
 
+// ======================= EXTRA LIFE: splashes, nails, birds, dust =======================
+const SPL = []; for (let i = 0; i < 36; i++) { const m = sph(0.07 + hash(i) * 0.08, tm(0xeaf6ff, { unlit: 0.6, noInk: 1 }), 0, -50, 0, 8, 6); W.add(m); SPL.push(m); }
+const NAILS = []; for (let i = 0; i < 14; i++) { const m = box(0.03, 0.09, 0.03, tm(0x9a9aa4)); W.add(m); NAILS.push(m); }
+const BIRDS = []; for (let i = 0; i < 9; i++) { const g = new THREE.Group(); for (const s of [-1, 1]) { const w = box(0.32, 0.03, 0.1, tm(0x2a2a30)); w.position.x = s * 0.15; w.userData.s = s; g.add(w); } W.add(g); BIRDS.push(g); }
+const DUST = []; for (let i = 0; i < 30; i++) { const m = sph(0.08, tm(0xd8c8a8, { noInk: 1 }), 0, -50, 0, 8, 6); W.add(m); DUST.push(m); }
+function extras(t) {
+  const A = bounceA(t); SPL.forEach((m, i) => { const ph = (t * 1.25 + hash(i)) % 1; const on = A > 0.12; m.visible = on; if (!on) return; const x = (hash(i * 3) - 0.5) * 10, z = (hash(i * 5) - 0.5) * 3.4; m.position.set(x, WATER + 0.05 + Math.sin(ph * Math.PI) * (0.4 + A * 2.2) * hash(i + 9), z); });
+  NAILS.forEach((m, i) => { const t0 = [17.3, 17.75, 39.9][i % 3] + hash(i) * 0.3, a = t - t0; m.visible = a > 0 && a < 1.0; if (!m.visible) return; const x = (hash(i * 2) - 0.5) * 6; m.position.set(x + a * (hash(i) - 0.5) * 1.5, deckY(x, t) + 0.1 + 3.2 * a - 4.9 * a * a, (hash(i * 7) - 0.5) * 2.4); m.rotation.set(a * 14, a * 9, 0); });
+  BIRDS.forEach((g, i) => { const a = t - 15.34 - hash(i) * 0.3; g.visible = a > 0 && a < 4; if (!g.visible) return; const sx = -12 + (i % 3) * 9, sz = -4 + (i % 4) * 3; g.position.set(sx + a * (2 + hash(i) * 2) * (i % 2 ? 1 : -1), BANK + 4 + a * 2.5, sz - a * 1.5); g.rotation.y = i % 2 ? -0.6 : 0.6; g.children.forEach((w) => (w.rotation.z = w.userData.s * 0.7 * Math.sin(t * 22 + i))); });
+  DUST.forEach((m, i) => { const st = [11.58, 12.32, 13.16, 14.02, 38.8, 39.6, 40.4][i % 7], a = t - st; m.visible = a > 0 && a < 0.7 && SOL[i % 10].root.visible; if (!m.visible) return; const P = SOL[i % 10].root.position; m.position.set(P.x + (hash(i) - 0.5) * 0.4, P.y + 0.06 + a * 0.4, P.z + (hash(i + 1) - 0.5) * 0.4); m.scale.setScalar(0.5 + a * 2.2); });
+}
 // ======================= PER FRAME =======================
 let SHAKE = 0, FLASH = 0;
 function setup(f) {
@@ -142,35 +153,69 @@ function setup(f) {
   { const on = t >= 30.7 && t < 38.75; const amp = lerp(0.12, 0.72, sstep(33.7, 38.1, t)); const ang = on ? amp * Math.sin((t - 30.7) * 2 * Math.PI * 0.55) : 0; SWING.rotation.set(ang, 0, 0);
     CHILD.root.visible = on; if (on) { SWING.updateMatrixWorld(true); const seat = SWING.localToWorld(V(0, -2.17, 0)); const P = CHILD; const p = toonify({ ...perf.get(P).at(t, { handsFree: false }), t }, P, t); P.root.position.set(seat.x, seat.y - 0.45 * 0.46 * 1.0, seat.z); P.root.rotation.set(0, Math.PI / 2, 0);
       p.sit = { h: seat.y, k: 1, footZ: 0.32, kneeX: 0.1, front: 0.18 }; p.armL = { f: 150, o: -10, b: 20 }; p.armR = { f: 150, o: -10, b: 20 }; P.update(p); P.root.rotation.set(ang, Math.PI / 2, 0, 'YXZ'); }
-    if (on) { const P = KING; P.root.visible = true; const pushK = Math.max(0, Math.sin((t - 30.7) * 2 * Math.PI * 0.55 - 0.4)); P.root.position.set(-11 + 1.8, BANK, 5.5 + 1.55); P.root.rotation.set(0, Math.PI, 0); const p = toonify({ ...perf.get(P).at(t, { handsFree: false }), t }, P, t);
+    if (on) { const P = KING; P.root.visible = true; const pushK = Math.max(0, Math.sin((t - 30.7) * 2 * Math.PI * 0.55 - 0.4)); P.root.position.set(-11 + 1.8 + 0.85, BANK, 5.5 + 0.9); P.root.rotation.set(0, Math.PI + 0.9, 0); const p = toonify({ ...perf.get(P).at(t, { handsFree: false }), t }, P, t);
       p.armL = { f: 70 + 25 * pushK, o: -10, b: 40 - 30 * pushK }; p.armR = { f: 70 + 25 * pushK, o: -10, b: 40 - 30 * pushK }; p.lean = 10 * pushK; P.update(p); CROWN.visible = true; CROWN.position.copy(P.headWorld()).add(V(0, 0.36, 0)); CROWN.rotation.set(0, 0, 0); } }
+  extras(t);
   return { t };
 }
 
 // ======================= CAMERA: moving shots, cuts only where the place changes =======================
-const CINE = new Cine({ blend: 0.5 }); const P = CT.pt;
+const CINE = new Cine({ blend: 0.32 }); const P = CT.pt;
 const soldierMid = () => SOL[4].root.position.clone().add(V(0, 0.9, 0));
-CINE.shot(0.0, 2.55, { rig: 'fly', path: [[-24, 9, 26], [-9, 5.5, 13]], at: P(0, DECKY + 0.6, 0), fov: [40, 34], shake: 0.2 })
-  .shot(2.55, 4.7, { rig: 'orbit', at: () => KING.headWorld().lerp(V(0, DECKY, 0), 0.55), size: [7, 5], az: [-30, 10], el: [14, 10], fov: 34, shake: 0.25 })
-  .shot(4.7, 6.6, { rig: 'track', at: () => CARTS[1].g.position.clone().add(V(0, 1.4, 0)), size: [4.8, 4.2], az: [20, 50], el: [10, 8], fov: 34, shake: 0.3 })
-  .shot(6.6, 7.8, { rig: 'crane', at: () => KING.headWorld(), size: ['fs', 'ms'], az: [-50, -30], el: [30, 6], fov: 32, shake: 0.3 })
-  .shot(7.8, 9.84, { rig: 'push', at: () => DRUM.position.clone().add(V(0, 0.25, 0)), size: [1.6, 0.9], az: [-40, -20], el: [12, 8], fov: 30, cut: true, shake: 0.3 })
-  .shot(9.84, 11.5, { rig: 'track', at: () => SOL[2].root.position.clone().add(V(0, 0.8, 0)), size: [4.0, 3.4], az: [30, 70], el: [14, 10], fov: 34, shake: 0.35 })
-  .shot(11.5, 14.7, { rig: 'orbit', at: () => SOL[0].root.position.clone().add(V(0.1, 0.3, 0)), size: [1.6, 2.6], az: [75, 35], el: [8, 12], fov: 34, shake: 0.4 })
-  .shot(14.7, 16.45, { rig: 'orbit', at: P(1.2, DECKY + 0.4, 0), size: [6, 4.5], az: [10, -20], el: [6, 4], fov: 34, shake: 0.5 })
-  .shot(16.45, 18.2, { rig: 'orbit', at: soldierMid, size: [3.4, 2.8], az: [-30, 20], el: [10, 14], fov: 32, shake: 0.6 })
-  .shot(18.2, 19.5, { rig: 'push', at: () => KING.headWorld().add(V(0, 0.4, 0)), size: [2.0, 1.4], az: [-120, -100], el: [10, 6], fov: 30, cut: true, shake: 0.6, ease: 'snap' })
-  .shot(19.5, 22.1, { rig: 'orbit', at: () => DRUMMER.headWorld().lerp(DRUM.position, 0.4), size: [1.9, 1.5], az: [30, 58], el: [8, 6], fov: 30, cut: true, shake: 0.6 })
-  .shot(22.1, 24.6, { rig: 'push', at: CT.head(CAPT), size: [1.5, 1.15], az: [-140, -160], el: [8, 5], fov: 30, shake: 0.7, ease: 'snap' })
-  .shot(24.6, 27.0, { rig: 'orbit', at: () => CAPT.headWorld().lerp(soldierMid(), 0.5), size: [3.4, 3.0], az: [-60, -20], el: [12, 10], fov: 32, shake: 0.5 })
-  .shot(27.0, 30.7, { rig: 'crane', at: () => soldierMid().add(V(1.5, 0, 0)), size: [4.5, 8], az: [20, 40], el: [8, 30], fov: 34, shake: 0.3 })
-  .shot(30.7, 33.6, { rig: 'orbit', at: () => SWING.localToWorld(V(0, -1.6, 0)), size: [4.0, 3.2], az: [80, 50], el: [8, 10], fov: 34, cut: true, shake: 0.2 })
-  .shot(33.6, 36.3, { rig: 'track', at: () => CHILD.headWorld(), size: ['ms', 'mcu'], az: [80, 100], el: [6, 4], fov: 32, shake: 0.25 })
-  .shot(36.3, 38.75, { rig: 'orbit', at: () => SWING.localToWorld(V(0, -1.4, 0)), size: [3.4, 4.8], az: [100, 60], el: [6, 16], fov: 34, shake: 0.35 })
-  .shot(38.75, 41.3, { rig: 'orbit', at: () => SOL[1].root.position.clone().add(V(0.1, 0.4, 0)), size: [2.0, 3.2], az: [55, 15], el: [8, 12], fov: 34, cut: true, shake: 0.6 })
-  .shot(41.3, 42.15, { rig: 'push', at: P(CX - 0.6, BANK + 4.0, 0), size: [7.0, 6.2], az: [-95, -85], el: [4, 4], fov: 32, shake: 0.6 })
-  .shot(42.15, 44.45, { rig: 'orbit', at: () => SOL[4].root.position.clone().add(V(0, 0.8, 0)), size: [5, 4], az: [30, -10], el: [12, 10], fov: 34, cut: true, shake: 0.2 })
-  .shot(44.45, 47.7, { rig: 'orbit', at: () => DRUMMER.headWorld().lerp(BOAT.position, 0.4), size: [2.4, 4.0], az: [140, 190], el: [10, 22], fov: 34, cut: true, shake: 0.2 });
+const solHead = (k) => () => SOL[k].headWorld(); const solFeet = (k) => () => SOL[k].root.position.clone().add(V(0, 0.25, 0));
+const deckMid = P(0, DECKY + 0.3, 0);
+const S = [
+  [0.0, 0.95, { rig: 'fly', path: [[-28, 10, 30], [-12, 4.5, 14]], at: P(0, DECKY, 0), fov: [44, 38], shake: 0.3 }],
+  [0.95, 1.9, { rig: 'orbit', at: deckMid, size: [8, 6], az: [70, -20], el: [4, 10], fov: 36, shake: 0.4 }],
+  [1.9, 2.55, { rig: 'push', at: deckMid, size: [5, 3.2], az: [-25, -10], el: [2, 1], fov: 34, shake: 0.9, ease: 'snap', fovKick: 8 }],
+  [2.55, 3.5, { rig: 'crane', at: () => KING.headWorld(), size: ['fs', 'ms'], az: [-70, -20], el: [40, 6], fov: 34, shake: 0.4 }],
+  [3.5, 4.7, { rig: 'orbit', at: P(0, DECKY - 0.2, 0), size: [6.5, 5.0], az: [15, 60], el: [2, 6], fov: 36, shake: 0.4 }],
+  [4.7, 5.6, { rig: 'track', at: () => CARTS[0].g.position.clone().add(V(0, 1.3, 0)), size: [3.6, 3.0], az: [10, 80], el: [10, 6], fov: 34, shake: 0.45 }],
+  [5.6, 6.6, { rig: 'orbit', at: () => CARTS[2].g.position.clone().add(V(0, 1.0, 0)), size: [7, 6], az: [0, 90], el: [70, 60], fov: 36, shake: 0.3 }],
+  [6.6, 7.3, { rig: 'orbit', at: P(-HALF - 1.0, BANK + 2.0, 1.5), size: [3.6, 2.6], az: [150, 80], el: [10, 14], fov: 34, shake: 0.5, fovKick: 6 }],
+  [7.3, 7.8, { rig: 'push', at: () => CROWD[2].headWorld(), size: [1.8, 1.2], az: [100, 70], el: [6, 4], fov: 32, shake: 0.6, ease: 'snap' }],
+  [7.8, 8.6, { rig: 'push', at: () => DRUM.position.clone().add(V(0, 0.15, 0)), size: [1.0, 0.55], az: [-60, -20], el: [24, 12], fov: 30, shake: 0.6, ease: 'snap' }],
+  [8.6, 9.84, { rig: 'orbit', at: () => DRUMMER.headWorld().lerp(DRUM.position, 0.5), size: [1.6, 1.4], az: [-90, 40], el: [8, 14], fov: 32, shake: 0.5 }],
+  [9.84, 10.8, { rig: 'track', at: () => SOL[2].root.position.clone().add(V(0, 0.8, 0)), size: [4.2, 3.4], az: [20, 85], el: [16, 8], fov: 34, shake: 0.5 }],
+  [10.8, 11.5, { rig: 'orbit', at: solFeet(0), size: [1.4, 1.1], az: [70, 20], el: [4, 6], fov: 34, shake: 0.6 }],
+  [11.5, 12.3, { rig: 'push', at: solHead(0), size: [2.4, 1.4], az: [100, 80], el: [6, 4], fov: 32, shake: 0.6, ease: 'snap', fovKick: 6 }],
+  [12.3, 13.1, { rig: 'orbit', at: solFeet(1), size: [1.6, 1.2], az: [-20, 30], el: [6, 4], fov: 34, shake: 0.6 }],
+  [13.1, 14.0, { rig: 'crane', at: soldierMid, size: [3.5, 6], az: [30, 70], el: [30, 75], fov: 36, shake: 0.4 }],
+  [14.0, 14.7, { rig: 'orbit', at: soldierMid, size: [4.5, 4.0], az: [-40, -5], el: [-4, 2], fov: 36, shake: 0.6, ease: 'snap' }],
+  [14.7, 15.6, { rig: 'orbit', at: P(0.5, DECKY + 0.5, 0), size: [7.5, 6.0], az: [5, -25], el: [3, 5], fov: 36, shake: 0.9, fovKick: 10 }],
+  [15.6, 16.5, { rig: 'push', at: () => CROWD[0].headWorld().lerp(CROWD[1].headWorld(), 0.5), size: [2.4, 1.6], az: [80, 110], el: [6, 4], fov: 32, shake: 0.7, ease: 'snap' }],
+  [16.5, 17.3, { rig: 'orbit', at: soldierMid, size: [3.0, 2.6], az: [-40, 30], el: [10, 14], fov: 34, shake: 0.9 }],
+  [17.3, 17.9, { rig: 'orbit', at: P(0.3, DECKY + 0.2, 0.3), size: [1.8, 1.4], az: [20, 70], el: [24, 18], fov: 32, shake: 0.8 }],
+  [17.9, 18.3, { rig: 'orbit', at: P(0, WATER + 0.7, 2.2), size: [3.4, 3.8], az: [0, 25], el: [12, 10], fov: 36, shake: 0.8 }],
+  [18.3, 19.5, { rig: 'push', at: () => KING.headWorld().add(V(0, 0.5, 0)), size: [2.4, 1.6], az: [-130, -100], el: [6, 12], fov: 30, shake: 0.8, ease: 'snap' }],
+  [19.5, 20.8, { rig: 'orbit', at: () => DRUMMER.headWorld().lerp(DRUM.position, 0.4), size: [2.0, 1.6], az: [20, 75], el: [8, 12], fov: 32, shake: 0.8 }],
+  [20.8, 22.1, { rig: 'push', at: () => DRUM.position.clone().add(V(0, 0.2, 0)), size: [1.2, 0.7], az: [40, 70], el: [26, 16], fov: 30, shake: 0.7 }],
+  [22.1, 23.0, { rig: 'push', at: CT.head(CAPT), size: [1.6, 1.1], az: [-150, -125], el: [8, 5], fov: 30, shake: 0.9, ease: 'snap', fovKick: 8 }],
+  [23.0, 23.86, { rig: 'orbit', at: () => CAPT.headWorld().lerp(soldierMid(), 0.5), size: [3.2, 2.8], az: [-30, 10], el: [12, 8], fov: 32, shake: 0.7 }],
+  [23.86, 24.7, { rig: 'push', at: CT.head(CAPT), size: [1.5, 1.0], az: [-160, -140], el: [4, 2], fov: 30, shake: 1.2, ease: 'snap', fovKick: 10 }],
+  [24.7, 26.1, { rig: 'orbit', at: () => CAPT.torso.localToWorld(V(0, 0.3, 0)), size: [2.2, 1.9], az: [-170, -100], el: [10, 14], fov: 32, shake: 0.7 }],
+  [26.1, 27.0, { rig: 'push', at: solHead(1), size: [1.8, 1.2], az: [110, 80], el: [6, 4], fov: 30, shake: 0.6, ease: 'snap' }],
+  [27.0, 28.2, { rig: 'crane', at: soldierMid, size: [4.0, 6.5], az: [10, 50], el: [12, 55], fov: 36, shake: 0.4 }],
+  [28.2, 29.2, { rig: 'orbit', at: solFeet(3), size: [1.6, 1.3], az: [120, 60], el: [6, 4], fov: 34, shake: 0.5 }],
+  [29.2, 30.3, { rig: 'push', at: P(1.5, DECKY + 0.6, 0), size: [8, 6.5], az: [-10, 0], el: [2, 3], fov: 36, shake: 0.2 }],
+  [30.3, 30.75, { rig: 'push', at: () => KING.headWorld(), size: [1.4, 1.0], az: [-110, -95], el: [6, 4], fov: 30, shake: 0.4, ease: 'snap' }],
+  [30.75, 31.6, { rig: 'fly', path: [[-6, 7, 14], [-6.5, 4.5, 10]], at: P(-9.2, BANK + 1.5, 5.5), fov: [40, 36], shake: 0.3 }],
+  [31.6, 33.2, { rig: 'orbit', at: () => SWING.localToWorld(V(0, -1.6, 0)), size: [4.0, 3.2], az: [60, 110], el: [8, 10], fov: 34, shake: 0.35 }],
+  [33.2, 34.6, { rig: 'orbit', at: () => KING.headWorld().lerp(CHILD.headWorld(), 0.5), size: [3.0, 2.6], az: [150, 100], el: [10, 8], fov: 32, shake: 0.4 }],
+  [34.6, 36.4, { rig: 'track', at: () => CHILD.headWorld(), size: [1.6, 1.2], az: [80, 110], el: [8, 4], fov: 32, shake: 0.4 }],
+  [36.4, 38.1, { rig: 'orbit', at: () => SWING.localToWorld(V(0, -1.3, 0)), size: [3.8, 5.0], az: [100, 40], el: [-8, 6], fov: 36, shake: 0.5 }],
+  [38.1, 38.75, { rig: 'crane', at: () => SWING.localToWorld(V(0, -1.0, 0)), size: [5, 8], az: [40, 20], el: [10, 50], fov: 36, shake: 0.4 }],
+  [38.75, 39.6, { rig: 'orbit', at: solFeet(0), size: [1.4, 1.1], az: [80, 30], el: [4, 6], fov: 34, cut: true, shake: 0.7 }],
+  [39.6, 40.4, { rig: 'orbit', at: P(0, DECKY + 0.5, 0), size: [7.5, 6.5], az: [-10, 20], el: [2, 4], fov: 36, shake: 1.0 }],
+  [40.4, 41.3, { rig: 'orbit', at: soldierMid, size: [2.8, 2.4], az: [60, 100], el: [8, 10], fov: 32, shake: 0.9 }],
+  [41.3, 42.15, { rig: 'push', at: P(CX - 0.6, BANK + 4.0, 0), size: [8.0, 6.2], az: [-100, -85], el: [6, 4], fov: 32, shake: 1.0, ease: 'snap', fovKick: 10 }],
+  [42.15, 43.3, { rig: 'orbit', at: () => SOL[4].root.position.clone().add(V(0, 0.8, 0)), size: [5, 4], az: [40, -10], el: [12, 10], fov: 34, cut: true, shake: 0.3 }],
+  [43.3, 44.45, { rig: 'crane', at: () => SOL[4].root.position.clone().add(V(0, 0.6, 0)), size: [4, 7], az: [-20, 20], el: [20, 65], fov: 36, shake: 0.3 }],
+  [44.45, 45.6, { rig: 'orbit', at: () => BOAT.position.clone().add(V(0, 0.8, 0)), size: [4.5, 3.4], az: [120, 170], el: [4, 8], fov: 34, cut: true, shake: 0.3 }],
+  [45.6, 46.6, { rig: 'push', at: () => DRUMMER.headWorld(), size: [1.6, 1.1], az: [170, 200], el: [6, 4], fov: 30, shake: 0.4, ease: 'snap' }],
+  [46.6, 47.7, { rig: 'crane', at: () => BOAT.position.clone().add(V(0, 1.0, 0)), size: [3, 12], az: [200, 230], el: [10, 45], fov: 36, shake: 0.2 }],
+];
+for (const [a, b, sp] of S) CINE.shot(a, b, sp);
 
 // ======================= LOOK =======================
 const DAY = mkLook({ sun: [0.55, 0.75, 0.45], lit: '#fff4dc', litK: 1.08, shade: '#a8b4e0', ambSky: '#eef4ff', ambGnd: '#f8f0d8', rim: '#fff0d0', fog: '#dcecff', fogR: [50, 320], sky: ['#2a7ae8', '#6ab6f4', '#cfeaff', '#ffffff'], contrast: 1.05, vig: 0.08, glow: 0.35, grain: 0, desat: 0, sat: 1.22, lo: '#f8f8ff', hi: '#fffff0', exposure: 1.05, shadow: 0.8 });
