@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        part: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        part: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,12 +22,11 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
           npm i --no-save playwright@1.47.2 > /dev/null && npx playwright install --with-deps chromium > /dev/null
-      - name: Render two 60-frame segments in parallel
+      - name: Render four 60-frame segments in parallel (all 4 CPUs)
         run: |
-          A=$(( ${{ matrix.part }} * 120 )); B=$(( A + 60 )); C=$(( A + 120 )); [ $C -gt 1786 ] && C=1786
-          node tree/tools/par_render_mb.cjs good $A $B out/seg > a.log 2>&1 &
-          if [ $B -lt $C ]; then node tree/tools/par_render_mb.cjs good $B $C out/seg > b.log 2>&1 & fi
-          wait; cat a.log; [ -f b.log ] && cat b.log; ls out/seg
+          N=$(cat tree/frames.txt 2>/dev/null || echo 1786); A=$(( ${{ matrix.part }} * 240 ))
+          for k in 0 1 2 3; do S=$(( A + k * 60 )); E=$(( S + 60 )); [ $E -gt $N ] && E=$N; [ $S -lt $N ] && node tree/tools/par_render_mb.cjs good $S $E out/seg > log_$k.txt 2>&1 & done
+          wait; cat log_*.txt; mkdir -p out/seg; ls out/seg
       - uses: actions/upload-artifact@v4
         with: { name: 'seg-${{ matrix.part }}', path: 'out/seg/*.mp4' }
   join:

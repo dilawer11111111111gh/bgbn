@@ -125,7 +125,7 @@ function makeVehicle(o) {
     for (const [x, z, h] of [[-0.86, 0.45, 1], [0.86, 0.45, 1], [-0.86, -1.35, 1], [0.86, -1.35, 1]]) { const p = box(0.08, 1.42, 0.1, col, x, 1.66, z); p.rotation.x = z > 0 ? -0.35 : 0.12; body.add(p); }
     body.add(box(1.86, 0.1, 1.85, col, 0, 2.36, -0.5, 0.04)); body.add(box(1.72, 0.42, 0.8, dark, 0, 1.1, 0.48, 0.05)); body.add(box(0.55, 0.14, 0.3, dark, 0.42, 1.36, 0.5, 0.04)); body.add(box(0.42, 0.1, 0.02, tm(0x9ad0ff, { unlit: 1, noInk: 1 }), 0.42, 1.36, 0.345)); // roof, dashboard, gauge hood
     body.add(box(1.75, 0.08, 0.06, col, 0, 1.0, 0.82));
-    for (const x of [-0.42, 0.42]) { body.add(box(0.55, 0.12, 0.55, tm(0x3a3030), x, 0.74, -0.45)); body.add(box(0.55, 0.8, 0.12, tm(0x3a3030), x, 1.25, -0.8)); }
+    for (const x of [-0.42, 0.42]) { body.add(box(0.55, 0.12, 0.4, tm(0x3a3030), x, 0.74, -0.52)); body.add(box(0.55, 0.8, 0.12, tm(0x3a3030), x, 1.25, -0.8)); }
     const SW = new THREE.Group(); SW.position.set(0.42, 1.08, -0.24); SW.rotation.x = 0.45; body.add(SW);
     const swM = tm(0x2a2a30), swG = tm(0x8a8a94); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.03, 10, 32), swM); SW.add(rim); for (const ang of [0, 2.094, 4.189]) { const sp = box(0.15, 0.03, 0.018, swM, Math.cos(ang - 1.5708) * 0.075, Math.sin(ang - 1.5708) * 0.075, 0); sp.rotation.z = ang - 1.5708; SW.add(sp); } SW.add(cyl(0.05, 0.05, 0.035, swG, 0, 0, 0.0).rotateX(Math.PI / 2)); SW.add(cyl(0.028, 0.034, 0.4, swM, 0, 0, 0.2).rotateX(Math.PI / 2));
     g.userData.SW = SW;
@@ -416,8 +416,8 @@ function setup(f) {
 const steerAt = (t, night) => night ? -0.9 * sstep(54.7, 57.6, t) : (t > 26.0 && t < 27.8 ? -0.5 * sstep(26.0, 27.4, t) : 0);
 function seatDriver(P, car, perf, t, st, night = false) {
   car.group.updateMatrixWorld(true); const sp = car.group.localToWorld(V(0.42, 0, -0.42)); const yaw = car.group.rotation.y;
-  const seat = { x: sp.x, z: sp.z, yaw, top: 0.8, back: 0.2, front: 0.16, floor: 0.42, kind: 'chair' };
-  const sit = sitOn(P, seat, { footZ: 0.34 }); const pose = { ...perf, ...sit, t };
+  const seat = { x: sp.x, z: sp.z, yaw, top: 0.8, back: 0.2, front: 0.1, floor: 0.41, kind: 'chair' };
+  const sit = sitOn(P, seat, { footZ: 0.62 }); const pose = { ...perf, ...sit, t };
   car.SW.rotation.z = steerAt(t, night) * 2.2; car.SW.updateMatrixWorld(true);
   const R = 0.15, aR = 0.84 * Math.PI, aL = 0.16 * Math.PI;
   pose.handL = { w: car.SW.localToWorld(V(R * Math.cos(aR), R * Math.sin(aR), 0.02)), k: 1 }; pose.handR = { w: car.SW.localToWorld(V(R * Math.cos(aL), R * Math.sin(aL), 0.02)), k: 1 };
@@ -487,4 +487,6 @@ window.dbg = (f) => { setup(f); const c = CINE.at(f / FPS); return { sher: SHER.
 window.dbg2 = (f) => { setup(f); const r = (v) => v.toArray().map((x) => +x.toFixed(3)); CR.SW.updateMatrixWorld(true); const c = CR.group;
   const loc = (v) => r(c.worldToLocal(v.clone()));
   return { palmL: loc(SHER.palmWorld('L')), palmR: loc(SHER.palmWorld('R')), wheel: loc(CR.SW.localToWorld(V(0, 0, 0))), head: loc(SHER.headWorld()), shoulderL: loc(SHER.torso.localToWorld(V(-SHER.LS, 0.55, 0))), pelvis: loc(SHER.pelvis.localToWorld(V(0, 0, 0))) }; };
+window.dbg3 = (f) => { setup(f); const out = {}; for (const [n, P, car] of [['sher', SHER, CR], ['drv', DRV, NC]]) { if (!P.root.visible || !car.group.visible) continue; car.group.updateMatrixWorld(true);
+  const loc = (v) => car.group.worldToLocal(v.clone()).toArray().map((x) => +x.toFixed(3)); out[n] = { footL: loc(P.footWorld(0)), footR: loc(P.footWorld(1)), knee: loc(P.pelvis.localToWorld(P.jt.knL.position.clone())), pelvis: loc(P.pelvis.localToWorld(V(0, 0, 0))) }; } return out; };
 window.ready = true;
