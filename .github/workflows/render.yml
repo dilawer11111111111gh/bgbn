@@ -1,0 +1,52 @@
+name: render
+on:
+  push:
+    branches: [main]
+    paths: ['tree/**', 'web/**', '.github/workflows/render.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  seg:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Install ffmpeg + browser
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          npm i --no-save playwright@1.47.2 > /dev/null && npx playwright install --with-deps chromium > /dev/null
+      - name: Render two 60-frame segments in parallel
+        run: |
+          A=$(( ${{ matrix.part }} * 120 )); B=$(( A + 60 )); C=$(( A + 120 )); [ $C -gt 1786 ] && C=1786
+          node tree/tools/par_render_mb.cjs good $A $B out/seg > a.log 2>&1 &
+          if [ $B -lt $C ]; then node tree/tools/par_render_mb.cjs good $B $C out/seg > b.log 2>&1 & fi
+          wait; cat a.log; [ -f b.log ] && cat b.log; ls out/seg
+      - uses: actions/upload-artifact@v4
+        with: { name: 'seg-${{ matrix.part }}', path: 'out/seg/*.mp4' }
+  join:
+    needs: seg
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core > /dev/null
+      - uses: actions/download-artifact@v4
+        with: { pattern: 'seg-*', merge-multiple: true, path: out/seg }
+      - name: Join segments + captions + voice
+        run: |
+          ls out/seg | grep -v part | sort | sed "s|^|file '$PWD/out/seg/|; s|$|'|" > list.txt; wc -l list.txt
+          ffmpeg -v error -y -f concat -safe 0 -i list.txt -i tree/audio/voice.mp3 -vf "ass=tree/captions.ass" -map 0:v -map 1:a -c:v libx264 -profile:v main -preset medium -b:v 3500k -maxrate 4500k -bufsize 9000k -pix_fmt yuv420p -c:a aac -ar 44100 -ac 2 -b:a 160k -shortest -movflags +faststart final.mp4
+          ls -la final.mp4
+      - uses: actions/upload-artifact@v4
+        with: { name: final-video, path: final.mp4 }
+      - name: Save video to the renders branch
+        run: |
+          git config user.name "render-bot"; git config user.email "render-bot@users.noreply.github.com"
+          git checkout --orphan renders && git rm -rq --cached . && mkdir -p videos && cp final.mp4 videos/final_$(date +%Y%m%d_%H%M).mp4
+          git add videos && git commit -qm "Rendered video" && git push -f origin renders
