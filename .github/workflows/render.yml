@@ -2,7 +2,7 @@ name: render
 on:
   push:
     branches: [main]
-    paths: ['tree/**', 'night/**', 'button/web/**', 'button/audio/mix.mp3', 'web/**', 'app.txt', '.github/workflows/render.yml']
+    paths: ['tree/**', 'night/**', 'button/web/**', 'button/audio/mix.mp3', 'bridge/web/**', 'bridge/audio/mix.mp3', 'web/**', 'app.txt', '.github/workflows/render.yml']
   workflow_dispatch:
 permissions:
   contents: write
