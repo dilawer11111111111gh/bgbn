@@ -24,7 +24,9 @@ const grassTex = ctex(256, 256, (g, w, h) => { g.fillStyle = '#86c050'; g.fillRe
 W.add(box(400, 0.1, 400, tm(0xffffff, { map: grassTex, repeat: [80, 80] }), 0, -0.05, 0));
 const cobTex = ctex(256, 256, (g, w, h) => { g.fillStyle = '#b8a68a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 120; i++) { g.fillStyle = hash(i) < 0.5 ? '#a8967a' : '#c8b89a'; g.beginPath(); g.ellipse(hash(i + 1) * w, hash(i + 2) * h, 10 + hash(i + 3) * 8, 7 + hash(i + 4) * 5, hash(i) * 3, 0, 7); g.fill(); } }, true);
 W.add(box(24, 0.04, 26, tm(0xffffff, { map: cobTex, repeat: [6, 7] }), -12.8, 0.01, 0));
-const stone = tm(0xc8bca8), stone2 = tm(0xb0a490), roofM = tm(0x2a5aa8);
+const stoneTex = ctex(256, 256, (g, w, h) => { g.fillStyle = '#8a8274'; g.fillRect(0, 0, w, h); const rows = 6, bh = h / rows; for (let r = 0; r < rows; r++) { const bw = w / 3, off = r % 2 ? bw / 2 : 0; for (let c = -1; c < 4; c++) { const x = c * bw + off + 3, y = r * bh + 3; const v = 180 + Math.floor(hash(r * 7 + c) * 40); g.fillStyle = `rgb(${v},${v - 8},${v - 22})`; g.fillRect(x, y, bw - 6, bh - 6); g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(x, y, bw - 6, 4); g.fillStyle = 'rgba(0,0,0,0.12)'; g.fillRect(x, y + bh - 10, bw - 6, 4); for (let k = 0; k < 18; k++) { g.fillStyle = hash(k + r * 31 + c * 7) < 0.5 ? 'rgba(90,80,70,0.25)' : 'rgba(255,250,235,0.18)'; g.fillRect(x + hash(k * 3 + c) * (bw - 10), y + hash(k * 5 + r) * (bh - 10), 3, 3); } } } }, true);
+const woodTex = ctex(128, 256, (g, w, h) => { g.fillStyle = '#9a6a3a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 26; i++) { g.strokeStyle = hash(i) < 0.5 ? 'rgba(90,55,25,0.55)' : 'rgba(200,150,95,0.35)'; g.lineWidth = 1 + hash(i + 1) * 2; const x = hash(i + 2) * w; g.beginPath(); g.moveTo(x, 0); for (let y = 0; y <= h; y += 16) g.lineTo(x + Math.sin(y * 0.04 + i) * 3, y); g.stroke(); } }, true);
+const stone = tm(0xffffff, { map: stoneTex, repeat: [8, 3] }), stone2 = tm(0xffffff, { map: stoneTex, repeat: [1, 1] }), roofM = tm(0x2a5aa8);
 const WH = 7.0; W.add(box(1.6, WH, 26, stone, 0, WH / 2, 0)); addSolidCentered('wall', 0, WH / 2, 0, 1.6, WH, 26);
 for (let i = -12; i <= 12; i++) W.add(box(0.35, 0.6, 0.6, stone2, 0.62, WH + 0.3, i * 1.05));
 for (const z of [-13.5, 13.5]) { W.add(cyl(2, 2.1, 10, stone2, 0, 5, z, 16)); W.add(cyl(0, 2.4, 3, roofM, 0, 11.5, z, 16)); addSolidCentered('tower' + z, 0, 5, z, 4.2, 10, 4.2); }
@@ -34,21 +36,21 @@ for (let i = 0; i < 6; i++) { const z = -11 + i * 4.4, x = -17 - (i % 2) * 2; W.
 for (let i = 0; i < 18; i++) { const tr = new THREE.Group(); const x = 6 + hash(i) * 50, z = -40 + hash(i + 3) * 80; tr.position.set(x, 0, z); tr.add(cyl(0.2, 0.28, 2.6, tm(0x7a5a3a), 0, 1.3, 0, 8)); for (let k = 0; k < 5; k++) tr.add(sph(1.0 + hash(i + k) * 0.4, tm([0x3f9a3a, 0x5cb846][k % 2], { noInk: 1, band: 0.15 }), Math.cos(k * 2.3) * 0.8, 3 + hash(i * 3 + k), Math.sin(k * 2.3) * 0.8, 10, 8)); W.add(tr); }
 for (let i = 0; i < 7; i++) { const cl = makeCloud(i + 160, 1.3); cl.position.set(-150 + i * 55, 55 + (i % 3) * 8, -140); W.add(cl); }
 // beam on the wall top (cantilever over the courtyard), ladder, hay pile, banner
-const wood = tm(0x8a5a32), woodD = tm(0x5a3a1a);
+const wood = tm(0xffffff, { map: woodTex, repeat: [1, 3] }), woodD = tm(0xb08060, { map: woodTex, repeat: [1, 2] });
 const BX = -1.35; W.add(box(2.4, 0.22, 0.26, wood, -0.55, 8.35, 0)); W.add(box(0.26, 1.2, 0.26, wood, 0.45, 7.6, 0)); { const br = box(0.18, 1.5, 0.18, woodD); seg(br, V(0.35, 7.05, 0), V(-1.1, 8.3, 0)); W.add(br); }
 W.add(box(0.06, 7.4, 0.06, woodD, -0.95, 3.7, 1.7)); W.add(box(0.06, 7.4, 0.06, woodD, -0.95, 3.7, 2.3)); for (let i = 0; i < 18; i++) W.add(box(0.05, 0.05, 0.6, woodD, -0.95, 0.35 + i * 0.4, 2.0));
 const HAY = new THREE.Group(); HAY.position.set(BX, 0, 1.25); W.add(HAY); for (let i = 0; i < 6; i++) { const h = sph(0.32, tm(0xf0c860, { band: 0.2 }), (hash(i) - 0.5) * 0.5, 0.15 + hash(i + 2) * 0.12, (hash(i + 4) - 0.5) * 0.4, 8, 6); h.scale.y = 0.6; HAY.add(h); }
 const BANNER = textCard(4.2, 1.1, ['BLOCK AND TACKLE'], '#2a4a8a', '#ffd24a', 'bold 92px serif'); BANNER.rotation.y = -Math.PI / 2; BANNER.position.set(-0.82, 4.6, -3.4); W.add(BANNER);
 
 // ======================= THE HORSE =======================
-const HORSE = new THREE.Group(); W.add(HORSE); const hb = tm(0xa0643a), hd = tm(0x5a3420), hw = tm(0xffffff, { unlit: 0.8, noInk: 1 }), hk = tm(0x111111, { unlit: 1, noInk: 1 });
-const HBODY = new THREE.Group(); HBODY.position.y = 0.95; HORSE.add(HBODY); HBODY.add(box(0.55, 0.62, 1.35, hb, 0, 0, 0, 0.22));
-const NECK = new THREE.Group(); NECK.position.set(0, 0.2, 0.55); HBODY.add(NECK); const nk = box(0.32, 0.75, 0.34, hb, 0, 0.35, 0.12, 0.12); nk.rotation.x = 0.45; NECK.add(nk); for (let i = 0; i < 5; i++) NECK.add(box(0.08, 0.14, 0.16, hd, 0, 0.18 + i * 0.13, -0.05 + i * 0.04));
-const HEAD = new THREE.Group(); HEAD.position.set(0, 0.72, 0.32); NECK.add(HEAD); HEAD.add(box(0.3, 0.32, 0.62, hb, 0, 0, 0.18, 0.1)); HEAD.add(box(0.28, 0.2, 0.2, tm(0xc89068), 0, -0.07, 0.48, 0.06));
-const JAW = box(0.26, 0.06, 0.18, hd, 0, -0.17, 0.42); HEAD.add(JAW); for (const s of [-1, 1]) { HEAD.add(box(0.06, 0.16, 0.06, hb, s * 0.1, 0.24, -0.02)); const e = sph(0.07, hw, s * 0.155, 0.06, 0.12, 10, 8); e.scale.z = 0.6; HEAD.add(e); HEAD.add(sph(0.035, hk, s * 0.19, 0.06, 0.13, 8, 6)); HEAD.add(sph(0.02, hk, s * 0.06, -0.05, 0.6, 6, 4)); }
-const MOUTHHAY = new THREE.Group(); MOUTHHAY.position.set(0, -0.12, 0.6); HEAD.add(MOUTHHAY); for (let i = 0; i < 7; i++) { const s = box(0.012, 0.012, 0.3, tm(0xf0c860)); s.rotation.y = (i - 3) * 0.25; s.rotation.x = (hash(i) - 0.5) * 0.4; MOUTHHAY.add(s); }
-const LEGS = []; for (const [x, z] of [[-0.17, 0.5], [0.17, 0.5], [-0.17, -0.5], [0.17, -0.5]]) { const l = new THREE.Group(); l.position.set(x, -0.2, z); HBODY.add(l); l.add(box(0.13, 0.72, 0.13, hb, 0, -0.36, 0)); l.add(box(0.15, 0.1, 0.17, hd, 0, -0.72, 0.01)); LEGS.push(l); }
-const TAIL = new THREE.Group(); TAIL.position.set(0, 0.15, -0.68); HBODY.add(TAIL); const tl = box(0.1, 0.5, 0.1, hd, 0, -0.22, -0.08); tl.rotation.x = -0.4; TAIL.add(tl);
+const HORSE = new THREE.Group(); W.add(HORSE); const hb = tm(0xa8683c, { band: 0.12 }), hd = tm(0x4a2a18), hw = tm(0xffffff, { unlit: 0.8, noInk: 1 }), hk = tm(0x111111, { unlit: 1, noInk: 1 }), hm = tm(0x3a2014);
+const HBODY = new THREE.Group(); HBODY.position.y = 0.98; HORSE.add(HBODY); { const b = sph(1, hb, 0, 0, 0, 24, 16); b.scale.set(0.3, 0.34, 0.72); HBODY.add(b); const r = sph(1, hb, 0, 0.02, -0.42, 18, 12); r.scale.set(0.31, 0.33, 0.34); HBODY.add(r); const c = sph(1, hb, 0, 0.04, 0.42, 18, 12); c.scale.set(0.3, 0.34, 0.32); HBODY.add(c); }
+const NECK = new THREE.Group(); NECK.position.set(0, 0.16, 0.5); HBODY.add(NECK); { const n = cyl(0.13, 0.19, 0.78, hb, 0, 0.32, 0.1, 16); n.rotation.x = 0.5; NECK.add(n); for (let i = 0; i < 7; i++) { const m = box(0.06, 0.16, 0.1, hm, 0, 0.12 + i * 0.1, -0.08 + i * 0.045); m.rotation.x = 0.5; NECK.add(m); } }
+const HEAD = new THREE.Group(); HEAD.position.set(0, 0.68, 0.32); NECK.add(HEAD); { const h1 = sph(1, hb, 0, 0, 0.05, 18, 12); h1.scale.set(0.15, 0.16, 0.2); HEAD.add(h1); const mz = cyl(0.11, 0.14, 0.42, hb, 0, -0.06, 0.3, 14); mz.rotation.x = Math.PI / 2 + 0.25; HEAD.add(mz); const nose = sph(1, tm(0xc89068), 0, -0.1, 0.5, 14, 10); nose.scale.set(0.12, 0.1, 0.09); HEAD.add(nose); }
+const JAW = box(0.2, 0.05, 0.16, hd, 0, -0.18, 0.42, 0.02); HEAD.add(JAW); for (const s of [-1, 1]) { const ear = cyl(0, 0.05, 0.16, hb, s * 0.08, 0.2, -0.02, 8); ear.rotation.z = -s * 0.2; HEAD.add(ear); const e = sph(0.065, hw, s * 0.13, 0.05, 0.1, 12, 8); e.scale.z = 0.6; HEAD.add(e); HEAD.add(sph(0.034, hk, s * 0.17, 0.05, 0.12, 8, 6)); HEAD.add(sph(0.012, hw, s * 0.18, 0.07, 0.135, 6, 4)); HEAD.add(sph(0.018, hk, s * 0.05, -0.08, 0.58, 6, 4)); }
+const MOUTHHAY = new THREE.Group(); MOUTHHAY.position.set(0, -0.15, 0.56); HEAD.add(MOUTHHAY); for (let i = 0; i < 7; i++) { const st = box(0.012, 0.012, 0.3, tm(0xf0c860)); st.rotation.y = (i - 3) * 0.25; st.rotation.x = (hash(i) - 0.5) * 0.4; MOUTHHAY.add(st); }
+const LEGS = []; for (const [x, z] of [[-0.15, 0.45], [0.15, 0.45], [-0.15, -0.45], [0.15, -0.45]]) { const l = new THREE.Group(); l.position.set(x, -0.18, z); HBODY.add(l); l.add(cyl(0.065, 0.085, 0.42, hb, 0, -0.18, 0, 10)); l.add(cyl(0.045, 0.06, 0.36, hb, 0, -0.55, 0, 10)); l.add(cyl(0.07, 0.065, 0.1, hd, 0, -0.76, 0.01, 10)); LEGS.push(l); }
+const TAIL = new THREE.Group(); TAIL.position.set(0, 0.16, -0.72); HBODY.add(TAIL); for (let i = 0; i < 5; i++) { const t2 = cyl(0.03, 0.05, 0.55, hm, (i - 2) * 0.025, -0.25, -0.1, 6); t2.rotation.x = -0.35 - i * 0.05; TAIL.add(t2); }
 HBODY.add(box(0.6, 0.12, 0.2, tm(0x6a3a1a), 0, 0.0, 0.25)); HBODY.add(box(0.6, 0.12, 0.2, tm(0x6a3a1a), 0, 0.0, -0.3)); const RING = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 14), tm(0xc0c0c8)); RING.position.set(0, 0.42, 0); HBODY.add(RING);
 // ======================= PULLEY BLOCKS + ROPES =======================
 const BLK = (n) => { const g = new THREE.Group(); g.add(box(0.12, 0.42, 0.62, woodD, 0, 0, 0, 0.04)); const wh = []; for (let i = 0; i < n; i++) { const w = new THREE.Group(); w.position.z = (i - (n - 1) / 2) * 0.22; const d = cyl(0.17, 0.17, 0.07, tm(0xc8964a), 0, 0, 0, 16); d.rotation.x = Math.PI / 2; w.add(d); w.add(cyl(0.04, 0.04, 0.09, tm(0x3a2a1a), 0, 0, 0, 8).rotateX(Math.PI / 2)); w.visible = false; g.add(w); wh.push(w); } W.add(g); return { g, wh }; };
@@ -80,11 +82,11 @@ const PAINTER = makeCast(W, 'painter', { hits: [[9.24, 'jolt', 0.4], [42.48, 'ta
 const ALL = [...BLD, ROPER, KING, PAINTER];
 const B = (arr) => arr.map(([t, emo, tr]) => ({ t, emo, trans: tr ?? 0.12 }));
 const PERF = new Map([
-  [ROPER, new Performer(2, { intensity: 1.5, auto: false }).beats(B([[0, 'calm'], [2.5, 'smug'], [4.3, 'proud'], [15.58, 'calm'], [16.64, 'determined'], [17.44, 'smug'], [18.74, 'happy'], [20.14, 'grin'], [21.46, 'proud'], [22.3, 'curious'], [24.44, 'gentle'], [25.48, 'smug'], [26.42, 'joy'], [28.32, 'proud'], [29.4, 'happy'], [33.76, 'smug'], [37.46, 'grin'], [39.14, 'smug'], [40.46, 'joy'], [41.24, 'proud'], [43.48, 'awe']]))],
-  [KING, new Performer(1, { intensity: 1.55, auto: false }).beats(B([[0, 'stern'], [1.0, 'angry'], [2.5, 'awe', 0.08], [4.82, 'proud'], [6.14, 'smug'], [7.16, 'love'], [8.4, 'joy'], [9.24, 'proud'], [10.36, 'determined'], [11.8, 'curious'], [13.24, 'shock', 0.06], [14.0, 'gasp'], [14.66, 'angry'], [15.58, 'suspicious'], [18.1, 'curious'], [21.0, 'suspicious'], [24.44, 'blank'], [25.5, 'shock', 0.06], [26.4, 'laugh'], [28.0, 'joy'], [42.38, 'proud'], [42.96, 'love'], [43.74, 'shock', 0.06], [44.2, 'angry']]))],
+  [ROPER, new Performer(2, { intensity: 1.7, auto: false }).beats(B([[0, 'calm'], [2.5, 'smug'], [4.3, 'proud'], [15.58, 'calm'], [16.64, 'determined'], [17.44, 'smug'], [18.74, 'happy'], [20.14, 'grin'], [21.46, 'proud'], [22.3, 'curious'], [24.44, 'gentle'], [25.48, 'smug'], [26.42, 'joy'], [28.32, 'proud'], [29.4, 'happy'], [33.76, 'smug'], [37.46, 'grin'], [39.14, 'smug'], [40.46, 'joy'], [41.24, 'proud'], [43.48, 'awe']]))],
+  [KING, new Performer(1, { intensity: 1.75, auto: false }).beats(B([[0, 'stern'], [1.0, 'angry'], [2.5, 'awe', 0.08], [4.82, 'proud'], [6.14, 'smug'], [7.16, 'love'], [8.4, 'joy'], [9.24, 'proud'], [10.36, 'determined'], [11.8, 'curious'], [13.24, 'shock', 0.06], [14.0, 'gasp'], [14.66, 'angry'], [15.58, 'suspicious'], [18.1, 'curious'], [21.0, 'suspicious'], [24.44, 'blank'], [25.5, 'shock', 0.06], [26.4, 'laugh'], [28.0, 'joy'], [42.38, 'proud'], [42.96, 'love'], [43.74, 'shock', 0.06], [44.2, 'angry']]))],
   [PAINTER, new Performer(3, { intensity: 1.5, auto: false }).beats(B([[0, 'happy'], [9.24, 'proud'], [42.38, 'smug'], [42.48, 'proud'], [42.96, 'joy'], [43.74, 'worried']]))],
 ]);
-BLD.forEach((P, i) => PERF.set(P, new Performer(20 + i, { intensity: 1.5, auto: false }).beats(B([[0, 'determined'], [1.0, 'angry'], [2.5, 'gasp', 0.08], [4.82, 'happy'], [10.36, 'determined'], [11.8, 'angry'], [12.48, 'nervous'], [13.24, 'panic', 0.06], [14.3, 'shock'], [14.9, 'tired'], [15.6, 'suspicious'], [18.0, 'curious'], [21.5, 'suspicious'], [25.5, 'shock', 0.06], [26.4, 'awe'], [27.0, 'laugh'], [28.4, 'curious'], [33.0, 'awe'], [37.46, 'curious'], [39.14, 'shock', 0.06], [39.9, 'gasp'], [41.24, 'joy'], [43.48, 'determined'], [43.74, 'angry'], [44.6, 'nervous']]))));
+BLD.forEach((P, i) => PERF.set(P, new Performer(20 + i, { intensity: 1.7, auto: false }).beats(B([[0, 'determined'], [1.0, 'angry'], [2.5, 'gasp', 0.08], [4.82, 'happy'], [10.36, 'determined'], [11.8, 'angry'], [12.48, 'nervous'], [13.24, 'panic', 0.06], [14.3, 'shock'], [14.9, 'tired'], [15.6, 'suspicious'], [18.0, 'curious'], [21.5, 'suspicious'], [25.5, 'shock', 0.06], [26.4, 'awe'], [27.0, 'laugh'], [28.4, 'curious'], [33.0, 'awe'], [37.46, 'curious'], [39.14, 'shock', 0.06], [39.9, 'gasp'], [41.24, 'joy'], [43.48, 'determined'], [43.74, 'angry'], [44.6, 'nervous']]))));
 const pose = (P, t, hands = true) => toonify({ ...PERF.get(P).at(t, { handsFree: hands }), t }, P, t);
 const UP = (p, t, ph = 0) => { p.armL = { f: 120 + 15 * Math.sin(t * 13 + ph), o: -70, b: 10 }; p.armR = { f: 120 + 15 * Math.sin(t * 13 + ph + 1.3), o: -70, b: 10 }; };
 const PANIC = (p) => { p.armL = { f: 140, o: -50, b: 30 }; p.armR = { f: 140, o: -50, b: 30 }; };
@@ -156,7 +158,7 @@ function setup(f) {
       else if (s >= 39.14 && s < 42.38) { p.handR = { w: V(-0.72, WH + 0.85, 0.66), k: 1 }; p.armL = { f: -5, o: -55, b: 115 }; p.reachAssist = false; p.lean = -8; }
       else if (onWall) { if (s >= 43.48) PANIC(p); }
       place(P, x, 0, z, yaw); P.root.position.y = WH; P.update(p); } }
-  BAG.visible = s >= 15.58 && s < 21.9; if (BAG.visible) { const P = ROPER; BAG.position.copy(P.root.visible ? P.torso.localToWorld(V(0.24, 0.1, -0.12)) : V(0, -50, 0)); }
+  BAG.visible = s >= 15.58 && s < 21.9; if (BAG.visible) { const P = ROPER; BAG.position.copy(P.root.visible ? P.torso.localToWorld(V(0.46, 0.02, -0.04)) : V(0, -50, 0)); BAG.scale.setScalar(0.55); }
   // ---- king + painter ----
   { const P = KING; let x = -6.2, z = 1.0, yaw = Math.atan2(BX - x, 0 - z); if (s >= 42.38) { x = -4.2; z = 0.6; yaw = 2.0; } const p = pose(P, s); if (s >= 6.14 && s < 9.0) p.armR = { f: 100, o: -25, b: 5 }; if (s >= 13.24 && s < 14.3) PANIC(p); if (s >= 14.66 && s < 15.5) { p.armL = { f: -5, o: -55, b: 115 }; p.armR = { f: -5, o: -55, b: 115 }; } if (s >= 25.5 && s < 26.3) PANIC(p); if (s >= 26.4 && s < 27.8) UP(p, s); if (s >= 42.96 && s < 43.6) UP(p, s); if (s >= 44.2) p.armR = { f: 100, o: -20, b: 5 }; place(P, x, 0, z, yaw); P.update(p); }
   { const P = PAINTER; const show = (s >= 8.4 && s < 10.36) || s >= 42.0; if (show) { const p = pose(P, s); if (s >= 42.48 && s < 43.0) p.armR = { f: 100, o: -25, b: 5 }; if (s >= 42.96 && s < 43.48) UP(p, s); if (s >= 43.74) PANIC(p); if (s < 10.36) p.armR = { f: 80, o: -20, b: 30 }; place(P, 0.15, WH, -4.75, 0); P.update(p); } }
@@ -175,7 +177,7 @@ const S = [
   [3.4, 4.6, { rig: 'crane', at: horseC, size: [4, 7], az: [-100, -60], el: [-10, 20], fov: 36, shake: 0.4 }],
   [4.6, 5.9, { rig: 'fly', path: [[-30, 14, 22], [-14, 8, 10]], at: P(-1, 6, 0), fov: [42, 36], shake: 0.2, cut: true }],
   [5.9, 7.0, { rig: 'orbit', at: () => KING.headWorld(), size: [1.8, 1.3], az: [70, 110], el: [8, 6], fov: 32, shake: 0.4 }],
-  [7.0, 7.6, { rig: 'push', at: () => HORSE.localToWorld(V(0, 1.4, 0.7)), size: [1.6, 1.0], az: [-30, -10], el: [8, 6], fov: 30, shake: 0.4, ease: 'snap' }],
+  [7.0, 7.6, { rig: 'push', at: () => HEAD.getWorldPosition(V()), size: [1.6, 1.0], az: [-30, -10], el: [8, 6], fov: 30, shake: 0.4, ease: 'snap' }],
   [7.6, 8.7, { rig: 'crane', at: P(-0.6, 5.5, 0), size: [4, 9], az: [-100, -70], el: [-20, 10], fov: 36, shake: 0.3 }],
   [8.7, 10.36, { rig: 'orbit', at: () => PAINTER.headWorld().lerp(V(0.1, WH + 1.2, -4.0), 0.4), size: [2.2, 1.8], az: [-140, -100], el: [10, 8], fov: 32, shake: 0.4 }],
   [10.36, 11.2, { rig: 'orbit', at: () => V(-4.5, 1.0, 0), size: [4, 3.4], az: [140, 100], el: [12, 10], fov: 34, shake: 0.5, cut: true }],
@@ -185,11 +187,11 @@ const S = [
   [13.1, 14.3, { rig: 'orbit', at: () => V(-5.0, 1.4 + flyL(CINE._s), 0), size: [5, 5], az: [170, 120], el: [4, 10], fov: 36, shake: 1.0, fovKick: 8 }],
   [14.3, 15.0, { rig: 'push', at: horseC, size: [2.2, 1.6], az: [-50, -30], el: [8, 6], fov: 32, shake: 0.7, ease: 'snap' }],
   [15.0, 15.58, { rig: 'push', at: () => KING.headWorld(), size: [1.6, 1.2], az: [80, 60], el: [6, 4], fov: 30, shake: 0.6 }],
-  [15.58, 16.6, { rig: 'track', at: () => ROPER.root.visible ? ROPER.torso.localToWorld(V(0, 0.3, 0)) : V(-4, 1, 3), size: [2.6, 2.2], az: [60, 100], el: [10, 8], fov: 34, shake: 0.4, cut: true }],
+  [15.58, 16.6, { rig: 'track', at: () => ROPER.root.visible ? ROPER.torso.localToWorld(V(0, 0.3, 0)) : V(-4, 1, 3), size: [2.6, 2.2], az: [-40, -10], el: [10, 8], fov: 34, shake: 0.4, cut: true }],
   [16.6, 17.6, { rig: 'crane', at: () => ROPER.headWorld(), size: [2.4, 2.4], az: [-60, -30], el: [-20, 10], fov: 36, shake: 0.4 }],
   [17.6, 18.6, { rig: 'push', at: () => BAG.position.clone(), size: [1.4, 0.9], az: [-120, -90], el: [16, 10], fov: 30, shake: 0.4 }],
   [18.6, 19.8, { rig: 'orbit', at: () => TOPP.clone().lerp(ROPER.headWorld(), 0.4), size: [2.2, 1.8], az: [-150, -110], el: [14, 10], fov: 32, shake: 0.4 }],
-  [19.8, 20.8, { rig: 'crane', at: () => FLY[1].visible ? FLY[1].position.clone() : BOTB.g.position.clone(), size: [3, 4], az: [-60, -40], el: [30, 10], fov: 36, shake: 0.4 }],
+  [19.8, 20.8, { rig: 'orbit', at: () => FLY[1].visible ? FLY[1].position.clone() : BOTB.g.position.clone(), size: [2.0, 1.6], az: [-80, -60], el: [10, 6], fov: 36, shake: 0.4 }],
   [20.8, 21.4, { rig: 'push', at: () => TOPP.clone(), size: [1.4, 0.9], az: [-100, -80], el: [6, 4], fov: 30, shake: 0.5, ease: 'snap' }],
   [21.4, 22.0, { rig: 'push', at: () => BOTB.g.position.clone(), size: [1.4, 0.9], az: [-110, -80], el: [10, 6], fov: 30, shake: 0.5, ease: 'snap' }],
   [22.0, 24.0, { rig: 'crane', at: ropeMid, size: [4, 7], az: [-140, -100], el: [-10, 20], fov: 36, shake: 0.4 }],
@@ -197,7 +199,7 @@ const S = [
   [24.7, 25.6, { rig: 'low', at: horseC, size: [3, 3.6], az: [-110, -70], fov: 36, shake: 0.5 }],
   [25.6, 26.4, { rig: 'push', at: () => BLD[4].headWorld().lerp(KING.headWorld(), 0.5), size: [3.0, 2.2], az: [-20, 10], el: [6, 4], fov: 32, shake: 0.7, ease: 'snap', fovKick: 8 }],
   [26.4, 27.5, { rig: 'track', at: horseC, size: [3.0, 2.6], az: [-90, -60], el: [4, 8], fov: 34, shake: 0.4 }],
-  [27.5, 28.3, { rig: 'push', at: () => HORSE.localToWorld(V(0, 1.6, 0.85)), size: [1.9, 1.4], az: [-70, -45], el: [6, 4], fov: 30, shake: 0.3 }],
+  [27.5, 28.3, { rig: 'push', at: () => HEAD.getWorldPosition(V()), size: [1.9, 1.4], az: [-70, -45], el: [6, 4], fov: 30, shake: 0.3 }],
   [28.3, 29.4, { rig: 'push', at: () => ROPER.headWorld(), size: [1.8, 1.2], az: [-110, -90], el: [8, 6], fov: 30, shake: 0.4, cut: true }],
   [29.4, 31.0, { rig: 'orbit', at: ropeMid, size: [3.8, 3.4], az: [-130, -60], el: [6, 10], fov: 34, shake: 0.4 }],
   [31.0, 33.3, { rig: 'orbit', at: ropeMid, size: [3.4, 3.6], az: [-60, -110], el: [10, 4], fov: 34, shake: 0.3 }],
@@ -209,9 +211,9 @@ const S = [
   [40.4, 41.24, { rig: 'push', at: () => ROPER.headWorld(), size: [1.6, 1.1], az: [-110, -90], el: [8, 6], fov: 30, shake: 0.4, cut: true }],
   [41.24, 42.38, { rig: 'push', at: P(-0.9, 4.6, -3.4), size: [8.4, 7.6], az: [-82, -92], el: [4, 2], fov: 34, shake: 0.8, ease: 'snap', fovKick: 8 }],
   [42.38, 43.0, { rig: 'push', at: () => V(0.1, WH + 1.15, -4.0), size: [2.2, 1.4], az: [-100, -85], el: [10, 6], fov: 32, shake: 0.4, cut: true }],
-  [43.0, 43.6, { rig: 'push', at: () => HORSE.localToWorld(V(0, 1.3, 0.5)), size: [2.4, 1.8], az: [-110, -90], el: [8, 6], fov: 32, shake: 0.4 }],
+  [43.0, 43.6, { rig: 'push', at: () => HEAD.getWorldPosition(V()), size: [2.4, 1.8], az: [-110, -90], el: [8, 6], fov: 32, shake: 0.4 }],
   [43.6, 44.6, { rig: 'orbit', at: () => V(-2, 3.5, -1.7), size: [8, 7], az: [-150, -120], el: [6, 10], fov: 36, shake: 0.8 }],
-  [44.6, 45.3, { rig: 'push', at: () => HORSE.localToWorld(V(0, 1.4, 0.5)), size: [2.4, 1.8], az: [-100, -80], el: [6, 4], fov: 30, shake: 0.6, ease: 'snap' }],
+  [44.6, 45.3, { rig: 'push', at: () => HEAD.getWorldPosition(V()), size: [2.4, 1.8], az: [-100, -80], el: [6, 4], fov: 30, shake: 0.6, ease: 'snap' }],
   [45.3, 46.1, { rig: 'crane', at: () => HORSE.localToWorld(V(0, 1.0, 0)), size: [3, 9], az: [-130, -100], el: [10, 40], fov: 36, shake: 0.2 }],
 ];
 for (const [a, b, sp] of S) CINE.shot(a, b, sp);
