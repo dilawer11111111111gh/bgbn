@@ -9,7 +9,7 @@ import { toTex, mkCanvas } from './tex.js';
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const tm = (hex, o = {}) => C.toon({ color: new THREE.Color(hex), ...o });
 const ctex = (w, h, fn, rep = false) => { const c = mkCanvas(w, h); fn(c.getContext('2d'), w, h); return toTex(c, rep); };
-let W = null; export const CAMPOS = V();
+let W = null; export const CAMPOS = V(); export const PEOPLE = [];   // every stick person ever created (for camera guard + QA)
 const MOUTHS = ['flat', 'smile', 'grin', 'laugh', 'frown', 'o', 'grit', 'wavy', 'smirk', 'sad'];
 function mouthTex(skin, kind, blush) { return ctex(1024, 512, (g, w, h) => { g.fillStyle = skin; g.fillRect(0, 0, w, h); const cx = 256, cy = 300; g.lineCap = 'round'; g.lineJoin = 'round';
   if (blush) { g.fillStyle = 'rgba(255,90,90,0.35)'; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(cx + sx * 88, cy - 38, 30, 16, 0, 0, 7); g.fill(); } }
@@ -123,6 +123,6 @@ export function makeStickPerson(world, spec, head = {}, act = {}) {
   P.update = (pose) => { up(pose); let fix = false; const hw = P.headWorld(), R = headR();
     for (const s of ['L', 'R']) { const pw = P.palmWorld(s); const d = pw.distanceTo(hw); if (d < R * 1.18) { const dir = pw.clone().sub(hw); if (dir.lengthSq() < 1e-6) dir.set(s === 'L' ? -1 : 1, 0, 0); dir.normalize(); pose['hand' + s] = { w: hw.clone().addScaledVector(dir, R * 1.28), k: 1 }; fix = true; } }
     if (fix) { pose.reachAssist = false; up(pose); } stickPose(P); h.update(pose, pose.t || 0); };
-  P.userData = { hits: act.hits || [], loops: act.loops || [], marks: act.marks || [] }; P.userData.markMesh = P.userData.marks.map(([k]) => makeMark(k)); P.toonHead = h; return P;
+  P.userData = { hits: act.hits || [], loops: act.loops || [], marks: act.marks || [] }; P.userData.markMesh = P.userData.marks.map(([k]) => makeMark(k)); P.toonHead = h; P.headR = () => 0.235 * 1.75 * 1.08 * (P.height || 0.62); PEOPLE.push(P); return P;
 }
 export { placeMarks, EXPR };
