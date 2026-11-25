@@ -1,0 +1,80 @@
+{
+ "kloofendal_48d_partly_cloudy_puresky": "assets/hdri/kloofendal_48d_partly_cloudy_puresky.hdr",
+ "spruit_sunrise": "assets/hdri/spruit_sunrise.hdr",
+ "goegap": "assets/hdri/goegap.hdr",
+ "gravel_floor_02": {
+  "diff": "assets/tex/gravel_floor_02/diff.jpg",
+  "nor": "assets/tex/gravel_floor_02/nor.jpg",
+  "rough": "assets/tex/gravel_floor_02/rough.jpg",
+  "ao": "assets/tex/gravel_floor_02/ao.jpg",
+  "arm": "assets/tex/gravel_floor_02/arm.jpg"
+ },
+ "aerial_rocks_02": {
+  "diff": "assets/tex/aerial_rocks_02/diff.jpg",
+  "nor": "assets/tex/aerial_rocks_02/nor.jpg",
+  "rough": "assets/tex/aerial_rocks_02/rough.jpg",
+  "ao": "assets/tex/aerial_rocks_02/ao.jpg",
+  "arm": "assets/tex/aerial_rocks_02/arm.jpg"
+ },
+ "red_sandstone_wall": {
+  "diff": "assets/tex/red_sandstone_wall/diff.jpg",
+  "nor": "assets/tex/red_sandstone_wall/nor.jpg",
+  "rough": "assets/tex/red_sandstone_wall/rough.jpg",
+  "ao": "assets/tex/red_sandstone_wall/ao.jpg",
+  "arm": "assets/tex/red_sandstone_wall/arm.jpg"
+ },
+ "brown_mud_leaves_01": {
+  "diff": "assets/tex/brown_mud_leaves_01/diff.jpg",
+  "nor": "assets/tex/brown_mud_leaves_01/nor.jpg",
+  "rough": "assets/tex/brown_mud_leaves_01/rough.jpg",
+  "ao": "assets/tex/brown_mud_leaves_01/ao.jpg",
+  "arm": "assets/tex/brown_mud_leaves_01/arm.jpg"
+ },
+ "wood_planks_dirt": {
+  "diff": "assets/tex/wood_planks_dirt/diff.jpg",
+  "nor": "assets/tex/wood_planks_dirt/nor.jpg",
+  "rough": "assets/tex/wood_planks_dirt/rough.jpg",
+  "ao": "assets/tex/wood_planks_dirt/ao.jpg",
+  "arm": "assets/tex/wood_planks_dirt/arm.jpg"
+ },
+ "rusty_metal_02": {
+  "diff": "assets/tex/rusty_metal_02/diff.jpg",
+  "nor": "assets/tex/rusty_metal_02/nor.jpg",
+  "rough": "assets/tex/rusty_metal_02/rough.jpg",
+  "ao": "assets/tex/rusty_metal_02/ao.jpg",
+  "arm": "assets/tex/rusty_metal_02/arm.jpg"
+ },
+ "rock_face": {
+  "diff": "assets/tex/rock_face/diff.jpg",
+  "nor": "assets/tex/rock_face/nor.jpg",
+  "rough": "assets/tex/rock_face/rough.jpg",
+  "ao": "assets/tex/rock_face/ao.jpg",
+  "arm": "assets/tex/rock_face/arm.jpg"
+ },
+ "sandstone_cracks": {
+  "diff": "assets/tex/sandstone_cracks/diff.jpg",
+  "nor": "assets/tex/sandstone_cracks/nor.jpg",
+  "rough": "assets/tex/sandstone_cracks/rough.jpg",
+  "ao": "assets/tex/sandstone_cracks/ao.jpg",
+  "arm": "assets/tex/sandstone_cracks/arm.jpg"
+ },
+ "dry_ground_01": {
+  "diff": "assets/tex/dry_ground_01/diff.jpg",
+  "nor": "assets/tex/dry_ground_01/nor.jpg",
+  "rough": "assets/tex/dry_ground_01/rough.jpg",
+  "ao": "assets/tex/dry_ground_01/ao.jpg",
+  "arm": "assets/tex/dry_ground_01/arm.jpg"
+ },
+ "aerial_grass_rock": {
+  "diff": "assets/tex/aerial_grass_rock/diff.jpg",
+  "nor": "assets/tex/aerial_grass_rock/nor.jpg",
+  "rough": "assets/tex/aerial_grass_rock/rough.jpg",
+  "ao": "assets/tex/aerial_grass_rock/ao.jpg",
+  "arm": "assets/tex/aerial_grass_rock/arm.jpg"
+ },
+ "rock_moss_set_01": "assets/models/rock_moss_set_01/rock_moss_set_01.gltf",
+ "dry_branches_medium_01": "assets/models/dry_branches_medium_01/dry_branches_medium_01.gltf",
+ "wooden_crate_01": "assets/models/wooden_crate_01/wooden_crate_01.gltf",
+ "boulder_01": "assets/models/boulder_01/boulder_01.gltf",
+ "dead_tree_trunk": "assets/models/dead_tree_trunk/dead_tree_trunk.gltf"
+}
