@@ -73,8 +73,8 @@ const UP = arrow(0x3ad0ff), DOWN = arrow(0xe8402a);
 
 // =================== CAST ===================
 Flat2D.T = 0;
-const BURL_O = { body: 'overalls', coat: '#3a4a6a', shirt: '#c8402a', patch: '#e8b83a', width: 1.45, size: 2.05, hat: 'cap', hatCol: '#3a3030', hair: '#4a2a18', hairStyle: 'bangs', beard: '#6a3a1e', mustache: true, seed: 3, res: 2.2 };
-const PIP_O = { body: 'overalls', coat: '#2a9a9a', shirt: '#f4e2c8', patch: '#e8402a', width: 0.92, size: 1.65, hat: 'beret', hatCol: '#d8343a', hair: '#7a4a26', hairStyle: 'pigtails', band: '#f2c63a', seed: 6, res: 2.2 };
+const BURL_O = { body: 'overalls', coat: '#3a4a6a', shirt: '#c8402a', patch: '#e8b83a', width: 1.15, size: 2.05, hat: 'cap', hatCol: '#3a3030', hair: '#4a2a18', hairStyle: 'bangs', beard: null, mustache: true, rest: 'hip', seed: 3, res: 2.2 };
+const PIP_O = { body: 'overalls', coat: '#2a9a9a', shirt: '#f4e2c8', patch: '#e8402a', width: 0.85, size: 1.65, rest: 'behind', hat: 'beret', hatCol: '#d8343a', hair: '#7a4a26', hairStyle: 'pigtails', band: '#f2c63a', seed: 6, res: 2.2 };
 const BURL = new Flat2D({ ...BURL_O, scene }), PIP = new Flat2D({ ...PIP_O, scene });
 const CROWD = [['fisherman', 0], ['sailor', 1], ['captain', 0], ['grandma', 1], ['kid', 4], ['girl', 2], ['worker', 3], ['shopkeeper', 2], ['lady', 4], ['gentleman', 1], ['tourist', 2], ['musician', 0]].map(([id, k]) => new Flat2D({ ...role(id, k), scene, res: 1.6 }));
 const STARTER = new Flat2D({ ...role('sheriff', 3), scene, res: 1.8 });
