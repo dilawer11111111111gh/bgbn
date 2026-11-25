@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import * as C from './core.js';
 
 const R = (d) => (d * Math.PI) / 180;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const INK = '#2a1810';
 function softShadowTex() {
   const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
@@ -53,7 +54,15 @@ export class Flat2D {
     const per = 2.4 + (sd % 1.3), ph = (t + sd) % per; if (ph < 0.11 && ['dot', 'calm', 'sly', undefined].includes(f.eyes) && !p.noBlink) f.eyes = 'closed';
     if (!f.look) { const k = Math.floor((t + sd) / 0.9); f.look = [Math.sin(k * 12.9898 + sd) * 0.5, Math.sin(k * 78.233 + sd) * 0.3]; }
     if (p.talk) f.mouth = ['talk', 'o', 'talk', 'smile', 'grin', 'o', 'talk', 'flat'][Math.floor((t + sd) * 13) % 8];   // lip sync ONLY while this character speaks
-    return { ...p, face: f, bob: (p.bob || 0) + 3 * Math.sin(t * 2.6 + sd), tilt: (p.tilt || 0) + 2.2 * Math.sin(t * 1.7 + sd * 2) };
+    // ALIVE v2: driven by the narration energy (Flat2D.E, Flat2D.ON per frame) so bodies move WITH the voice; never a frozen pose
+    const E = (Flat2D.E || 0) * (p.e ?? 0.7), ON = Math.min(1, (Flat2D.ON || 0) * 6) * (p.e ?? 0.7);
+    if (f.brow === undefined) f.brow = Math.min(1.2, ON * 1.4 + E * 0.35);
+    const sw = (a, ph) => { const b = a || [14, 6]; return [b[0] + 4 * Math.sin(t * 1.9 + sd + ph) + E * 14 * Math.sin(t * 7.3 + sd + ph), b[1] + 3 * Math.sin(t * 2.3 + sd + ph) + E * 12 * Math.sin(t * 5.1 + sd + ph)]; };
+    const turn = p.turn ?? (0.32 * Math.sin(t * 0.55 + sd) + 0.14 * Math.sin(t * 1.7 + sd * 2) + 0.25 * ON * Math.sign(Math.sin(sd * 9)));
+    return { ...p, face: f, turn, armL: p.handHead === 'L' ? p.armL : sw(p.armL, 0), armR: p.handHead === 'R' ? p.armR : sw(p.armR, 1.7),
+      bob: (p.bob || 0) + 3 * Math.sin(t * 2.6 + sd) - E * 9 * Math.abs(Math.sin(t * 8.6 + sd)), hop: (p.hop || 0) + ON * 34,
+      tilt: (p.tilt || 0) + 2.2 * Math.sin(t * 1.7 + sd * 2) + E * 7 * Math.sin(t * 4.3 + sd) + ON * 8 * Math.sin(sd * 7), squash: (p.squash || 0) + Math.min(0.08, ON * 0.12),
+      lean: (p.lean || 0) + 2.5 * Math.sin(t * 0.9 + sd) + E * 3 * Math.sin(t * 3.1 + sd), hatOff: (p.hatOff || 0) + E * 6 * Math.abs(Math.sin(t * 8.6 + sd + 0.6)) };
   }
   headWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.5 : 0.68), 0)); }
   bodyWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.35 : 0.5), 0)); }
@@ -110,14 +119,14 @@ export class Flat2D {
     g.save(); this.wpath(g, headPts); g.clip();
     if (p.tint) { const [tc, tk] = Array.isArray(p.tint) ? p.tint : [p.tint, 0.7]; g.globalAlpha = tk; g.fillStyle = tc; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); g.globalAlpha = 1; }
     g.fillStyle = 'rgba(150,110,80,0.10)'; g.beginPath(); g.ellipse(26, 22, r * 0.95, r * 0.95, 0, 0, 7); g.rect(-r * 2, -r * 2, r * 4, r * 4); g.fill('evenodd');
-    if (o.hair && (o.hairStyle === 'bangs' || o.hairStyle === 'cap')) this.hair(g, r);
+    if (o.hair && (o.hairStyle === 'bangs' || o.hairStyle === 'cap')) { g.save(); g.translate((p.turn || 0) * 16, 0); this.hair(g, r); g.restore(); }
     g.restore();
     this.outline(g, headPts, 7);
     if (o.hair && ['pompadour', 'side', 'messy', 'pigtails'].includes(o.hairStyle)) this.bigHair(g, r);
-    this.face(g, p.face || {}, r);
+    { const tu = clamp(p.turn || 0, -0.8, 0.8); g.save(); g.translate(tu * 36, 0); g.scale(1 - 0.16 * Math.abs(tu), 1); this.face(g, p.face || {}, r); g.restore(); }
     if (p.blush) { g.fillStyle = `rgba(230,60,60,${0.55 * p.blush})`; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 62, 40, 28, 15, 0, 0, 7); g.fill(); } g.strokeStyle = 'rgba(180,30,30,0.6)'; g.lineWidth = 3; for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(s * 50 + k * 10 - 10, 32); g.lineTo(s * 50 + k * 10 - 16, 48); g.stroke(); } }
     if (p.tears) { const T = Flat2D.T || 0; g.fillStyle = '#7cc8ff'; g.strokeStyle = INK; g.lineWidth = 2.5; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * 40 - 8, 8); g.lineTo(s * 40 + 8, 8); g.lineTo(s * 46, 120); g.lineTo(s * 34, 120); g.closePath(); g.globalAlpha = 0.85; g.fill(); g.globalAlpha = 1; for (let k = 0; k < 2; k++) { const y = 20 + ((T * 140 + k * 50 + (s > 0 ? 25 : 0)) % 110); g.beginPath(); g.arc(s * 42, y, 6, 0, 7); g.fill(); g.stroke(); } } }
-    this.hat(g, r, p.hatOff || 0);
+    g.save(); g.translate((p.turn || 0) * 12, 0); this.hat(g, r, p.hatOff || 0); g.restore();
     g.restore();
     if (p.steam) this.steam(g, hx, hy, r, p.steam);
     if (headHand) { g.fillStyle = '#3a2620'; g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.arc(headHand[0], headHand[1], 16, 0, 7); g.fill(); g.stroke(); }

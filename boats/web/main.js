@@ -8,6 +8,7 @@ import { Flat2D } from '../../web/flat2d.js';
 import { role, act } from '../../web/roles.js';
 import { sstep, clamp, lerp } from '../../web/motion.js';
 import { WORDS } from './words.js';
+import { ENERGY, ONSET } from './energy.js';
 export const DURATION = 26.95;
 const T = (i) => WORDS[i][1];
 const DOCK = 1.2;   // dock deck height (water = 0)
@@ -65,7 +66,7 @@ const PIPB = new THREE.Group(); scene.add(PIPB); const BOWL = new THREE.Group();
   BOWL.add(mesh(new THREE.LatheGeometry(pts, 40), pbr('rusty_metal_02', [3, 1], { tint: '#58b4b4', side: THREE.DoubleSide, ns: 1.2 }))); const rim = mesh(new THREE.TorusGeometry(2.3, 0.1, 10, 48), std(0xe8b83a, { m: 0.8, r: 0.3 })); rim.rotation.x = Math.PI / 2; BOWL.add(rim);
   BOWL.add(mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 8), std(0x8a5a32), 1.5, 1.2, -0.6)); const pf = mesh(new THREE.ConeGeometry(0.4, 1.1, 3), std(0xf2c63a, { side: THREE.DoubleSide }), 2.0, 2.4, -0.6); pf.rotation.z = -Math.PI / 2; BOWL.add(pf); }
 // explanation helpers: displaced water dome, arrows
-const DOME = mesh(new THREE.SphereGeometry(2.45, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x5ad8ff, emissive: 0x2a8aff, emissiveIntensity: 0.6, transparent: true, opacity: 0.45, depthWrite: false }), 0, 0, 0, false); scene.add(DOME);
+const DOME = mesh(new THREE.SphereGeometry(2.45, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x5ad8ff, emissive: 0x2a8aff, emissiveIntensity: 1.3, transparent: true, opacity: 0.6, depthWrite: false }), 0, 0, 0, false); DOME.renderOrder = 3; scene.add(DOME);
 const SMALLW = mesh(new THREE.BoxGeometry(1.0, 0.8, 2.2), new THREE.MeshStandardMaterial({ color: 0x5ad8ff, emissive: 0x2a8aff, emissiveIntensity: 0.6, transparent: true, opacity: 0.5, depthWrite: false }), 0, 0, 0, false); scene.add(SMALLW);
 const arrow = (col) => { const g = new THREE.Group(); g.add(mesh(new THREE.CylinderGeometry(0.16, 0.16, 2.4, 12), std(col, { e: col, ei: 0.6 }), 0, 1.2, 0, false)); g.add(mesh(new THREE.ConeGeometry(0.45, 0.8, 16), std(col, { e: col, ei: 0.6 }), 0, 2.7, 0, false)); scene.add(g); return g; };
 const UP = arrow(0x3ad0ff), DOWN = arrow(0xe8402a);
@@ -120,7 +121,7 @@ function pipBoat(t) {
 const ZONE = (t) => (t < T(9) ? 'dock' : t < T(24) ? 'forge' : t < T(47) ? 'shop' : t < T(63) ? 'race' : t < T(88) ? 'explain' : 'under');
 
 function setup(t, camPos) {
-  Flat2D.T = t; const z = ZONE(t); for (const c of ALL) hide(c);
+  Flat2D.T = t; const fi = Math.min(ENERGY.length - 1, Math.round(t * FPS)); Flat2D.E = ENERGY[fi]; Flat2D.ON = ONSET[fi]; const z = ZONE(t); for (const c of ALL) hide(c);
   // ----- boats -----
   const bb = burlBoat(t); BURLB.position.copy(bb.p); BURLB.rotation.set(bb.pitch, 0, 0);
   const pb = pipBoat(t); PIPB.position.copy(pb.p); PIPB.position.y += pb.bob; PIPB.rotation.z = pb.bob * 0.3; BOWL.scale.set(1, Math.max(0.06, pb.form), 1);
@@ -138,19 +139,19 @@ function setup(t, camPos) {
     else if (!bb.sunk) { bp = onBoat(BURLB, 0, 2.0, -0.6); bpose = { ...act(t, [[T(52), 'shock'], [T(53), 'flail']]), face: t < T(53) ? 'shock' : 'panic', tears: t > T(53) ? 1 : 0 }; } }
   else if (z === 'explain') { if (t > T(77) && t < T(86)) { bp = onBoat(BURLB, 0, 2.0, -0.6); bpose = { ...act(t, [[0, 'crossArms']]), face: 'angry', steam: 0.8, tint: ['#8a4ad0', 0.4] }; } }
   else if (z === 'under') { bp = onBoat(BURLB, 0, 2.0, -0.6); bpose = { ...act(t, [[T(88), 'facepalm'], [T(90), 'row']]), face: t < T(90) ? 'worried' : 'proud', flip: false }; }
-  if (bp) { BURL.place(bp.x, bp.y, bp.z); BURL.update(bpose, camPos); }
+  if (bp) { BURL.place(bp.x, bp.y, bp.z); BURL.update({ e: 1, ...bpose }, camPos); }
   // ----- Pip -----
   let pp, ppose = {};
   if (z === 'shop') { if (t < T(31)) { pp = V(12.4, DOCK, -7.4); ppose = { ...act(t, [[T(24), 'wave'], [T(27), 'presenter']]), face: t < T(27) ? 'grin' : 'proud', flip: true }; }
-    else if (t < T(36)) { pp = V(11.6, DOCK, -8.2); ppose = { ...act(t, [[T(31), 'kneel']]), prop: 'hammer', armR: [150 - 120 * Math.abs(Math.sin(t * 9)), 20], face: 'angry', flip: false }; }
+    else if (t < T(36)) { pp = V(10.6, DOCK, -8.0); ppose = { ...act(t, [[T(31), 'kneel']]), prop: 'hammer', armR: [150 - 120 * Math.abs(Math.sin(t * 9)), 20], face: 'angry', flip: false }; }
     else if (t < T(41)) { pp = V(10.4, DOCK, -8.0); ppose = { ...act(t, [[T(36), 'thumbsUp']]), face: 'proud', blush: 0.6, flip: false }; }
     else { pp = V(10.4, DOCK, -8.0); ppose = { ...act(t, [[T(41), 'crossArms']]), face: 'angry', steam: 0.8, tint: ['#e2403a', 0.35] }; } }
   else if (z === 'race') { pp = onBoat(PIPB, 0, -0.9, 0.4); ppose = t < T(57) ? { ...act(t, [[0, 'crossArms']]), face: 'smug' } : t < T(61) ? { ...act(t, [[T(57), 'row']]), face: 'grin', lines: t > T(60) ? 1 : 0 } : { ...act(t, [[T(61), 'cheer']]), prop: 'trophy', face: 'laugh' }; }
   else if (z === 'explain') { pp = onBoat(PIPB, 0, -0.9, 0.4); ppose = { ...act(t, [[T(63), 'presenter'], [T(77), 'point'], [T(86), 'thumbsUp']]), face: t > T(86) ? 'laugh' : 'proud' }; }
-  if (pp) { PIP.place(pp.x, pp.y, pp.z); PIP.update(ppose, camPos); }
+  if (pp) { PIP.place(pp.x, pp.y, pp.z); PIP.update({ e: 1, ...ppose }, camPos); }
   // ----- crowd on the dock edge -----
   const crowdOn = z === 'dock' || (z === 'shop' && t > T(41)) || (z === 'race' && t < T(63));
-  if (crowdOn) CROWD.forEach((c, i) => { const x = i < 6 ? -17 + i * 1.6 : 8.8 + (i - 6) * 1.6, zz = -0.9 - (i % 2) * 1.1; c.place(x, DOCK, zz);
+  if (crowdOn) CROWD.forEach((c, i) => { const x = i < 6 ? -15.5 + i * 1.35 : 8.8 + (i - 6) * 1.6, zz = -0.9 - (i % 2) * 1.1; c.place(x, DOCK, zz);
     const laugh = z === 'shop', sink = z === 'race' && t > T(52) && t < T(57), win = z === 'race' && t > T(61), hook = z === 'dock';
     const pose = laugh ? (i % 3 ? 'laughPoint' : 'laugh') : sink ? (i % 2 ? 'shock' : 'flail') : win ? 'cheer' : hook ? (i % 2 ? 'shock' : 'flail') : i % 2 ? 'cheer' : 'wave';
     c.update({ ...act(t + i * 0.11, [[0, pose]]), face: laugh ? 'laugh' : sink || hook ? (i % 2 ? 'shock' : 'awe') : win ? 'laugh' : 'grin', flip: i >= 6 }, camPos); });
@@ -166,7 +167,7 @@ function setup(t, camPos) {
 }
 function fx(t, st) {
   const z = ZONE(t);
-  B.sparks.update(t, T(9), V(-11.5, DOCK + 1.0, -9.4), 0.5, z === 'forge' && t < T(16)); B.sparks2.update(t, T(31), V(9.6, DOCK + 0.5, -8.4), 0.5, z === 'shop' && t > T(31) && t < T(36));
+  B.sparks.update(t, T(9), V(-11.5, DOCK + 1.0, -9.4), 0.5, z === 'forge' && t < T(16)); B.sparks2.update(t, T(31), V(9.9, DOCK + 0.5, -8.2), 0.5, z === 'shop' && t > T(31) && t < T(36));
   B.splash.update(t, st.bb.hook ? T(5) + 0.35 : T(52) - 0.15, () => V(-4.5, 0.2, 8.2), 0, (st.bb.hook || z === 'race') && t < (st.bb.hook ? T(9) : T(57)));
   B.splash2.update(t, T(59), () => V(4.5, 0.2, 7.0), 0, z === 'race' && t > T(58));
   B.bubbles.update(t, st.bb.hook ? T(5) + 0.5 : T(52), () => BURLB.position.clone().add(V(0, 2.4, 0)), 1.6, st.bb.sinking && (st.bb.hook || z === 'race' || z === 'under'));
@@ -190,12 +191,12 @@ const BEATS = [
   { t0: T(7), t1: T(9), shot: 'orbit', at: () => V(-4.5, 1.0, 9.0), size: 6.5, az: 55, over: { az: [60, 40], el: [8, 10] } },
   { t0: T(9), t1: T(16), cut: true, shot: 'craneDown', at: burlH, big: 7, size: 2.6, az: 25 },
   { t0: T(16), t1: T(18), shot: 'track', at: bboat, heading: Math.PI / 2, side: -1, size: 5, over: { az: [-70, -40] } },
-  { t0: T(18), t1: T(24), shot: 'low', at: burlH, size: 2.4, az: 30 },
+  { t0: T(18), t1: T(24), shot: 'low', at: burlH, size: 2.6, az: -20 },
   { t0: T(24), t1: T(27), cut: true, shot: 'whip', at: pipH, size: 2.2, az: -20 },
   { t0: T(27), t1: T(31), shot: 'orbit', at: pipH, size: 2.6, az: -30 },
-  { t0: T(31), t1: T(36), shot: 'dollyIn', at: () => V(10.3, DOCK + 0.9, -8.3), size: 4.6, az: 22 },
-  { t0: T(36), t1: T(41), shot: 'dollyOut', at: () => V(8.8, DOCK + 1.4, -8.4), size: 3.4, big: 7.5, az: 15 },
-  { t0: T(41), t1: T(47), shot: 'handheld', at: pt(-13, DOCK + 1.3, -1.4), size: 5.2, az: 18 },
+  { t0: T(31), t1: T(36), shot: 'orbit', at: () => V(9.5, DOCK + 0.9, -8.3), size: 5.0, az: 22, over: { az: [30, 12], el: [10, 8] } },
+  { t0: T(36), t1: T(41), shot: 'dollyOut', at: () => V(8.6, DOCK + 1.0, -8.5), size: 3.2, big: 4.8, az: 15 },
+  { t0: T(41), t1: T(47), shot: 'handheld', at: pt(-11.5, DOCK + 1.3, -1.5), size: 6.8, az: 22 },
   { t0: T(47), t1: T(50), cut: true, shot: 'drone', at: pt(0, 1.5, 2), big: 26, mid: 16, az: 15 },
   { t0: T(50), t1: T(52), shot: 'orbit', at: bboat, size: 5.5, az: 80, over: { az: [90, 60], el: [4, 6] } },
   { t0: T(52), t1: T(53), shot: 'closeup', at: burlH, size: 1.6, az: 30 },
@@ -220,7 +221,7 @@ window.renderFrame = function (f) {
   const t = f / FPS;
   const c0 = CINE.at(t); const cp = V(...c0.pos); const st = setup(t, cp);
   const c = CINE.at(t); if (ZONE(t) !== 'under' && c.pos[1] < 0.35 && !(t > T(53) && t < T(57))) c.pos[1] = 0.35; setCam(c); setup(t, cam.position.clone());
-  const under = cam.position.y < 0; scene.fog = under ? fogSea : fogAir; WATER.material.opacity = ZONE(t) === 'explain' ? 0.55 : 0.86; if (!window.__bg) window.__bg = scene.background; scene.background = under ? SEA_COL : window.__bg; scene.backgroundIntensity = 1.0;
+  const under = cam.position.y < 0; scene.fog = under ? fogSea : fogAir; WATER.material.opacity = ZONE(t) === 'explain' ? 0.42 : 0.86; if (!window.__bg) window.__bg = scene.background; scene.background = under ? SEA_COL : window.__bg; scene.backgroundIntensity = 1.0;
   scene.traverse((o) => o.userData.tick && o.userData.tick(t));
   fx(t, st);
   composer.grade.uniforms.uFade.value = Math.max(0, 1 - t / 0.2) + Math.max(0, (t - (DURATION - 0.3)) / 0.3);
