@@ -1,0 +1,20 @@
+name: assets
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['tools/assets_wanted.json']
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: python tools/fetch_assets.py
+      - name: Commit assets
+        run: |
+          git config user.name "asset-bot"; git config user.email "asset-bot@users.noreply.github.com"
+          git add assets && git commit -qm "CC0 assets (Poly Haven) [skip ci]" && git pull --rebase -q origin main && git push origin HEAD:main || echo "nothing new"

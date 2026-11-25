@@ -1,0 +1,4 @@
+{ "hdri_res": "2k", "tex_res": "1k", "model_res": "1k",
+  "hdris": ["kloofendal_48d_partly_cloudy_puresky", "spruit_sunrise", "goegap"],
+  "textures": ["gravel_floor_02", "aerial_rocks_02", "red_sandstone_wall", "brown_mud_leaves_01", "wood_planks_dirt", "rusty_metal_02", "rock_face", "sandstone_cracks", "dry_ground_01", "aerial_grass_rock"],
+  "models": ["rock_moss_set_01", "dry_branches_medium_01", "wooden_crate_01", "boulder_01", "dead_tree_trunk"] }
