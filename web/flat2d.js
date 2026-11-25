@@ -18,10 +18,14 @@ function softShadowTex() {
 let SHT = null;
 // expression presets (use by name: face:'shock')
 export const FACES = {
-  happy: { eyes: 'dot', mouth: 'bigsmile' }, grin: { eyes: 'dot', mouth: 'grin' }, laugh: { eyes: 'happy', mouth: 'laugh' }, proud: { eyes: 'calm', mouth: 'smirk', brow: -0.3 },
-  shock: { eyes: 'tiny', mouth: 'scream', brow: 1.5 }, scared: { eyes: 'wide', mouth: 'wobble', brow: 1.3 }, panic: { eyes: 'tiny', mouth: 'wobble', brow: 1.6 }, angry: { eyes: 'dot', mouth: 'teeth', brow: -1.4 },
-  smug: { eyes: 'sly', mouth: 'smirk', sly: 1 }, confused: { eyes: 'dot', mouth: 'wobble', brow: 0.9 }, sleepy: { eyes: 'sleepy', mouth: 'flat' }, deadpan: { eyes: 'calm', mouth: 'flat' },
-  idea: { eyes: 'wide', mouth: 'grin', brow: 1.2 }, awe: { eyes: 'wide', mouth: 'o', brow: 1.2 }, worried: { eyes: 'dot', mouth: 'frown', brow: 1.1 }, evil: { eyes: 'sly', mouth: 'grin', sly: 1 },
+  neutral: { eyes: 'dot', mouth: 'smirk1' }, calm: { eyes: 'lid', lid: 0.5, mouth: 'smirk1' },
+  happy: { eyes: 'dot', mouth: 'bigsmile' }, grin: { eyes: 'dot', mouth: 'grin' }, laugh: { eyes: 'happy', mouth: 'laugh', brow: 0.5 },
+  proud: { eyes: 'lid', lid: 0.6, mouth: 'smirk1', browL: 0.5, browR: 0.1 }, smug: { eyes: 'lid', lid: 0.58, look: [0.8, 0], mouth: 'smirk1', browL: 0.9, browR: -0.3 },
+  sideeye: { eyes: 'lid', lid: 0.55, look: [1, 0], mouth: 'line', browL: -0.5, browR: 0.6 }, evil: { eyes: 'lid', lid: 0.6, lidTilt: -0.3, mouth: 'grin', brow: -1.0 },
+  angry: { eyes: 'lid', lid: 0.45, lidTilt: -0.4, mouth: 'teeth', brow: -1.5 }, grumpy: { eyes: 'lid', lid: 0.55, lidTilt: -0.3, mouth: 'frown', brow: -1.2 },
+  shock: { eyes: 'tiny', mouth: 'scream', brow: 1.5 }, scared: { eyes: 'wide', mouth: 'wobble', brow: 1.3 }, panic: { eyes: 'tiny', mouth: 'wobble', brow: 1.6 },
+  confused: { eyes: 'lid', lid: 0.3, mouth: 'line', browL: 1.1, browR: -0.6 }, worried: { eyes: 'lid', lid: 0.3, lidTilt: 0.3, mouth: 'wobble', brow: 1.0 },
+  idea: { eyes: 'wide', mouth: 'grin', brow: 1.2 }, awe: { eyes: 'wide', mouth: 'smallO', brow: 1.2 }, sleepy: { eyes: 'sleepy', mouth: 'line' }, deadpan: { eyes: 'lid', lid: 0.62, mouth: 'line' },
 };
 const shade = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); return '#' + c.getHexString(); };
 // hand-drawn wobble: deterministic per character (no shimmer), tiny amplitude
@@ -50,19 +54,22 @@ export class Flat2D {
   place(x, y, z) { this.pos.set(x, y, z); return this; }
   // ALIVE layer (always on): blinks, eye darts, breathing, tiny head motion. Flat2D.T = current time (set once per frame).
   alive(p) {
-    const t = Flat2D.T ?? 0, sd = this.o.seed * 1.37; const f = typeof p.face === 'string' ? (FACES[p.face] || {}) : { ...(p.face || {}) };
-    const per = 2.4 + (sd % 1.3), ph = (t + sd) % per; if (ph < 0.11 && ['dot', 'calm', 'sly', undefined].includes(f.eyes) && !p.noBlink) f.eyes = 'closed';
+    const t = Flat2D.T ?? 0, sd = this.o.seed * 1.37; const f = typeof p.face === 'string' ? { ...(FACES[p.face] || FACES.neutral) } : p.face ? { ...p.face } : { ...FACES.neutral };
+    const per = 2.4 + (sd % 1.3), ph = (t + sd) % per; if (ph < 0.11 && ['dot', 'calm', 'sly', 'lid', undefined].includes(f.eyes) && !p.noBlink) f.eyes = 'closed';
     if (!f.look) { const k = Math.floor((t + sd) / 0.9); f.look = [Math.sin(k * 12.9898 + sd) * 0.5, Math.sin(k * 78.233 + sd) * 0.3]; }
-    if (p.talk) f.mouth = ['talk', 'o', 'talk', 'smile', 'grin', 'o', 'talk', 'flat'][Math.floor((t + sd) * 13) % 8];   // lip sync ONLY while this character speaks
-    // ALIVE v2: driven by the narration energy (Flat2D.E, Flat2D.ON per frame) so bodies move WITH the voice; never a frozen pose
-    const E = (Flat2D.E || 0) * (p.e ?? 0.7), ON = Math.min(1, (Flat2D.ON || 0) * 6) * (p.e ?? 0.7);
-    if (f.brow === undefined) f.brow = Math.min(1.2, ON * 1.4 + E * 0.35);
-    const sw = (a, ph) => { const b = a || [14, 6]; return [b[0] + 4 * Math.sin(t * 1.9 + sd + ph) + E * 14 * Math.sin(t * 7.3 + sd + ph), b[1] + 3 * Math.sin(t * 2.3 + sd + ph) + E * 12 * Math.sin(t * 5.1 + sd + ph)]; };
-    const turn = p.turn ?? (0.32 * Math.sin(t * 0.55 + sd) + 0.14 * Math.sin(t * 1.7 + sd * 2) + 0.25 * ON * Math.sign(Math.sin(sd * 9)));
-    return { ...p, face: f, turn, armL: p.handHead === 'L' ? p.armL : sw(p.armL, 0), armR: p.handHead === 'R' ? p.armR : sw(p.armR, 1.7),
-      bob: (p.bob || 0) + 3 * Math.sin(t * 2.6 + sd) - E * 9 * Math.abs(Math.sin(t * 8.6 + sd)), hop: (p.hop || 0) + ON * 34,
-      tilt: (p.tilt || 0) + 2.2 * Math.sin(t * 1.7 + sd * 2) + E * 7 * Math.sin(t * 4.3 + sd) + ON * 8 * Math.sin(sd * 7), squash: (p.squash || 0) + Math.min(0.08, ON * 0.12),
-      lean: (p.lean || 0) + 2.5 * Math.sin(t * 0.9 + sd) + E * 3 * Math.sin(t * 3.1 + sd), hatOff: (p.hatOff || 0) + E * 6 * Math.abs(Math.sin(t * 8.6 + sd + 0.6)) };
+    if (p.talk) f.mouth = ['talk', 'smallO', 'line', 'talk', 'smallO', 'smirk1'][Math.floor((t + sd) * 12) % 6];   // lip sync ONLY while this character speaks
+    // ALIVE v3 (reference style): calm, held poses; the head LOOKS somewhere and holds, then snaps to a new look; accents only on stressed words
+    const E = (Flat2D.E || 0) * (p.e ?? 0.6), ON = Math.min(1, (Flat2D.ON || 0) * 6) * (p.e ?? 0.6);
+    if (f.brow === undefined && f.browL === undefined && ON > 0.25) f.brow = Math.min(1.1, ON);
+    const slot = Math.floor((t + sd * 3) / 1.9), u = ((t + sd * 3) % 1.9) / 1.9; const look = (k) => [-0.55, 0.45, -0.25, 0.6, 0.15, -0.5][Math.abs(Math.floor(k * 7 + sd * 13)) % 6];
+    const turn = p.turn ?? (look(slot - 1) + (look(slot) - look(slot - 1)) * Math.min(1, u * 9) ** 2 * (3 - 2 * Math.min(1, u * 9)));
+    if (!f.look) f.look = [turn * 0.8, 0];
+    const rest = this.o.rest || ['hip', 'pockets', 'hang', 'behind'][Math.floor(sd * 10) % 4];
+    const RA = { hip: [[12, 18], [40, -125]], pockets: [[16, -32], [16, -32]], hang: [[8, 14], [10, 16]], behind: [[-12, -20], [-12, -20]] }[rest];
+    const breathe = Math.sin(t * 2.4 + sd);
+    return { ...p, face: f, turn, armL: p.armL || [RA[0][0] + breathe, RA[0][1]], armR: p.armR || [RA[1][0] + breathe, RA[1][1]], hip: p.hip ?? (sd % 2 > 1 ? 14 : -14),
+      bob: (p.bob || 0) + 2.2 * breathe - ON * 10, hop: (p.hop || 0), tilt: (p.tilt || 0) + 3 * Math.sin(t * 0.8 + sd) + ON * 9 * (sd % 2 > 1 ? 1 : -1) + E * 2 * Math.sin(t * 5 + sd),
+      squash: (p.squash || 0) + Math.min(0.06, ON * 0.08), lean: (p.lean || 0) + 1.5 * Math.sin(t * 0.7 + sd), hatOff: (p.hatOff || 0) + ON * 8 };
   }
   headWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.5 : 0.68), 0)); }
   bodyWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.35 : 0.5), 0)); }
@@ -88,19 +95,21 @@ export class Flat2D {
     // ---- legs: long thin lines, tiny dark feet ----
     if (!o.bust) { const ph = p.walk || 0, amp = p.amp ?? 0;
       for (const s of [-1, 1]) {
-        const sw = Math.sin(ph + (s > 0 ? 0 : Math.PI)); let a = R(amp * sw + (p.legOut || 0) * s); const hx = 256 + s * 20, L1 = 180, L2 = 170;
+        const sw = Math.sin(ph + (s > 0 ? 0 : Math.PI)); let a = R(amp * sw + (p.legOut || 0) * s); const hx = 256 + s * 20 + (p.hip || 0) * 0.5, L1 = 180, L2 = 170;
+        const hipS = p.hip || 0, free = hipS !== 0 && Math.sign(hipS) !== s;   // contrapposto: weight on one leg, the other knee bends
+        if (!amp && !kn) a += R(s * (free ? 9 : 3));   // feet a little apart, the free leg a bit wider
         if (kn) a = s > 0 ? R(-62 * kn) : R(8 * kn);   // kneel: front thigh forward, back knee on the ground
-        const knee = [hx + Math.sin(a) * L1, hipY + Math.cos(a) * L1]; let kb = a + R(Math.max(0, Math.cos(ph + (s > 0 ? 0 : Math.PI))) * amp * 1.2); if (kn) kb = s > 0 ? R(0) : R(88 * kn);   // shin swings BACK (character faces left by default)
+        const knee = [hx + Math.sin(a) * L1, hipY + Math.cos(a) * L1]; let kb = a + R(Math.max(0, Math.cos(ph + (s > 0 ? 0 : Math.PI))) * amp * 1.2); if (kn) kb = s > 0 ? R(0) : R(88 * kn); else if (!amp) kb = a - R(s * (free ? 7 : 2)) + R(free ? 12 : 3);   // shin swings BACK (character faces left by default)
         const foot = [knee[0] + Math.sin(kb) * L2, Math.min(992, knee[1] + Math.cos(kb) * L2)];
         g.strokeStyle = INK; g.lineWidth = 7.5; g.beginPath(); g.moveTo(hx, hipY - 10); g.lineTo(knee[0], knee[1]); g.lineTo(foot[0], foot[1]); g.stroke();
         g.fillStyle = INK; g.beginPath(); g.ellipse(foot[0] - 8, foot[1] + 2, 14, 6.5, 0, 0, 7); g.fill();
       } }
-    g.save(); g.translate(256, hipY); g.rotate(R(-lean)); g.translate(-256, -hipY);   // +lean = forward
-    const top = 442 + bob + sq * 14, hem = 652 + bob * 0.6;
-    { const bw = o.width || 1; g.save(); g.translate(256, 0); g.scale(bw, 1); g.translate(-256, 0); this.body(g, o, top, hem); this.extras(g, o, top, hem); g.restore(); }
+    g.save(); g.translate(256 + (p.hip || 0) * 0.6, hipY); g.rotate(R(-lean) + R((p.hip || 0) * 0.08)); g.translate(-256, -hipY);   // +lean = forward; hip shift tilts the torso a little
+    const top = 382 + bob + sq * 14, hem = 652 + bob * 0.6;   // reference proportions: head 32% / torso 30% / legs 38%
+    { const bw = (o.width || 1) * 1.5; g.save(); g.translate(256, 0); g.scale(bw, 1); g.translate(-256, 0); this.body(g, o, top, hem); this.extras(g, o, top, hem); g.restore(); }
     // ---- arms: thin lines, round dark hands ----
     const arm = (s, a) => {
-      const [sa, eb] = a || [22, 6]; const sx = 256 + s * 44 * (o.width || 1), sy = top + 22, L1 = 84, L2 = 78; const a1 = R(sa), a2 = R(sa + eb);
+      const [sa, eb] = a || [22, 6]; const sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30, L1 = 84, L2 = 78; const a1 = R(sa), a2 = R(sa + eb);
       const el = [sx + s * Math.sin(a1) * L1, sy + Math.cos(a1) * L1], hd = [el[0] + s * Math.sin(a2) * L2, el[1] + Math.cos(a2) * L2];
       g.strokeStyle = INK; g.lineWidth = 6.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(el[0], el[1]); g.lineTo(hd[0], hd[1]); g.stroke();
       g.fillStyle = '#3a2620'; g.beginPath(); g.arc(hd[0], hd[1], 15, 0, 7); g.fill(); g.lineWidth = 3; g.stroke();
@@ -108,22 +117,22 @@ export class Flat2D {
       hd.ang = s * (sa + eb); hd.s = s; return hd;
     };
     const HH = p.handHead; const headHand = HH ? [256 + (HH === 'R' ? 1 : -1) * 112, 318 + bob - 40] : null;
-    if (HH) { const s = HH === 'R' ? 1 : -1, sx = 256 + s * 44 * (o.width || 1), sy = top + 22; g.strokeStyle = INK; g.lineWidth = 6.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + s * 90, sy - 40); g.lineTo(headHand[0] + s * 10, headHand[1] + 10); g.stroke(); }
+    if (HH) { const s = HH === 'R' ? 1 : -1, sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30; g.strokeStyle = INK; g.lineWidth = 6.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + s * 90, sy - 40); g.lineTo(headHand[0] + s * 10, headHand[1] + 10); g.stroke(); }
     this.handL = HH === 'L' ? null : arm(-1, p.armL); this.handR = HH === 'R' ? null : arm(1, p.armR);
     if (p.prop) { const hd = (p.propHand === 'L' ? this.handL : this.handR) || this.handR; if (hd) this.prop(g, p.prop, hd); }
     // ---- head ----
-    const r = 116, hx = 256 + (p.headX || 0), hy = 318 + bob + sq * 22;
+    const r = 116 * (o.head ?? 1.25), hx = 256 + (p.headX || 0), hy = 382 - r + 22 + bob + sq * 22;   // big head like the reference; bottom sits on the collar
     g.save(); g.translate(hx, hy); g.rotate(R(p.tilt || 0)); g.scale(1 + sq * 0.12, 1 - sq * 0.1);
     const headPts = this.ell(0, 0, r, r * 1.0, 56);
     this.wpath(g, headPts); g.fillStyle = o.skin; g.fill();
     g.save(); this.wpath(g, headPts); g.clip();
     if (p.tint) { const [tc, tk] = Array.isArray(p.tint) ? p.tint : [p.tint, 0.7]; g.globalAlpha = tk; g.fillStyle = tc; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); g.globalAlpha = 1; }
-    g.fillStyle = 'rgba(150,110,80,0.10)'; g.beginPath(); g.ellipse(26, 22, r * 0.95, r * 0.95, 0, 0, 7); g.rect(-r * 2, -r * 2, r * 4, r * 4); g.fill('evenodd');
+    { const sh = g.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.1, r * 0.1, r * 0.15, r * 1.15); sh.addColorStop(0, 'rgba(255,255,255,0.28)'); sh.addColorStop(0.55, 'rgba(255,255,255,0)'); sh.addColorStop(0.85, 'rgba(90,60,50,0.10)'); sh.addColorStop(1, 'rgba(70,40,40,0.28)'); g.fillStyle = sh; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); }   // soft 3D shading + sheen on the head
     if (o.hair && (o.hairStyle === 'bangs' || o.hairStyle === 'cap')) { g.save(); g.translate((p.turn || 0) * 16, 0); this.hair(g, r); g.restore(); }
     g.restore();
-    this.outline(g, headPts, 7);
+    this.outline(g, headPts, 9);
     if (o.hair && ['pompadour', 'side', 'messy', 'pigtails'].includes(o.hairStyle)) this.bigHair(g, r);
-    { const tu = clamp(p.turn || 0, -0.8, 0.8); g.save(); g.translate(tu * 36, 0); g.scale(1 - 0.16 * Math.abs(tu), 1); this.face(g, p.face || {}, r); g.restore(); }
+    { const tu = clamp(p.turn || 0, -0.8, 0.8); g.save(); const fk = r / 116; g.translate(tu * 44 * fk, 6 * fk); g.scale((1 - 0.22 * Math.abs(tu)) * fk, fk); this.face(g, p.face || {}, 116); g.restore(); }   // facial features scale with the head
     if (p.blush) { g.fillStyle = `rgba(230,60,60,${0.55 * p.blush})`; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 62, 40, 28, 15, 0, 0, 7); g.fill(); } g.strokeStyle = 'rgba(180,30,30,0.6)'; g.lineWidth = 3; for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(s * 50 + k * 10 - 10, 32); g.lineTo(s * 50 + k * 10 - 16, 48); g.stroke(); } }
     if (p.tears) { const T = Flat2D.T || 0; g.fillStyle = '#7cc8ff'; g.strokeStyle = INK; g.lineWidth = 2.5; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * 40 - 8, 8); g.lineTo(s * 40 + 8, 8); g.lineTo(s * 46, 120); g.lineTo(s * 34, 120); g.closePath(); g.globalAlpha = 0.85; g.fill(); g.globalAlpha = 1; for (let k = 0; k < 2; k++) { const y = 20 + ((T * 140 + k * 50 + (s > 0 ? 25 : 0)) % 110); g.beginPath(); g.arc(s * 42, y, 6, 0, 7); g.fill(); g.stroke(); } } }
     g.save(); g.translate((p.turn || 0) * 12, 0); this.hat(g, r, p.hatOff || 0); g.restore();
@@ -160,9 +169,9 @@ export class Flat2D {
   outline(g, pts, w = 6) { this.wpath(g, pts); g.strokeStyle = INK; g.lineWidth = w; g.stroke(); g.save(); g.globalAlpha = 0.35; g.translate(1.2, -0.8); this.wpath(g, pts); g.lineWidth = w * 0.45; g.stroke(); g.restore(); }
   body(g, o, top, hem) {
     const type = o.body || 'coat', sd = this.o.seed;
-    const shapeBell = (wt, wb) => { const pts = [], n = 14; for (let i = 0; i <= n; i++) { const u = i / n; pts.push([256 + wt + (wb - wt) * Math.pow(u, 0.8), top + (hem - top - 26) * u]); }
-      for (let i = 0; i <= 10; i++) { const a = R(180 * i / 10); pts.push([256 + Math.cos(a) * wb, hem - 26 + Math.sin(a) * 26]); }
-      for (let i = n; i >= 0; i--) { const u = i / n; pts.push([256 - wt - (wb - wt) * Math.pow(u, 0.8), top + (hem - top - 26) * u]); } return pts; };
+    const shapeBell = (wt, wb) => { const pts = [], n = 14; for (let i = 0; i <= n; i++) { const u = i / n; pts.push([256 + wt + (wb - wt) * Math.pow(u, 0.5), top + (hem - top - 60) * u]); }
+      for (let i = 0; i <= 14; i++) { const a = R(180 * i / 14); pts.push([256 + Math.cos(a) * wb, hem - 60 + Math.sin(a) * 60]); }
+      for (let i = n; i >= 0; i--) { const u = i / n; pts.push([256 - wt - (wb - wt) * Math.pow(u, 0.5), top + (hem - top - 60) * u]); } return pts; };
     if (type === 'bean') {     // tall rounded capsule (suit / long coat), like the villain
       const pts = []; const bt = top - 4, bh = hem + 40;
       for (let i = 0; i <= 40; i++) { const a = R(-90 + 360 * i / 40); const rx = 66, ry = (bh - bt) / 2; const k = Math.sin(a) > 0 ? 1.0 : 0.85; pts.push([256 + Math.cos(a) * rx * k, (bt + bh) / 2 + Math.sin(a) * ry]); }
@@ -239,12 +248,17 @@ export class Flat2D {
     }
   }
   face(g, f, r) {
-    const lx = (f.look?.[0] || 0) * 8, ly = (f.look?.[1] || 0) * 6, ey = 4, ex = 40;
+    const lx = (f.look?.[0] || 0) * 8, ly = (f.look?.[1] || 0) * 6, ey = -2, ex = 45;
     const eyes = f.eyes || 'calm', mouth = f.mouth || 'smile', brow = f.brow ?? 0;
-    g.fillStyle = 'rgba(244,160,150,0.28)'; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 66, 44, 17, 10, 0, 0, 7); g.fill(); }
+    g.fillStyle = 'rgba(244,160,150,0.12)'; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 66, 44, 17, 10, 0, 0, 7); g.fill(); }
     for (const s of [-1, 1]) {
       const x = s * ex; g.strokeStyle = INK; g.fillStyle = '#55555e';
-      if (eyes === 'dot') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 6 + ly, 9.5, 14, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(x + lx - 3, ey - 11 + ly, 3, 0, 7); g.fill(); }
+      if (eyes === 'lid') {   // reference eye: small black pupil, upper lid covering part of it (lid 0..1), lid can tilt (angry / worried)
+        const lid = f.lid ?? 0.45, tl = (f.lidTilt || 0) * s; const ew = 10, eh = 13, cy = ey - 4;
+        g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, cy + ly, ew, eh, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(x + lx - 3, cy + ly + 2, 2.6, 0, 7); g.fill();
+        const ly0 = cy - eh + lid * eh * 2; g.fillStyle = this.o.skin; g.beginPath(); g.moveTo(x - 20, cy - eh - 6); g.lineTo(x + 20, cy - eh - 6); g.lineTo(x + 20, ly0 - tl * 14); g.lineTo(x - 20, ly0 + tl * 14); g.closePath(); g.fill();
+        g.strokeStyle = INK; g.lineWidth = 4.5; g.beginPath(); g.moveTo(x - 15, ly0 + tl * 10); g.lineTo(x + 15, ly0 - tl * 10); g.stroke(); }
+      else if (eyes === 'dot') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 6 + ly, 10.5, 16.5, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(x + lx - 3, ey - 11 + ly, 3, 0, 7); g.fill(); }
       else if (eyes === 'sly') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 4, 12, 7, 0, 0, 7); g.fill(); g.lineWidth = 5; g.beginPath(); g.moveTo(x - 17, ey - 9 - s * 3); g.lineTo(x + 17, ey - 9 + s * 3); g.stroke(); }
       else if (eyes === 'calm') {      // reference eye: grey half-lidded ellipse with a lid line
         g.beginPath(); g.ellipse(x + lx, ey + ly + 2, 14, 8.5, 0, 0, 7); g.fill();
@@ -256,7 +270,9 @@ export class Flat2D {
       else if (eyes === 'closed') { g.lineWidth = 4.5; g.beginPath(); g.arc(x, ey - 4, 13, Math.PI * 0.15, Math.PI * 0.85); g.stroke(); }
       else if (eyes === 'happy') { g.lineWidth = 4.5; g.beginPath(); g.arc(x, ey + 8, 13, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
       else if (eyes === 'sleepy') { g.beginPath(); g.ellipse(x + lx, ey + 5, 13, 5, 0, 0, Math.PI); g.fill(); g.lineWidth = 4; g.beginPath(); g.moveTo(x - 16, ey + 4); g.lineTo(x + 16, ey + 4); g.stroke(); }
-      if (f.sly) { g.lineWidth = 7; g.beginPath(); g.moveTo(x - s * 4 + s * 22, ey - 40); g.lineTo(x - s * 20, ey - 26); g.stroke(); }
+      const bs = s < 0 ? f.browL : f.browR;
+      if (bs !== undefined) { const b = bs; const by = ey - 30 - Math.max(0, b) * 10; g.lineWidth = 8; g.beginPath(); g.moveTo(x - s * 15, by + (b < 0 ? -b * 9 : -b * 2)); g.quadraticCurveTo(x, by - 4 - Math.max(0, b) * 3, x + s * 15, by + (b < 0 ? b * 3 : b * 6)); g.stroke(); }
+      else if (f.sly) { g.lineWidth = 7; g.beginPath(); g.moveTo(x - s * 4 + s * 22, ey - 40); g.lineTo(x - s * 20, ey - 26); g.stroke(); }
       else if (!brow) { const by = ey - (eyes === 'wide' ? 44 : 30); g.lineWidth = 6; g.beginPath(); g.moveTo(x - s * 14, by + 2); g.quadraticCurveTo(x, by - 5, x + s * 16, by + 1); g.stroke(); }
       else if (brow) { const by = ey - (eyes === 'wide' || eyes === 'tiny' ? 46 : 26) - Math.max(0, brow) * 8; g.lineWidth = 5; g.beginPath(); g.moveTo(x - s * 15, by + (brow < 0 ? -brow * 9 : -brow * 3)); g.lineTo(x + s * 15, by + (brow < 0 ? brow * 3 : brow * 5)); g.stroke(); }
     }
@@ -266,9 +282,12 @@ export class Flat2D {
     g.strokeStyle = INK; g.fillStyle = '#5a1e1a'; g.lineWidth = 3.5; const my = 52;
     if (mouth === 'smile') { g.beginPath(); g.arc(0, my - 12, 10, Math.PI * 0.2, Math.PI * 0.8); g.stroke(); }
     else if (mouth === 'grin' || mouth === 'teeth') {   // big toothy grin
-      g.beginPath(); g.moveTo(-46, my - 14); g.quadraticCurveTo(0, my - 4, 46, my - 14); g.quadraticCurveTo(40, my + 34, 0, my + 36); g.quadraticCurveTo(-40, my + 34, -46, my - 14); g.closePath(); g.fillStyle = '#3a1210'; g.fill();
-      g.save(); g.clip(); g.fillStyle = '#fffdf6'; g.fillRect(-50, my - 20, 100, 24); g.strokeStyle = INK; g.lineWidth = 2; for (let k = -3; k <= 3; k++) { g.beginPath(); g.moveTo(k * 12, my - 14); g.lineTo(k * 12, my + 4); g.stroke(); } g.fillStyle = '#e07a7a'; g.beginPath(); g.ellipse(0, my + 30, 20, 9, 0, 0, 7); g.fill(); g.restore();
-      g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(-46, my - 14); g.quadraticCurveTo(0, my - 4, 46, my - 14); g.quadraticCurveTo(40, my + 34, 0, my + 36); g.quadraticCurveTo(-40, my + 34, -46, my - 14); g.closePath(); g.stroke(); }
+      g.beginPath(); g.moveTo(-58, my - 16); g.quadraticCurveTo(0, my - 2, 58, my - 16); g.quadraticCurveTo(48, my + 34, 0, my + 36); g.quadraticCurveTo(-48, my + 34, -58, my - 16); g.closePath(); g.fillStyle = '#3a1210'; g.fill();
+      g.save(); g.clip(); g.fillStyle = '#fffdf6'; g.fillRect(-60, my - 22, 120, 26); g.strokeStyle = INK; g.lineWidth = 2; for (let k = -4; k <= 4; k++) { g.beginPath(); g.moveTo(k * 12, my - 14); g.lineTo(k * 12, my + 4); g.stroke(); } g.fillStyle = '#e07a7a'; g.beginPath(); g.ellipse(0, my + 30, 20, 9, 0, 0, 7); g.fill(); g.restore();
+      g.strokeStyle = INK; g.lineWidth = 4.5; g.beginPath(); g.moveTo(-58, my - 16); g.quadraticCurveTo(0, my - 2, 58, my - 16); g.quadraticCurveTo(48, my + 34, 0, my + 36); g.quadraticCurveTo(-48, my + 34, -58, my - 16); g.closePath(); g.stroke(); }
+    else if (mouth === 'smirk1') { g.lineWidth = 4; g.beginPath(); g.moveTo(-12, my - 2); g.quadraticCurveTo(8, my + 4, 20, my - 10); g.stroke(); g.beginPath(); g.moveTo(17, my - 13); g.lineTo(23, my - 7); g.stroke(); }
+    else if (mouth === 'line') { g.lineWidth = 4; g.beginPath(); g.moveTo(-11, my + 1); g.lineTo(11, my - 1); g.stroke(); }
+    else if (mouth === 'smallO') { g.beginPath(); g.ellipse(0, my + 2, 7, 9, 0, 0, 7); g.fill(); g.stroke(); }
     else if (mouth === 'laugh') { g.beginPath(); g.moveTo(-40, my - 10); g.quadraticCurveTo(0, my - 2, 40, my - 10); g.quadraticCurveTo(36, my + 46, 0, my + 48); g.quadraticCurveTo(-36, my + 46, -40, my - 10); g.closePath(); g.fillStyle = '#3a1210'; g.fill(); g.save(); g.clip(); g.fillStyle = '#fffdf6'; g.fillRect(-44, my - 16, 88, 16); g.fillStyle = '#e07a7a'; g.beginPath(); g.ellipse(0, my + 40, 22, 12, 0, 0, 7); g.fill(); g.restore(); g.strokeStyle = INK; g.lineWidth = 4; g.stroke(); }
     else if (mouth === 'teeth') { g.fillStyle = '#fffdf6'; g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.roundRect(-36, my - 8, 72, 30, 8); g.fill(); g.stroke(); g.lineWidth = 2; g.beginPath(); g.moveTo(-36, my + 7); g.lineTo(36, my + 7); for (let k = -2; k <= 2; k++) { g.moveTo(k * 12, my - 8); g.lineTo(k * 12, my + 22); } g.stroke(); }
     else if (mouth === 'wobble') { g.lineWidth = 4.5; g.beginPath(); for (let k = 0; k <= 12; k++) { const x = -26 + k * 52 / 12; const y = my + 6 + Math.sin(k * 1.6 + (Flat2D.T || 0) * 30) * 4; k ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }

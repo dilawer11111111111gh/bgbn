@@ -61,7 +61,7 @@ export function role(id, k = 0, extra = {}) { const f = ROLES[id]; if (!f) throw
 
 // ---------------- POSES (arms: [shoulder deg from down, outward +; elbow deg]) ----------------
 export const POSE = {
-  idle:     { armL: [14, 6], armR: [14, 6] },
+  idle:     {},   // use the character's own rest pose (hand on hip, pockets, behind back...)
   wave:     (t) => ({ armL: [14, 6], armR: [150 + 16 * Math.sin(t * 16), 25 * Math.sin(t * 16)], tilt: 4 }),
   point:    { armL: [14, 6], armR: [95, 0], lean: 4 },
   pointUp:  { armL: [14, 6], armR: [165, 0], tilt: -6 },

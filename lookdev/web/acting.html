@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><script type="importmap">{"imports":{"three":"../../web/vendor/three.module.js"}}</script></head><body style="margin:0">
+<canvas id="o" width="2700" height="900"></canvas>
+<script type="module">
+import { Flat2D } from '../../web/flat2d.js';
+import { act } from '../../web/roles.js';
+const BURL = { body: 'overalls', coat: '#3a4a6a', shirt: '#c8402a', patch: '#e8b83a', width: 1.15, size: 2.05, hat: 'cap', hatCol: '#3a3030', hair: '#4a2a18', hairStyle: 'bangs', beard: '#6a3a1e', mustache: true, seed: 3 };
+const PIP = { body: 'overalls', coat: '#2a9a9a', shirt: '#f4e2c8', patch: '#e8402a', width: 0.85, size: 1.65, hat: 'beret', hatCol: '#d8343a', hair: '#7a4a26', hairStyle: 'pigtails', band: '#f2c63a', seed: 6 };
+const L = [[BURL, 1.0, { face: 'grin', turn: 0.2 }], [BURL, 2.0, { face: 'angry', turn: -0.4, tint: ['#8a4ad0', 0.75], steam: 1 }], [PIP, 1.0, { face: 'neutral', turn: 0.3 }],
+  [PIP, 3.0, { face: 'sideeye', turn: -0.3 }], [{ ...PIP, rest: 'behind' }, 2.0, { face: 'happy', turn: 0.2 }], [{ ...BURL, rest: 'pockets' }, 1.5, { face: 'smug', turn: -0.5 }],
+  [BURL, 1.0, { ...act(1, [[0, 'laughPoint']]), face: 'laugh' }], [PIP, 1.0, { face: 'shock', turn: 0 }], [{ ...BURL, rest: 'hang' }, 1.0, { face: 'grumpy', turn: 0.6 }]];
+const o = document.getElementById('o').getContext('2d'); o.fillStyle = '#9fd0f0'; o.fillRect(0, 0, 2700, 900); o.fillStyle = '#d8c09a'; o.fillRect(0, 700, 2700, 200);
+L.forEach(([opt, t, pose], i) => { Flat2D.T = t; const c = new Flat2D({ res: 1, ...opt }); c.draw(c.alive(pose)); const k = (opt.size || 1.85) / 2.05; o.drawImage(c.cv, i * 300 - 6, 760 - 740 * k, 370 * k, 740 * k); });
+window.ready = true;
+</script></body></html>
