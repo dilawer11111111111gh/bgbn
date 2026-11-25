@@ -9,7 +9,7 @@ import { role, act } from '../../web/roles.js';
 import { sstep, clamp, lerp } from '../../web/motion.js';
 import { WORDS } from './words.js';
 import { ENERGY, ONSET } from './energy.js';
-export const DURATION = 32.85;
+export const DURATION = 26.95;
 const T = (i) => WORDS[i][1];
 const DOCK = 1.2;   // dock deck height (water = 0)
 let WATER = null;
@@ -189,7 +189,7 @@ const CALM = { kick: 2, swing: 1, shake: 0.15 };   // readable pacing: gentle tr
 const BEATS = [
   { t0: 0, t1: T(5), beat: 'establish', at: pt(0, 2, 0), az: 20, big: 30, mid: 20, over: CALM },
   { t0: T(5), t1: T(9), cut: true, shot: 'orbit', at: () => V(-4.5, 1.0, 9.0), size: 7, az: 55, over: { ...CALM, az: [60, 45], el: [8, 9] } },
-  { t0: T(9), t1: T(16), cut: true, shot: 'craneDown', at: burlH, big: 6, size: 2.8, az: 25, over: CALM },
+  { t0: T(9), t1: T(16), cut: true, shot: 'orbit', at: burlH, size: 3.2, az: 32, over: { ...CALM, az: [36, 18], el: [9, 7] } },
   { t0: T(16), t1: T(21), shot: 'orbit', at: () => V(-5.6, DOCK + 1.6, -2.4), size: 5.2, az: -35, over: { ...CALM, az: [-40, -25], el: [6, 7] } },
   { t0: T(21), t1: T(24), shot: 'low', at: burlH, size: 2.8, az: -20, over: { ...CALM, az: [-22, -12] } },
   { t0: T(24), t1: T(31), cut: true, shot: 'orbit', at: pipH, size: 2.8, az: -25, over: { ...CALM, az: [-28, -10], el: [5, 6] } },
@@ -206,16 +206,28 @@ direct(CINE, BEATS);
 const composer = makeComposer({ sat: 1.4, con: 1.07, bloom: 0.25 });
 const SEA_COL = new THREE.Color(0x1a7a90);
 const fogAir = new THREE.FogExp2(0xcfe0ee, 0.0035), fogSea = new THREE.FogExp2(0x1a7a90, 0.085);
-window.renderFrame = function (f) {
-  const t = f / FPS;
-  const c0 = CINE.at(t); const cp = V(...c0.pos); const st = setup(t, cp);
-  const c = CINE.at(t); if (ZONE(t) !== 'under' && c.pos[1] < 0.35 && !(t > T(53) && t < T(57))) c.pos[1] = 0.35; setCam(c); setup(t, cam.position.clone());
+// ---- render one look of the world through a given camera (shot) ----
+function renderWith(t, c, st) {
+  if (ZONE(t) !== 'under' && c.pos[1] < 0.35 && !(t > T(53) && t < T(57))) c.pos[1] = 0.35; setCam(c); setup(t, cam.position.clone());
   const under = cam.position.y < 0; scene.fog = under ? fogSea : fogAir; WATER.material.opacity = ZONE(t) === 'explain' ? 0.42 : 0.86; if (!window.__bg) window.__bg = scene.background; scene.background = under ? SEA_COL : window.__bg; scene.backgroundIntensity = 1.0;
+  fx(t, st); composer.render();
+}
+const camOf = (i, t) => { const S = CINE.shots[Math.max(0, Math.min(CINE.shots.length - 1, i))]; const c = CINE._eval(S, t); return { pos: c.pos.toArray(), look: c.look.toArray(), fov: c.fov, roll: (c.roll * Math.PI) / 180 }; };
+const OUT = document.createElement('canvas'); OUT.width = R.domElement.width; OUT.height = R.domElement.height; const OG = OUT.getContext('2d'); window.__R = { domElement: OUT };
+const DIS = 0.4;   // dissolve length (s): every shot change is a soft cross-dissolve with a gentle push, never a jerk
+window.renderFrame = function (f) {
+  const t = f / FPS; const shots = CINE.shots;
+  let i = 0; while (i < shots.length - 1 && t >= shots[i + 1].t0) i++;
+  const nb = shots[i + 1] && Math.abs(t - shots[i + 1].t0) < DIS / 2 ? i + 1 : (Math.abs(t - shots[i].t0) < DIS / 2 && i > 0 ? i : -1);   // index of the incoming shot when inside a dissolve
   scene.traverse((o) => o.userData.tick && o.userData.tick(t));
-  fx(t, st);
-  composer.grade.uniforms.uFade.value = Math.max(0, 1 - t / 0.2) + Math.max(0, (t - (DURATION - 0.3)) / 0.3);
-  composer.grade.uniforms.uFlash.value = 0;
-  composer.render(); return 'ok';
+  composer.grade.uniforms.uFade.value = Math.max(0, 1 - t / 0.2) + Math.max(0, (t - (DURATION - 0.3)) / 0.3); composer.grade.uniforms.uFlash.value = 0;
+  const st = setup(t, V(...camOf(i, t).pos));
+  const W = OUT.width, H = OUT.height;
+  if (nb < 0) { renderWith(t, camOf(i, t), st); OG.globalAlpha = 1; OG.drawImage(R.domElement, 0, 0); return 'ok'; }
+  const u = Math.min(1, Math.max(0, (t - (shots[nb].t0 - DIS / 2)) / DIS)), e = u * u * (3 - 2 * u);
+  renderWith(t, camOf(nb - 1, t), st); const sa = 1 + 0.05 * e; OG.globalAlpha = 1; OG.drawImage(R.domElement, W * (1 - sa) / 2, H * (1 - sa) / 2, W * sa, H * sa);
+  renderWith(t, camOf(nb, t), st); const sb = 1.05 - 0.05 * e; OG.globalAlpha = e; OG.drawImage(R.domElement, W * (1 - sb) / 2, H * (1 - sb) / 2, W * sb, H * sb); OG.globalAlpha = 1;
+  return 'ok';
 };
 (async () => {
   await sky('kloofendal_48d_partly_cloudy_puresky', { env: 0.8 });
