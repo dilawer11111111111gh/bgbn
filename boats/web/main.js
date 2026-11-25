@@ -73,7 +73,7 @@ const UP = arrow(0x3ad0ff), DOWN = arrow(0xe8402a);
 
 // =================== CAST ===================
 Flat2D.T = 0;
-const BURL_O = { body: 'overalls', coat: '#3a4a6a', shirt: '#c8402a', patch: '#e8b83a', width: 1.15, size: 2.05, hat: 'cap', hatCol: '#3a3030', hair: '#4a2a18', hairStyle: 'bangs', beard: null, mustache: true, rest: 'hip', seed: 3, res: 2.2 };
+const BURL_O = { body: 'overalls', coat: '#3a4a6a', shirt: '#c8402a', patch: '#e8b83a', width: 1.15, size: 2.05, hat: 'cap', hatCol: '#3a3030', hair: '#4a2a18', hairStyle: 'tufts', beard: null, mustache: true, rest: 'hip', seed: 3, res: 2.2 };
 const PIP_O = { body: 'overalls', coat: '#2a9a9a', shirt: '#f4e2c8', patch: '#e8402a', width: 0.85, size: 1.65, rest: 'behind', hat: 'beret', hatCol: '#d8343a', hair: '#7a4a26', hairStyle: 'pigtails', band: '#f2c63a', seed: 6, res: 2.2 };
 const BURL = new Flat2D({ ...BURL_O, scene }), PIP = new Flat2D({ ...PIP_O, scene });
 const CROWD = [['fisherman', 0], ['sailor', 1], ['captain', 0], ['grandma', 1], ['kid', 4], ['girl', 2], ['worker', 3], ['shopkeeper', 2], ['lady', 4], ['gentleman', 1], ['tourist', 2], ['musician', 0]].map(([id, k]) => new Flat2D({ ...role(id, k), scene, res: 1.6 }));
@@ -176,7 +176,7 @@ function fx(t, st) {
   B.smoke.update(t, 0, V(-14.4, DOCK + 5.6, -12.4), 2.0, z === 'forge' || z === 'dock');
   S.sec.update(t, T(7), T(9) - 0.05, () => BURLB.position.clone().add(V(0, 4.2, 0))); S.uns.update(t, T(21), T(24) - 0.05, () => BURL.headWorld().add(V(0.6, 1.0, 0)));
   S.same.update(t, T(28), T(31), V(12.5, DOCK + 1.6, -8.4)); S.bowl.update(t, T(38), T(41), () => PIPB.position.clone().add(V(0, 3.0, 0))); S.ha.update(t, T(42), T(47) - 0.05, V(-1, DOCK + 3.6, -1.5));
-  S.race.update(t, T(47), T(49), V(0, DOCK + 4.0, -1.0)); S.blub.update(t, T(52), T(53) + 0.4, () => V(-4.5, 1.6, 8.6)); S.won.update(t, T(61) + 0.1, T(63), () => PIPB.position.clone().add(V(0, 4.0, 0)));
+  S.race.update(t, T(47), T(49), V(0, DOCK + 4.0, -1.0)); S.blub.update(t, T(52), T(53) + 0.4, () => BURL.headWorld().add(V(0, 1.25, 0))); S.won.update(t, T(61) + 0.1, T(63), () => PIPB.position.clone().add(V(0, 4.0, 0)));
   S.push.update(t, T(70), T(77), () => PIPB.position.clone().add(V(-3.2, 0.9, 0))); S.weight.update(t, T(73), T(77), () => PIPB.position.clone().add(V(3.2, 6.8, 0)));
   S.big.update(t, T(77), T(82), () => PIPB.position.clone().add(V(0, -2.8, 2.6))); S.small.update(t, T(79), T(82), () => V(BURLB.position.x, -4.6, BURLB.position.z + 2));
   S.same2.update(t, T(82), T(86), () => V(0, 3.2, 8.5)); S.buoy.update(t, T(86), T(88), () => PIPB.position.clone().add(V(0, 4.2, 0)));
