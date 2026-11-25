@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><script type="importmap">{"imports":{"three":"../../web/vendor/three.module.js"}}</script></head><body style="margin:0">
+<canvas id="o" width="2640" height="2000"></canvas>
+<script type="module">
+import { Flat2D } from '../../web/flat2d.js';
+import { ROLE_IDS, role, act } from '../../web/roles.js';
+const o = document.getElementById('o').getContext('2d');
+const poses = ['idle','wave','point','cheer','shrug','hips','think','carry','laugh','angry','pointUp','push'];
+const faces = [{eyes:'dot',mouth:'grin'},{eyes:'dot',mouth:'bigsmile'},{eyes:'wide',mouth:'o',brow:1},{eyes:'sly',mouth:'smirk',sly:1},{eyes:'happy',mouth:'grin'},{eyes:'dot',mouth:'frown',brow:-1},{eyes:'calm',mouth:'smile'}];
+ROLE_IDS.forEach((id, i) => {
+  const c = i % 11, r = Math.floor(i / 11), X = c * 240, Y = r * 500;
+  o.fillStyle = (c + r) % 2 ? '#bfe0f6' : '#d4ecfa'; o.fillRect(X, Y, 240, 500); o.fillStyle = '#e8d6ae'; o.fillRect(X, Y + 380, 240, 120);
+  const opt = role(id, i); const ch = new Flat2D({ res: 1, ...opt });
+  const p = act(1.0 + i * 0.13, [[0, poses[i % poses.length]]]); ch.draw({ ...p, face: faces[i % faces.length] });
+  const k = (opt.size || 1.85) / 1.95; o.drawImage(ch.cv, X - 8, Y + 450 - 460 * k, 256 * k * 1.0, 512 * k);
+  o.fillStyle = '#1a1a1a'; o.font = 'bold 24px sans-serif'; o.textAlign = 'center'; o.fillText(id, X + 120, Y + 488);
+});
+window.ready = true;
+</script></body></html>
