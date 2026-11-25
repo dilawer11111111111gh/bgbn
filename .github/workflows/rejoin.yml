@@ -1,0 +1,30 @@
+name: rejoin
+on:
+  workflow_dispatch:
+    inputs:
+      run_id: { description: 'render run id whose segments to join', required: true }
+permissions:
+  contents: write
+  actions: read
+jobs:
+  join:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core > /dev/null
+      - uses: actions/download-artifact@v4
+        with: { pattern: 'seg-*', merge-multiple: true, path: out/seg, run-id: '${{ inputs.run_id }}', github-token: '${{ secrets.GITHUB_TOKEN }}' }
+      - name: Join segments + captions + voice
+        run: |
+          ls out/seg | grep -v part | sort | sed "s|^|file '$PWD/out/seg/|; s|$|'|" > list.txt; wc -l list.txt
+          APP=$(cat app.txt 2>/dev/null || echo tree); AUD=$APP/audio/mix.mp3; [ -f $AUD ] || AUD=$APP/audio/voice.mp3; VF="unsharp=5:5:0.55"; [ -f $APP/captions.ass ] && VF="unsharp=5:5:0.55,ass=$APP/captions.ass"
+          ffmpeg -v error -y -f concat -safe 0 -i list.txt -i $AUD -vf "$VF" -map 0:v -map 1:a -c:v libx264 -profile:v high -preset slow -crf 18 -maxrate 12M -bufsize 24M -pix_fmt yuv420p -c:a aac -ar 44100 -ac 2 -b:a 160k -shortest -movflags +faststart final.mp4
+          for CRF in 20 22 24; do [ $(stat -c%s final.mp4) -lt 94000000 ] && break; ffmpeg -v error -y -f concat -safe 0 -i list.txt -i $AUD -vf "$VF" -map 0:v -map 1:a -c:v libx264 -profile:v high -preset slow -crf $CRF -maxrate 9M -bufsize 18M -pix_fmt yuv420p -c:a aac -ar 44100 -ac 2 -b:a 160k -shortest -movflags +faststart final.mp4; done   # GitHub file limit 100 MB
+          ls -la final.mp4
+      - uses: actions/upload-artifact@v4
+        with: { name: final-video, path: final.mp4 }
+      - name: Save video to the renders branch
+        run: |
+          APPN=$(cat app.txt 2>/dev/null || echo tree); git config user.name "render-bot"; git config user.email "render-bot@users.noreply.github.com"
+          git fetch --depth 1 origin renders && git checkout -B renders FETCH_HEAD || git checkout --orphan renders; git rm -rq --cached . 2>/dev/null; mkdir -p videos && cp final.mp4 videos/${APPN}_$(date +%Y%m%d_%H%M).mp4
+          git add videos && git commit -qm "Rendered video" && git push origin renders
