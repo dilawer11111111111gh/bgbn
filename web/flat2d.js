@@ -22,7 +22,7 @@ export const FACES = {
   happy: { eyes: 'dot', mouth: 'bigsmile' }, grin: { eyes: 'dot', mouth: 'grin' }, laugh: { eyes: 'happy', mouth: 'laugh', brow: 0.5 },
   proud: { eyes: 'lid', lid: 0.6, mouth: 'smirk1', browL: 0.5, browR: 0.1 }, smug: { eyes: 'lid', lid: 0.58, look: [0.8, 0], mouth: 'smirk1', browL: 0.9, browR: -0.3 },
   sideeye: { eyes: 'lid', lid: 0.55, look: [1, 0], mouth: 'line', browL: -0.5, browR: 0.6 }, evil: { eyes: 'lid', lid: 0.6, lidTilt: -0.3, mouth: 'grin', brow: -1.0 },
-  angry: { eyes: 'lid', lid: 0.45, lidTilt: -0.4, mouth: 'teeth', brow: -1.5 }, grumpy: { eyes: 'lid', lid: 0.55, lidTilt: -0.3, mouth: 'frown', brow: -1.2 },
+  angry: { eyes: 'lid', lid: 0.45, lidTilt: -0.4, mouth: 'talk', brow: -1.5 }, grumpy: { eyes: 'lid', lid: 0.55, lidTilt: -0.3, mouth: 'frown', brow: -1.2 },
   shock: { eyes: 'tiny', mouth: 'scream', brow: 1.5 }, scared: { eyes: 'wide', mouth: 'wobble', brow: 1.3 }, panic: { eyes: 'tiny', mouth: 'wobble', brow: 1.6 },
   confused: { eyes: 'lid', lid: 0.3, mouth: 'line', browL: 1.1, browR: -0.6 }, worried: { eyes: 'lid', lid: 0.3, lidTilt: 0.3, mouth: 'wobble', brow: 1.0 },
   idea: { eyes: 'wide', mouth: 'grin', brow: 1.2 }, awe: { eyes: 'wide', mouth: 'smallO', brow: 1.2 }, sleepy: { eyes: 'sleepy', mouth: 'line' }, deadpan: { eyes: 'lid', lid: 0.62, mouth: 'line' },
@@ -131,6 +131,7 @@ export class Flat2D {
     if (o.hair && (o.hairStyle === 'bangs' || o.hairStyle === 'cap')) { g.save(); g.translate((p.turn || 0) * 16, 0); this.hair(g, r); g.restore(); }
     g.restore();
     this.outline(g, headPts, 9);
+    if (o.hair && o.hairStyle === 'tufts') { g.save(); g.translate((p.turn || 0) * 14, 0); this.tufts(g, r); g.restore(); }
     if (o.hair && ['pompadour', 'side', 'messy', 'pigtails'].includes(o.hairStyle)) this.bigHair(g, r);
     { const tu = clamp(p.turn || 0, -0.8, 0.8); g.save(); const fk = r / 116; g.translate(tu * 44 * fk, 6 * fk); g.scale((1 - 0.22 * Math.abs(tu)) * fk, fk); this.face(g, p.face || {}, 116); g.restore(); }   // facial features scale with the head
     if (p.blush) { g.fillStyle = `rgba(230,60,60,${0.55 * p.blush})`; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 62, 40, 28, 15, 0, 0, 7); g.fill(); } g.strokeStyle = 'rgba(180,30,30,0.6)'; g.lineWidth = 3; for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(s * 50 + k * 10 - 10, 32); g.lineTo(s * 50 + k * 10 - 16, 48); g.stroke(); } }
@@ -195,6 +196,17 @@ export class Flat2D {
       g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.moveTo(256 - 46, top + 128); g.lineTo(256 + 46, top + 128); g.stroke();
       g.restore(); this.outline(g, pts, 6); return;
     }
+    if (type === 'vest') {       // shirt + waistcoat with buttons + bow tie / bandana (reference look)
+      const pts = shapeBell(46, 78); this.wpath(g, pts); g.fillStyle = o.shirt || '#f4f0e6'; g.fill(); g.save(); this.wpath(g, pts); g.clip();
+      g.fillStyle = o.coat; g.beginPath(); g.moveTo(256 - 90, top + 10); g.lineTo(256 - 14, top + 40); g.lineTo(256 - 6, hem); g.lineTo(256 - 90, hem); g.closePath(); g.fill(); g.beginPath(); g.moveTo(256 + 90, top + 10); g.lineTo(256 + 14, top + 40); g.lineTo(256 + 6, hem); g.lineTo(256 + 90, hem); g.closePath(); g.fill();
+      this.hatch(g, 256 + 30, top, 256 + 100, hem + 10, shade(o.coat, 0.5), 8, 0.4); g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.moveTo(256 - 14, top + 40); g.lineTo(256 - 6, hem); g.moveTo(256 + 14, top + 40); g.lineTo(256 + 6, hem); g.stroke();
+      g.fillStyle = o.buttons || '#f2c63a'; for (let k = 0; k < 4; k++) for (const sx of [-1, 1]) { g.beginPath(); g.arc(256 + sx * 22, top + 70 + k * 38, 5.5, 0, 7); g.fill(); g.stroke(); }
+      if (o.pocket) { g.strokeStyle = o.buttons || '#f2c63a'; g.lineWidth = 3; g.beginPath(); g.moveTo(256 + 30, top + 80); g.quadraticCurveTo(256 + 50, top + 100, 256 + 70, top + 80); g.stroke(); }
+      g.restore(); this.outline(g, pts, 6);
+      if (o.bandana) { g.fillStyle = o.bandana; g.strokeStyle = INK; g.lineWidth = 3.5; g.beginPath(); g.moveTo(256 - 30, top + 2); g.lineTo(256 + 30, top + 2); g.lineTo(256, top + 46); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#fff'; for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(256 - 12 + k * 8, top + 12 + (k % 2) * 8, 2.5, 0, 7); g.fill(); } }
+      else if (o.bow) { g.fillStyle = o.bow; g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.moveTo(256, top + 12); g.lineTo(256 - 24, top); g.lineTo(256 - 24, top + 26); g.closePath(); g.moveTo(256, top + 12); g.lineTo(256 + 24, top); g.lineTo(256 + 24, top + 26); g.closePath(); g.fill(); g.stroke(); }
+      return;
+    }
     if (type === 'dress') {      // checked dress (gingham)
       const pts = shapeBell(40, 92); this.wpath(g, pts); g.fillStyle = '#fff'; g.fill();
       g.save(); this.wpath(g, pts); g.clip(); g.fillStyle = o.coat; g.globalAlpha = 0.85;
@@ -225,6 +237,8 @@ export class Flat2D {
     g.strokeStyle = 'rgba(255,220,180,0.38)'; g.lineWidth = 7; g.beginPath(); g.moveTo(-r * 0.62, -r * 0.62); g.quadraticCurveTo(-r * 0.3, -r * 0.84, 0, -r * 0.8); g.stroke();
     g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.moveTo(-r - 4, -r * 0.05); for (const [x, y] of bang.slice().reverse()) g.lineTo(x, y); g.lineTo(r + 4, -r * 0.05); g.stroke();
   }
+  tufts(g, r) { const o = this.o; g.fillStyle = o.hair; g.strokeStyle = INK; g.lineWidth = 4;
+    for (const sd of [-1, 1]) { if (o.tuftSide && o.tuftSide !== sd) continue; g.beginPath(); g.moveTo(sd * r * 0.98, -r * 0.42); g.quadraticCurveTo(sd * r * 1.1, -r * 0.05, sd * r * 0.92, r * 0.18); g.lineTo(sd * r * 0.74, -r * 0.05); g.lineTo(sd * r * 0.8, r * 0.08); g.lineTo(sd * r * 0.62, -r * 0.35); g.closePath(); g.fill(); g.stroke(); } }
   bigHair(g, r) {
     const o = this.o, st = o.hairStyle; g.fillStyle = o.hair; g.strokeStyle = INK; g.lineWidth = 5;
     const fillStroke = () => { g.fill(); g.stroke(); };
@@ -302,7 +316,7 @@ export class Flat2D {
     else if (mouth === 'yawn') { g.beginPath(); g.ellipse(0, my + 8, 13, 20, 0, 0, 7); g.fill(); g.stroke(); }
   }
   hat(g, r, off) {
-    const o = this.o; if (!o.hat) return; g.save(); g.translate(0, -off); g.strokeStyle = INK; g.lineWidth = 4.5; g.fillStyle = o.hatCol;
+    const o = this.o; if (!o.hat) return; g.save(); g.translate(0, -off); const hk = r / 116; g.scale(hk, hk); r = 116; g.strokeStyle = INK; g.lineWidth = 4.5; g.fillStyle = o.hatCol;   // hats scale with the (bigger) head
     const hl = (x, y, w, h) => { g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(x, y, w, h); g.fillStyle = o.hatCol; };
     if (o.hat === 'top') {
       g.beginPath(); g.moveTo(-50, -r * 0.78); g.lineTo(-56, -r - 104); g.lineTo(56, -r - 104); g.lineTo(50, -r * 0.78); g.closePath(); g.fill(); g.stroke(); hl(-46, -r - 96, 16, 80);
@@ -316,6 +330,11 @@ export class Flat2D {
       g.beginPath(); g.roundRect(-62, -r - 50, 124, 64, 6); g.fill(); g.stroke(); hl(-56, -r - 44, 14, 50);
       g.fillStyle = shade(o.hatCol, 0.75); g.fillRect(-62, -r + 0, 124, 12);
       g.fillStyle = o.hatCol; g.beginPath(); g.ellipse(0, -r + 16, 112, 15, 0, 0, 7); g.fill(); g.stroke();
+    } else if (o.hat === 'engineer') {   // striped railway cap
+      g.save(); g.beginPath(); g.moveTo(-r * 1.04, -r * 0.42); g.bezierCurveTo(-r * 1.12, -r * 1.36, r * 1.12, -r * 1.36, r * 1.04, -r * 0.42); g.closePath(); g.fillStyle = o.hatCol || '#3a5a9a'; g.fill(); g.clip();
+      g.strokeStyle = o.band || '#f4f0e6'; g.lineWidth = 9; for (let k = -6; k <= 6; k++) { g.beginPath(); g.moveTo(k * r * 0.17, -r * 1.3); g.quadraticCurveTo(k * r * 0.2, -r * 0.8, k * r * 0.22, -r * 0.4); g.stroke(); } g.restore();
+      g.strokeStyle = INK; g.lineWidth = 5; g.beginPath(); g.moveTo(-r * 1.04, -r * 0.42); g.bezierCurveTo(-r * 1.12, -r * 1.36, r * 1.12, -r * 1.36, r * 1.04, -r * 0.42); g.closePath(); g.stroke();
+      g.fillStyle = shade(o.hatCol || '#3a5a9a', 0.7); g.beginPath(); g.ellipse(-r * 0.62, -r * 0.42, r * 0.55, 13, -0.08, 0, Math.PI); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.beginPath(); g.arc(0, -r * 1.12, 8, 0, 7); g.fill(); g.stroke();
     } else if (o.hat === 'ball') {    // baseball cap
       g.beginPath(); g.moveTo(-r * 1.02, -r * 0.35); g.bezierCurveTo(-r * 1.05, -r * 1.3, r * 1.05, -r * 1.3, r * 1.02, -r * 0.35); g.closePath(); g.fill(); g.stroke();
       g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 2.5; for (const a of [-0.45, 0, 0.45]) { g.beginPath(); g.moveTo(0, -r * 1.05); g.quadraticCurveTo(a * r * 0.9, -r * 0.8, a * r * 1.6, -r * 0.38); g.stroke(); }
