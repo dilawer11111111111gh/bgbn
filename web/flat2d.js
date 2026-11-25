@@ -36,10 +36,13 @@ export class Flat2D {
     this.tex.generateMipmaps = true; this.tex.minFilter = THREE.LinearMipmapLinearFilter;
     const h = this.o.size * (this.o.bust ? 0.5 : 1), w = this.o.bust ? h : h * 0.5;
     const geo = new THREE.PlaneGeometry(w, h); geo.translate(0, h / 2, 0);
-    this.mesh = new THREE.Mesh(geo, C.cardMat(this.tex)); this.mesh.frustumCulled = false; C.stage.cards.add(this.mesh);
+    const parent = this.o.scene || C.stage.cards;   // o.scene: draw into a normal three.js scene (PBR renderer) instead of the toon card pass
+    if (this.o.scene) this.tex.colorSpace = THREE.SRGBColorSpace;
+    const mat = this.o.scene ? new THREE.MeshBasicMaterial({ map: this.tex, color: 0xeeeae4, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide, toneMapped: false }) : C.cardMat(this.tex);
+    this.mesh = new THREE.Mesh(geo, mat); this.mesh.frustumCulled = false; parent.add(this.mesh);
     if (!this.o.bust) {
       SHT = SHT || softShadowTex();
-      this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.34), C.fxMat(SHT)); this.shadow.rotation.x = -Math.PI / 2; this.shadow.renderOrder = -5; C.stage.cards.add(this.shadow);
+      this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.34), this.o.scene ? new THREE.MeshBasicMaterial({ map: SHT, transparent: true, depthWrite: false, toneMapped: false }) : C.fxMat(SHT)); this.shadow.rotation.x = -Math.PI / 2; this.shadow.renderOrder = -5; parent.add(this.shadow);
     }
     this.pos = new THREE.Vector3(); this.h = h;
   }
