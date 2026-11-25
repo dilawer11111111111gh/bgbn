@@ -5,7 +5,7 @@ import { mkLook, applyLook } from '../../web/looks.js';
 import { lerp, sstep, clamp } from '../../web/motion.js';
 import { Cine } from '../../web/cine.js';
 import { direct } from '../../web/director.js';
-import { Flat2D } from '../../web/flat2d.js';
+import { Flat2D, FACES } from '../../web/flat2d.js';
 import { role, act } from '../../web/roles.js';
 import { Kit, TEX, facade, barrel, crate, lamp } from '../../web/oldtown.js';
 import { makeTrain, makeTrack, makeWheelset, Horse2D } from '../../web/train.js';
@@ -43,7 +43,7 @@ K.mat('sign4', { map: TEX.sign('BARBER', '#f2e8d2', '#a02a2a'), local: true }); 
 
 const desert = (cx, cz, seed) => { K.box('sand', 240, 0.1, 240, cx, -0.05, cz); const r = C.rng(seed);
   for (let i = 0; i < 10; i++) { const a = r() * 6.28, d = 90 + r() * 60, s = 10 + r() * 12; const x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d; K.cyl(i % 2 ? 'mesa' : 'mesa2', s * 0.7, s, s * 0.6, x, s * 0.3, z, 7); K.cyl(i % 2 ? 'mesa' : 'mesa2', s * 0.62, s * 0.7, 0.6, x, s * 0.6 + 0.3, z, 7); }
-  for (let i = 0; i < 40; i++) { const x = cx - 70 + r() * 140, z = cz - 60 + r() * 120; if (Math.abs(z - cz) < 8 && x < cx + 50) continue; if (i % 3 === 0) { K.cyl('cactus', 0.22, 0.28, 2.4, x, 1.2, z, 8); K.cyl('cactus', 0.14, 0.16, 0.9, x + 0.4, 1.5, z, 8); K.cyl('cactus', 0.14, 0.16, 0.7, x - 0.36, 1.2, z, 8); } else if (i % 3 === 1) K.add('rock', new THREE.DodecahedronGeometry(0.5 + r() * 1.2, 0), x, 0.3, z); else K.add('bush', new THREE.IcosahedronGeometry(0.4 + r() * 0.4, 0), x, 0.3, z); } };
+  for (let i = 0; i < 40; i++) { const x = cx - 70 + r() * 140, z = cz - 60 + r() * 120; if (z > cz - 40 && z < cz + 20 && x < cx + 55) continue; if (i % 3 === 0) { K.cyl('cactus', 0.22, 0.28, 2.4, x, 1.2, z, 8); K.cyl('cactus', 0.14, 0.16, 0.9, x + 0.4, 1.5, z, 8); K.cyl('cactus', 0.14, 0.16, 0.7, x - 0.36, 1.2, z, 8); } else if (i % 3 === 1) K.add('rock', new THREE.DodecahedronGeometry(0.5 + r() * 1.2, 0), x, 0.3, z); else K.add('bush', new THREE.IcosahedronGeometry(0.4 + r() * 0.4, 0), x, 0.3, z); } };
 
 // =============== ZONE: TOWN (origin) ===============
 K.box('mud', 260, 0.1, 40, 0, -0.05, 3.2);
@@ -140,8 +140,9 @@ const TINK = P('inventor', 1), TINKB = new Flat2D({ ...role('inventor', 1), bust
 const RIDER = new Flat2D({ ...role('cowboy', 2), bust: true, res: 1.6, front: 0.3 }); const HORSE = new Horse2D({ coat: '#a8642e' });
 const CROWD = [['farmer', 0], ['lady', 1], ['kid', 2], ['girl', 0], ['sheriff', 1], ['grandma', 0], ['gentleman', 2], ['shopkeeper', 0], ['postman', 1], ['teen', 3], ['worker', 1], ['tourist', 0]].map(([id, k]) => P(id, k));
 const PIANO = P('musician', 1), DRINK = P('cowboy', 4), BARK = P('waiter', 0), DANCER = P('lady', 3);
+const SPECT = [P('gentleman', 4), P('teacher', 1), P('worker', 5)];
 const BANKER = P('banker', 0, { front: 0 }); const BANKER_RIDE = new Flat2D({ ...role('banker', 0), front: 1.9 }); const PEEK = [P('grandpa', 0), P('reporter', 1), P('athlete', 0)];
-const CARDS = [TINK, TINKB, RIDER, ...CROWD, PIANO, DRINK, BARK, DANCER, BANKER, BANKER_RIDE, ...PEEK];
+const CARDS = [TINK, TINKB, RIDER, ...SPECT, ...CROWD, PIANO, DRINK, BARK, DANCER, BANKER, BANKER_RIDE, ...PEEK];
 
 // =============== SIGNS + PARTICLES ===============
 const S = {
@@ -149,7 +150,7 @@ const S = {
   fat1: new Sign('FAT', { bg: '#f4c430', h: 0.4, arrow: 'right' }), thin1: new Sign('THIN', { bg: '#4ad0ff', h: 0.4, arrow: 'left' }),
   longer: new Sign('LONGER', { bg: '#f4c430', h: 5.5 }), shorter: new Sign('SHORTER', { bg: '#4ad0ff', h: 5.5 }), out: new Sign('OUTWARD', { bg: '#fff', h: 0.55, arrow: 'right' }),
   fat2: new Sign('FAT PART', { bg: '#f4c430', h: 0.45 }), thin2: new Sign('THIN PART', { bg: '#4ad0ff', h: 0.45 }), turn1: new Sign('1 TURN', { bg: '#f4c430', h: 0.6 }), turn2: new Sign('1 TURN', { bg: '#4ad0ff', h: 0.6 }),
-  more: new Sign('MORE GROUND!', { bg: '#7ad85a', h: 0.62 }), nosteer: new Sign('NO STEERING WHEEL', { bg: '#fff', h: 0.26 }), cones: new Sign('JUST CONES', { bg: '#f4c430', h: 0.4 }), ha: new Sign('HA HA HA', { bg: '#fff', h: 1.0, panel: false }),
+  more: new Sign('MORE GROUND!', { bg: '#7ad85a', h: 0.5 }), nosteer: new Sign('NO STEERING WHEEL', { bg: '#fff', h: 0.2 }), cones: new Sign('JUST CONES', { bg: '#f4c430', h: 0.4 }), ha: new Sign('HA HA HA', { bg: '#fff', h: 1.0, panel: false }),
   boom: new Sign('CRASH!', { bg: '#f4c430', h: 1.6, panel: false }), x: new Sign('X', { bg: '#e8402a', h: 3.0, panel: false }), butter: new Sign('SMOOTH!', { bg: '#7ad85a', h: 1.4 }), bank: new Sign('BOOM!', { bg: '#f4c430', h: 1.6, panel: false }),
 };
 const B = {
@@ -199,17 +200,17 @@ function setup(t, cam) {
   for (const c of CARDS) hideCard(c); HORSE.mesh.visible = false;
   if (pl && z !== 'studio') { const sp = tr.cabSeat(); TINKB.place(sp.x, sp.y, sp.z);
     const scared = (t > T(35) && t < T(41)) || (t > T(43) && t < T(64)), relax = t > T(143);
-    TINKB.update({ face: scared ? { eyes: 'wide', mouth: Math.floor(t * 8) % 2 ? 'scream' : 'o', brow: 1.3 } : relax ? { eyes: t > T(147) && t < T(150) ? 'happy' : 'dot', mouth: 'grin' } : { eyes: 'dot', mouth: 'bigsmile' }, tilt: scared ? 6 * Math.sin(t * 30) : 4 * Math.sin(t * 3), sweat: scared ? t * 3 : 0 }, cam); }
+    TINKB.update({ face: scared ? (Math.floor(t * 6) % 2 ? 'panic' : 'shock') : relax ? (t > T(147) && t < T(150) ? 'laugh' : 'proud') : t > T(26) && t < T(31) ? 'proud' : t > T(31) ? 'worried' : 'grin', tilt: scared ? 6 * Math.sin(t * 30) : 4 * Math.sin(t * 3), sweat: scared ? t * 3 : 0 }, cam); }
   if (z === 'town') {
     if (t < T(9)) { const hx = -38 + 13 * t; HORSE.place(hx, 0, 6.6); HORSE.update({ gallop: t * 14, flip: cam ? cam.z < 6.6 : false }, cam); HORSE.mesh.visible = true;
       const rb = HORSE.backWorld(); const toCam = cam ? cam.clone().sub(rb).setY(0).normalize().multiplyScalar(0.1) : V(); RIDER.place(rb.x + toCam.x, rb.y - 0.12, rb.z + toCam.z);
-      const passed = t > 2.6; RIDER.update({ face: passed ? { eyes: 'wide', mouth: 'o', brow: 1.2 } : { eyes: 'dot', mouth: 'grin' }, hatOff: passed ? Math.min(60, (t - 2.6) * 160) : 0, tilt: passed ? -8 : 3 * Math.sin(t * 14) }, cam); }
+      const passed = t > 2.6; RIDER.update({ face: passed ? 'shock' : 'grin', hatOff: passed ? Math.min(60, (t - 2.6) * 160) : 0, tilt: passed ? -8 : 3 * Math.sin(t * 14) }, cam); }
     const cheer = t > T(26) && t < T(31), laugh = t > T(86) && t < T(90);
     if (cheer || laugh) CROWD.forEach((c, i) => { const south = i > 5; const x = (laugh ? -19 : -14) + (i % 6) * 1.3 + (south ? 0.6 : 0);
       c.place(laugh ? -20 + (i % 6) * 1.35 + (south ? 0.7 : 0) : x, laugh ? 0 : 0.25, laugh ? (south ? -1.6 : -0.3) : (south ? 9.6 : -3.1)); const pose = laugh ? (i % 3 === 0 ? 'point' : 'laugh') : (i % 2 ? 'cheer' : 'wave');
-      c.update({ ...act(t + i * 0.13, [[0, pose]]), flip: laugh ? false : south, face: laugh ? { eyes: i % 2 ? 'happy' : 'dot', mouth: 'grin' } : { eyes: 'dot', mouth: i % 2 ? 'grin' : 'bigsmile' } }, cam); });
+      c.update({ ...act(t + i * 0.13, [[0, pose]]), flip: laugh ? false : south, face: laugh ? (i % 3 === 0 ? 'grin' : 'laugh') : (i % 2 ? 'laugh' : 'grin') }, cam); });
     if (t > T(166)) { const u = clamp((t - T(169)) / (DURATION - T(169)), 0, 1); const k = Math.min(17, Math.floor(u * 18)); BANKER.place(-38.6 + k * 0.4 + 0.1, 0.78 + 0.28 * k, -0.75);
-      BANKER.update({ ...act(t, [[0, 'walk']]), amp: 18, flip: true, face: { eyes: t > T(171) ? 'sly' : 'dot', mouth: t > T(172) ? 'smirk' : 'flat', look: [1, 0] }, sweat: t * 2 }, cam); }
+      BANKER.update({ ...act(t, [[0, 'walk']]), amp: 18, flip: true, face: t > T(171) ? 'smug' : 'deadpan', sweat: t * 2 }, cam); }
   }
   if (z === 'work') {
     const early = t < T(26);
@@ -217,20 +218,22 @@ function setup(t, cam) {
     const plan = early ? [[T(16), 'hips'], [T(19), 'angry'], [T(22), 'point'], [T(24), 'hips']] : [[T(64), 'think'], [T(69), 'pointUp'], [T(71), 'push'], [T(78), 'point'], [T(82), 'point']];
     const hammer = early && t > T(19) && t < T(22);
     TINK.update({ ...act(t, plan), ...(hammer ? { armL: [150 - 110 * Math.abs(Math.sin(t * 12)), 20] } : {}), flip: early ? false : t > T(78),
-      face: early ? (t > T(24) ? { eyes: 'happy', mouth: 'smirk' } : hammer ? { eyes: 'dot', mouth: 'grin', brow: -0.6 } : { eyes: 'dot', mouth: 'bigsmile' }) : t < T(69) ? { eyes: 'dot', mouth: 'flat', look: [0.8, -1], brow: 0.8 } : t < T(71) ? { eyes: 'wide', mouth: 'grin', brow: 1 } : { eyes: 'sly', mouth: 'grin', sly: 1 },
+      face: early ? (t > T(24) ? 'smug' : hammer ? 'angry' : t > T(22) ? 'grin' : 'proud') : t < T(69) ? { eyes: 'dot', mouth: 'wobble', look: [0.8, -1], brow: 0.9 } : t < T(71) ? 'idea' : t < T(78) ? 'evil' : 'proud',
       mark: !early && t > T(69) && t < T(71) + 0.3 ? '!' : null }, cam);
-    if (!early && t < T(71)) PEEK.forEach((c, i) => { c.place(-397.4 + i * 1.15, 0.25, 2.6 + (i % 2) * 0.35); c.update({ ...act(t, [[0, ['shrug', 'think', 'hips'][i]]]), face: { eyes: 'dot', mouth: i === 1 ? 'o' : 'flat', brow: 0.6, look: [-0.5, -0.5] }, mark: t > T(68) ? '?' : null }, cam); });
+    if (!early && t < T(71)) PEEK.forEach((c, i) => { c.place(-397.4 + i * 1.15, 0.25, 2.6 + (i % 2) * 0.35); c.update({ ...act(t, [[0, ['shrug', 'think', 'hips'][i]]]), face: i === 1 ? 'awe' : 'confused', mark: t > T(68) ? '?' : null }, cam); });
   }
+  if (z === 'curve' && t > T(90) && t < T(98) + 0.6) SPECT.forEach((c, i) => { c.place(434 + i * 1.3, 0, 7 + (i % 2) * 0.6); const wow = t > T(95);
+    c.update({ ...act(t, [[T(90), i === 1 ? 'hips' : 'think'], [T(95), wow ? 'shock' : 'idle'], [T(96), i === 2 ? 'cheer' : 'shock']]), flip: true, face: wow ? (i === 2 ? 'laugh' : 'awe') : 'smug' }, cam); });
   if (z === 'saloon') {
     const hit = t > HIT_SAL, post = t > HIT_SAL + 0.6;
-    PIANO.place(823.2, 0.3, 4.2); PIANO.update({ armL: [70, 30 + 20 * Math.sin(t * 20)], armR: [70, 30 + 20 * Math.sin(t * 20 + 2)], flip: true, face: post ? { eyes: 'calm', mouth: 'smile' } : hit ? { eyes: 'wide', mouth: 'o', brow: 1 } : { eyes: 'happy', mouth: 'grin' }, tilt: 5 * Math.sin(t * 6), mark: post && t < HIT_SAL + 1.4 ? '?' : null }, cam);
-    DRINK.place(817.5, 0.3, -2.6); DRINK.update({ ...act(t, [[0, 'idle'], [HIT_SAL, 'shock'], [HIT_SAL + 0.5, 'shrug']]), face: hit ? { eyes: 'wide', mouth: 'scream', brow: 1.3 } : { eyes: 'dot', mouth: 'smile' }, hatOff: hit ? 40 : 0 }, cam);
-    BARK.place(823.0, 0.3, -3.0); BARK.update({ ...act(t, [[0, 'idle'], [HIT_SAL, 'shock']]), flip: true, face: hit ? { eyes: 'wide', mouth: 'o', brow: 1.2 } : { eyes: 'calm', mouth: 'flat' } }, cam);
-    DANCER.place(819.5, 0.3, 2.2); DANCER.update({ ...act(t, [[0, 'cheer'], [HIT_SAL, 'panic']]), face: hit ? { eyes: 'wide', mouth: 'scream', brow: 1.4 } : { eyes: 'happy', mouth: 'grin' } }, cam);
+    PIANO.place(823.2, 0.3, 4.2); PIANO.update({ armL: [70, 30 + 20 * Math.sin(t * 20)], armR: [70, 30 + 20 * Math.sin(t * 20 + 2)], flip: true, face: post ? 'deadpan' : hit ? 'shock' : 'laugh', tilt: 5 * Math.sin(t * 6), mark: post && t < HIT_SAL + 1.4 ? '?' : null }, cam);
+    DRINK.place(817.5, 0.3, -2.6); DRINK.update({ ...act(t, [[0, 'idle'], [HIT_SAL, 'shock'], [HIT_SAL + 0.5, 'shrug']]), face: hit ? 'shock' : 'grin', hatOff: hit ? 40 : 0 }, cam);
+    BARK.place(823.0, 0.3, -3.0); BARK.update({ ...act(t, [[0, 'idle'], [HIT_SAL, 'shock']]), flip: true, face: hit ? 'scared' : 'deadpan' }, cam);
+    DANCER.place(819.5, 0.3, 2.2); DANCER.update({ ...act(t, [[0, 'cheer'], [HIT_SAL, 'panic']]), face: hit ? 'panic' : 'laugh' }, cam);
   }
   if (z === 'bank') {
     const hit = t > HIT_BANK; const lp = hit ? tr.pilot() : V(1222.5, 0.3, 1.0);
-    const BK = hit ? BANKER_RIDE : BANKER; BK.place(lp.x + (hit ? 0.25 : 0), hit ? lp.y + 0.3 : 0.3, lp.z); BK.update({ ...act(t, [[0, 'idle'], [HIT_BANK, 'carry']]), legOut: hit ? 35 : 0, flip: true, face: hit ? { eyes: 'wide', mouth: Math.floor(t * 6) % 2 ? 'o' : 'scream', brow: 1.4 } : { eyes: 'calm', mouth: 'smile' }, sweat: hit ? t * 3 : 0, hatOff: hit ? 30 : 0 }, cam);
+    const BK = hit ? BANKER_RIDE : BANKER; BK.place(lp.x + (hit ? 0.25 : 0), hit ? lp.y + 0.3 : 0.3, lp.z); BK.update({ ...act(t, [[0, 'idle'], [HIT_BANK, 'carry']]), legOut: hit ? 35 : 0, flip: true, face: hit ? (Math.floor(t * 6) % 2 ? 'panic' : 'shock') : 'smug', sweat: hit ? t * 3 : 0, hatOff: hit ? 30 : 0 }, cam);
   }
   SAL_DEB.update(z === 'saloon' ? t : 0, HIT_SAL); BANK_DEB.update(z === 'bank' ? t : 0, HIT_BANK);
   const gO = z === 'curve' && t > T(104) && t < T(112), gI = z === 'curve' && t > T(109) && t < T(112);
@@ -302,7 +305,8 @@ const BEATS = [
   { t0: T(77), t1: T(82), shot: 'orbit', at: pt(-401.5, 1.2, 1.0), size: 3.2, az: 20 },
   { t0: T(82), t1: T(86), shot: 'dollyOut', at: pt(-401.6, 1.0, 1.1), size: 1.6, big: 3.6, az: 70 },
   { t0: T(86), t1: T(90), shot: 'handheld', at: pt(-17, 1.2, -0.9), size: 4.4, az: 60, over: { az: [58, 84], el: [6, 9] } },
-  { t0: T(90), t1: T(98), shot: 'drone', at: loco, big: 26, mid: 16, az: -40 },
+  { t0: T(90), t1: T(95), shot: 'drone', at: loco, big: 26, mid: 16, az: -40 },
+  { t0: T(95), t1: T(98), shot: 'orbit', at: pt(435.3, 1.4, 7.3), size: 3.2, az: 60, over: { az: [70, 40], el: [4, 6] } },
   { t0: T(98), t1: T(112), shot: 'droneTop', at: pt(418, 0, -12), big: 62, mid: 56, az: 45 },
   { t0: T(112), t1: T(117), shot: 'static', at: pt(1600, 1.2, 0.1), size: 4.4, az: -90 },
   { t0: T(117), t1: T(126), beat: 'realize', at: pt(1600, 0.9, 0.75), size: 1.6, az: -70 },
@@ -323,7 +327,7 @@ const LOOK = mkLook({ sun: [-0.5, 0.7, 0.55], lit: '#fff0d6', litK: 1.12, shade:
   sky: ['#3c86d8', '#7ab8ec', '#f6e2c0', '#e8c89a'], contrast: 1.06, vig: 0.16, vigCol: '#3a2014', glow: 0.45, sat: 1.15, exposure: 1.04, shadow: 0.85, lo: '#f4f0ff', hi: '#fff2dc' });
 function guard(c, t) { const p = c.pos, z = zoneAt(t); p[1] = Math.max(p[1], 0.45); if (z === 'town' && p[1] < 6) { p[2] = clamp(p[2], -2.3, 8.8); } return c; }
 window.renderFrame = function (f) {
-  const t = f / FPS;
+  const t = f / FPS; Flat2D.T = t;
   setup(t, null);
   const cam = guard(CINE.at(t), t); const cp = V(...cam.pos);
   setup(t, cp); fx(t, cp);
