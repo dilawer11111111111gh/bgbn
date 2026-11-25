@@ -112,7 +112,7 @@ function burlBoat(t) {
 }
 function pipBoat(t) {
   let p = V(4.5, DOCK + 2.05, -3.2), bob = 0; const form = sstep(T(33), T(36) + 0.2, t);   // bowl is hammered into shape
-  if (t < T(47)) { p = V(7.6, DOCK + 2.0 * Math.max(0.06, form), -8.6); return { p, form, bob }; }
+  if (t < T(47)) { p = V(10.6, DOCK + 2.0 * Math.max(0.06, form), -9.0); return { p, form, bob }; }
   if (t > T(57)) { const u = sstep(T(57), T(59) + 0.2, t); p = V(4.5, lerp(DOCK + 2.05, 1.0, u), lerp(-3.2, 7.0, u)); bob = u * 0.12 * Math.sin(t * 3); }
   if (t > T(60)) { const u = sstep(T(60), T(62) + 0.3, t); p.z = lerp(7.0, 24.5, u); p.x = lerp(4.5, 4.0, u); }
   if (t > T(63)) { const u = sstep(T(63), T(65), t); p.set(lerp(4.0, 2.5, u), 1.0, lerp(24.5, 9.0, u)); }
@@ -142,10 +142,10 @@ function setup(t, camPos) {
   if (bp) { BURL.place(bp.x, bp.y, bp.z); BURL.update({ e: 1, ...bpose }, camPos); }
   // ----- Pip -----
   let pp, ppose = {};
-  if (z === 'shop') { if (t < T(31)) { pp = V(12.4, DOCK, -7.4); ppose = { ...act(t, [[T(24), 'wave'], [T(27), 'presenter']]), face: t < T(27) ? 'grin' : 'proud', flip: true }; }
-    else if (t < T(36)) { pp = V(10.6, DOCK, -8.0); ppose = { ...act(t, [[T(31), 'kneel']]), prop: 'hammer', armR: [150 - 120 * Math.abs(Math.sin(t * 9)), 20], face: 'angry', flip: false }; }
-    else if (t < T(41)) { pp = V(10.4, DOCK, -8.0); ppose = { ...act(t, [[T(36), 'thumbsUp']]), face: 'proud', blush: 0.6, flip: false }; }
-    else { pp = V(10.4, DOCK, -8.0); ppose = { ...act(t, [[T(41), 'crossArms']]), face: 'angry', steam: 0.8, tint: ['#e2403a', 0.35] }; } }
+  if (z === 'shop') { if (t < T(31)) { pp = V(14.0, DOCK, -7.6); ppose = { ...act(t, [[T(24), 'wave'], [T(27), 'presenter']]), face: t < T(27) ? 'grin' : 'proud', flip: true }; }
+    else if (t < T(36)) { pp = V(13.3, DOCK, -8.4); ppose = { ...act(t, [[T(31), 'kneel']]), prop: 'hammer', armR: [150 - 120 * Math.abs(Math.sin(t * 9)), 20], face: 'angry', flip: false }; }
+    else if (t < T(41)) { pp = V(13.9, DOCK, -7.8); ppose = { ...act(t, [[T(36), 'thumbsUp']]), face: 'proud', blush: 0.6, flip: false }; }
+    else { pp = V(13.9, DOCK, -7.8); ppose = { ...act(t, [[T(41), 'crossArms']]), face: 'angry', steam: 0.8, tint: ['#e2403a', 0.35] }; } }
   else if (z === 'race') { pp = onBoat(PIPB, 0, -0.9, 0.4); ppose = t < T(57) ? { ...act(t, [[0, 'crossArms']]), face: 'smug' } : t < T(61) ? { ...act(t, [[T(57), 'row']]), face: 'grin', lines: t > T(60) ? 1 : 0 } : { ...act(t, [[T(61), 'cheer']]), prop: 'trophy', face: 'laugh' }; }
   else if (z === 'explain') { pp = onBoat(PIPB, 0, -0.9, 0.4); ppose = { ...act(t, [[T(63), 'presenter'], [T(77), 'point'], [T(86), 'thumbsUp']]), face: t > T(86) ? 'laugh' : 'proud' }; }
   if (pp) { PIP.place(pp.x, pp.y, pp.z); PIP.update({ e: 1, ...ppose }, camPos); }
@@ -167,7 +167,7 @@ function setup(t, camPos) {
 }
 function fx(t, st) {
   const z = ZONE(t);
-  B.sparks.update(t, T(9), V(-11.5, DOCK + 1.0, -9.4), 0.5, z === 'forge' && t < T(16)); B.sparks2.update(t, T(31), V(9.9, DOCK + 0.5, -8.2), 0.5, z === 'shop' && t > T(31) && t < T(36));
+  B.sparks.update(t, T(9), V(-11.5, DOCK + 1.0, -9.4), 0.5, z === 'forge' && t < T(16)); B.sparks2.update(t, T(31), V(12.7, DOCK + 0.5, -8.8), 0.5, z === 'shop' && t > T(31) && t < T(36));
   B.splash.update(t, st.bb.hook ? T(5) + 0.35 : T(52) - 0.15, () => V(-4.5, 0.2, 8.2), 0, (st.bb.hook || z === 'race') && t < (st.bb.hook ? T(9) : T(57)));
   B.splash2.update(t, T(59), () => V(4.5, 0.2, 7.0), 0, z === 'race' && t > T(58));
   B.bubbles.update(t, st.bb.hook ? T(5) + 0.5 : T(52), () => BURLB.position.clone().add(V(0, 2.4, 0)), 1.6, st.bb.sinking && (st.bb.hook || z === 'race' || z === 'under'));
@@ -175,7 +175,7 @@ function fx(t, st) {
   B.confetti.update(t, T(61), V(4.5, 4.5, 20), 0, z === 'race' && t > T(61)); B.stars.update(t, T(61), () => PIP.headWorld(), 1.0, z === 'race' && t > T(61));
   B.smoke.update(t, 0, V(-14.4, DOCK + 5.6, -12.4), 2.0, z === 'forge' || z === 'dock');
   S.sec.update(t, T(7), T(9) - 0.05, () => BURLB.position.clone().add(V(0, 4.2, 0))); S.uns.update(t, T(21), T(24) - 0.05, () => BURL.headWorld().add(V(0.6, 1.0, 0)));
-  S.same.update(t, T(28), T(31), V(9.5, DOCK + 1.4, -7.6)); S.bowl.update(t, T(38), T(41), () => PIPB.position.clone().add(V(0, 3.0, 0))); S.ha.update(t, T(42), T(47) - 0.05, V(-1, DOCK + 3.6, -1.5));
+  S.same.update(t, T(28), T(31), V(12.5, DOCK + 1.6, -8.4)); S.bowl.update(t, T(38), T(41), () => PIPB.position.clone().add(V(0, 3.0, 0))); S.ha.update(t, T(42), T(47) - 0.05, V(-1, DOCK + 3.6, -1.5));
   S.race.update(t, T(47), T(49), V(0, DOCK + 4.0, -1.0)); S.blub.update(t, T(52), T(53) + 0.4, () => V(-4.5, 1.6, 8.6)); S.won.update(t, T(61) + 0.1, T(63), () => PIPB.position.clone().add(V(0, 4.0, 0)));
   S.push.update(t, T(70), T(77), () => PIPB.position.clone().add(V(-3.2, 0.9, 0))); S.weight.update(t, T(73), T(77), () => PIPB.position.clone().add(V(3.2, 6.8, 0)));
   S.big.update(t, T(77), T(82), () => PIPB.position.clone().add(V(0, -2.8, 2.6))); S.small.update(t, T(79), T(82), () => V(BURLB.position.x, -4.6, BURLB.position.z + 2));
@@ -194,8 +194,8 @@ const BEATS = [
   { t0: T(18), t1: T(24), shot: 'low', at: burlH, size: 2.6, az: -20 },
   { t0: T(24), t1: T(27), cut: true, shot: 'whip', at: pipH, size: 2.2, az: -20 },
   { t0: T(27), t1: T(31), shot: 'orbit', at: pipH, size: 2.6, az: -30 },
-  { t0: T(31), t1: T(36), shot: 'orbit', at: () => V(9.5, DOCK + 0.9, -8.3), size: 5.0, az: 22, over: { az: [30, 12], el: [10, 8] } },
-  { t0: T(36), t1: T(41), shot: 'dollyOut', at: () => V(8.6, DOCK + 1.0, -8.5), size: 3.2, big: 4.8, az: 15 },
+  { t0: T(31), t1: T(36), shot: 'orbit', at: () => V(12.2, DOCK + 0.9, -8.6), size: 5.0, az: 22, over: { az: [30, 12], el: [10, 8] } },
+  { t0: T(36), t1: T(41), shot: 'orbit', at: () => V(12.1, DOCK + 1.3, -8.6), size: 6.2, az: 25, over: { az: [30, 8], el: [12, 9] } },
   { t0: T(41), t1: T(47), shot: 'handheld', at: pt(-11.5, DOCK + 1.3, -1.5), size: 6.8, az: 22 },
   { t0: T(47), t1: T(50), cut: true, shot: 'drone', at: pt(0, 1.5, 2), big: 26, mid: 16, az: 15 },
   { t0: T(50), t1: T(52), shot: 'orbit', at: bboat, size: 5.5, az: 80, over: { az: [90, 60], el: [4, 6] } },
