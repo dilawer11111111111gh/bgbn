@@ -27,8 +27,17 @@ export class Sign {
   update(t, t0, t1, p, cam) {
     const on = t >= t0 && t <= t1; this.mesh.visible = on; if (!on) return;
     const u = Math.min(1, (t - t0) / 0.22), out = Math.min(1, (t1 - t) / 0.15); const k = backOut(u) * out;
-    this.mesh.position.copy(typeof p === 'function' ? p(t) : p); this.mesh.scale.setScalar(Math.max(0.001, k));
-    if (cam) { this.mesh.lookAt(cam); this.mesh.rotateZ(0.06 * Math.sin(t * 5 + t0)); }
+    this.mesh.position.copy(typeof p === 'function' ? p(t) : p);
+    // auto-fit: never wider than 82% of the visible frame width at this distance
+    let fit = 1; if (cam) { const c = C.stage.cam; const d = cam.distanceTo(this.mesh.position); const fw = 2 * d * Math.tan((c.fov * Math.PI) / 360) * c.aspect; const w = this.mesh.geometry.parameters.width; if (w > fw * 0.82) fit = (fw * 0.82) / w; }
+    this.mesh.scale.setScalar(Math.max(0.001, k * fit));
+    if (cam) { this.mesh.lookAt(cam); this.mesh.rotateZ(0.06 * Math.sin(t * 5 + t0));
+      // keep the whole sign inside the frame (slide it sideways / down if it would be cut)
+      const c = C.stage.cam; c.updateMatrixWorld(); const q = this.mesh.position.clone().project(c); const d = cam.distanceTo(this.mesh.position);
+      const fw = 2 * d * Math.tan((c.fov * Math.PI) / 360) * c.aspect, fh = fw / c.aspect; const hw = (this.mesh.geometry.parameters.width * this.mesh.scale.x) / fw, hh = (this.mesh.geometry.parameters.height * this.mesh.scale.y) / fh;
+      const right = new THREE.Vector3().setFromMatrixColumn(c.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(c.matrixWorld, 1);
+      let dx = 0, dy = 0; if (q.x + hw > 0.92) dx = 0.92 - (q.x + hw); else if (q.x - hw < -0.92) dx = -0.92 - (q.x - hw); if (q.y + hh > 0.86) dy = 0.86 - (q.y + hh);   // hw/hh = half size in NDC
+      if (dx || dy) this.mesh.position.addScaledVector(right, dx * fw / 2).addScaledVector(up, dy * fh / 2); }
   }
 }
 

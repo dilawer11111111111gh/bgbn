@@ -76,7 +76,7 @@ export function makeTrain(o = {}) {
       for (let i = 0; i < 2; i++) { const a = -dist / 0.82; rods[i].position.set(0.42 + Math.cos(a) * 0.32, 0.82 + Math.sin(a) * 0.32, rods[i].position.z); }
     },
     chimney() { return loco.localToWorld(new THREE.Vector3(4.0, 4.6, 0)); },
-    cabSeat() { return loco.localToWorld(new THREE.Vector3(-1.75, 2.02, 0.35)); },
+    cabSeat() { return loco.localToWorld(new THREE.Vector3(-1.75, 1.32, 0.35)); },
     pilot() { return loco.localToWorld(new THREE.Vector3(5.05, 0.75, 0)); },
     wheelWorld(i = 0) { return wheels[i].getWorldPosition(new THREE.Vector3()); },
   };

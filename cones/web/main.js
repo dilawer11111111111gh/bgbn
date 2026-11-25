@@ -55,7 +55,7 @@ SOUTH.forEach(([x, w, fl, br, sh, sg], i) => facade(K, { x, zf: 10.5, face: -1, 
 // station + footbridge with stairs (x=-30) over the track
 K.box('plank', 13, 0.5, 2.6, -33, 0.25, -1.1); K.box('stationSign', 4.2, 0.8, 0.08, -33, 4.4, -2.9); for (const x of [-39, -35, -31, -27]) K.box('post', 0.18, 3.6, 0.18, x, 2.05, -0.1); K.box('roof', 13.4, 0.18, 3.6, -33, 3.9, -1.6);
 for (let i = 0; i < 18; i++) K.box('woodD', 0.42, 0.28, 1.3, -38.6 + i * 0.4, 0.64 + i * 0.28, -0.75);
-for (let i = 0; i < 18; i += 2) K.box('post', 0.07, 1.0, 0.07, -38.6 + i * 0.4, 1.3 + i * 0.28, -0.1);
+
 K.box('woodD', 1.6, 0.25, 9, -31.2, 5.65, 3.2); for (const s of [-1, 1]) K.box('post', 0.08, 1.0, 9, -31.2 + s * 0.78, 6.25, 3.2); for (const z of [-0.8, 7.2]) for (const s of [-1, 1]) K.box('post', 0.22, 5.6, 0.22, -31.2 + s * 0.7, 2.8, z);
 for (const x of [-20, 12, 40]) lamp(K, x, 0.25, -2.6); for (const x of [-8, 22]) lamp(K, x, 0.25, 9.1);
 for (const [x, z] of [[-2.3, -3.55], [-2.95, -3.5], [16.5, 9.6], [17.1, 9.7]]) barrel(K, x, 0.25, z, 0.95); crate(K, 2.4, 0.25, -3.4, 0.62, 0.2); crate(K, -42, 0.25, -3.2, 0.6, 0.3);
@@ -136,12 +136,12 @@ CONTACT_O.position.set(0, 0.85, 0.66); CONTACT_I.position.set(0, 0.85, -0.84);
 
 // =============== CAST ===============
 const P = (id, k, extra = {}) => new Flat2D(role(id, k, extra));
-const TINK = P('inventor', 1), TINKB = new Flat2D({ ...role('inventor', 1), bust: true, res: 1.4 });
+const TINK = P('inventor', 1), TINKB = new Flat2D({ ...role('inventor', 1), size: 1.8 });   // full body standing on the cab floor: walls hide the legs, no cut edge
 const RIDER = new Flat2D({ ...role('cowboy', 2), bust: true, res: 1.6, front: 0.3 }); const HORSE = new Horse2D({ coat: '#a8642e' });
 const CROWD = [['farmer', 0], ['lady', 1], ['kid', 2], ['girl', 0], ['sheriff', 1], ['grandma', 0], ['gentleman', 2], ['shopkeeper', 0], ['postman', 1], ['teen', 3], ['worker', 1], ['tourist', 0]].map(([id, k]) => P(id, k));
 const PIANO = P('musician', 1), DRINK = P('cowboy', 4), BARK = P('waiter', 0), DANCER = P('lady', 3);
 const SPECT = [P('gentleman', 4), P('teacher', 1), P('worker', 5)];
-const BANKER = P('banker', 0, { front: 0 }); const BANKER_RIDE = new Flat2D({ ...role('banker', 0), front: 1.9 }); const PEEK = [P('grandpa', 0), P('reporter', 1), P('athlete', 0)];
+const BANKER = P('banker', 0, { front: 0.5 }); const BANKER_RIDE = new Flat2D({ ...role('banker', 0), front: 1.9 }); const PEEK = [P('grandpa', 0), P('reporter', 1), P('athlete', 0)];
 const CARDS = [TINK, TINKB, RIDER, ...SPECT, ...CROWD, PIANO, DRINK, BARK, DANCER, BANKER, BANKER_RIDE, ...PEEK];
 
 // =============== SIGNS + PARTICLES ===============
@@ -200,7 +200,7 @@ function setup(t, cam) {
   for (const c of CARDS) hideCard(c); HORSE.mesh.visible = false;
   if (pl && z !== 'studio') { const sp = tr.cabSeat(); TINKB.place(sp.x, sp.y, sp.z);
     const scared = (t > T(35) && t < T(41)) || (t > T(43) && t < T(64)), relax = t > T(143);
-    TINKB.update({ face: scared ? (Math.floor(t * 6) % 2 ? 'panic' : 'shock') : relax ? (t > T(147) && t < T(150) ? 'laugh' : 'proud') : t > T(26) && t < T(31) ? 'proud' : t > T(31) ? 'worried' : 'grin', tilt: scared ? 6 * Math.sin(t * 30) : 4 * Math.sin(t * 3), sweat: scared ? t * 3 : 0 }, cam); }
+    TINKB.update({ face: scared ? (Math.floor(t * 6) % 2 ? 'panic' : 'shock') : relax ? (t > T(147) && t < T(150) ? 'laugh' : 'proud') : t > T(26) && t < T(31) ? 'proud' : t > T(31) ? 'worried' : 'grin', tilt: scared ? 6 * Math.sin(t * 30) : 4 * Math.sin(t * 3), sweat: scared ? t * 3 : 0 }, cam); if (TINKB.shadow) TINKB.shadow.visible = false; }
   if (z === 'town') {
     if (t < T(9)) { const hx = -38 + 13 * t; HORSE.place(hx, 0, 6.6); HORSE.update({ gallop: t * 14, flip: cam ? cam.z < 6.6 : false }, cam); HORSE.mesh.visible = true;
       const rb = HORSE.backWorld(); const toCam = cam ? cam.clone().sub(rb).setY(0).normalize().multiplyScalar(0.1) : V(); RIDER.place(rb.x + toCam.x, rb.y - 0.12, rb.z + toCam.z);
@@ -209,7 +209,7 @@ function setup(t, cam) {
     if (cheer || laugh) CROWD.forEach((c, i) => { const south = i > 5; const x = (laugh ? -19 : -14) + (i % 6) * 1.3 + (south ? 0.6 : 0);
       c.place(laugh ? -20 + (i % 6) * 1.35 + (south ? 0.7 : 0) : x, laugh ? 0 : 0.25, laugh ? (south ? -1.6 : -0.3) : (south ? 9.6 : -3.1)); const pose = laugh ? (i % 3 === 0 ? 'point' : 'laugh') : (i % 2 ? 'cheer' : 'wave');
       c.update({ ...act(t + i * 0.13, [[0, pose]]), flip: laugh ? false : south, face: laugh ? (i % 3 === 0 ? 'grin' : 'laugh') : (i % 2 ? 'laugh' : 'grin') }, cam); });
-    if (t > T(166)) { const u = clamp((t - T(169)) / (DURATION - T(169)), 0, 1); const k = Math.min(17, Math.floor(u * 18)); BANKER.place(-38.6 + k * 0.4 + 0.1, 0.78 + 0.28 * k, -0.75);
+    if (t > T(166)) { const u = clamp((t - T(169)) / (DURATION - T(169)), 0, 1); const k = Math.min(11, Math.floor(u * 12)); BANKER.place(-38.6 + k * 0.4 + 0.1, 0.78 + 0.28 * k, -0.75);
       BANKER.update({ ...act(t, [[0, 'walk']]), amp: 18, flip: true, face: t > T(171) ? 'smug' : 'deadpan', sweat: t * 2 }, cam); }
   }
   if (z === 'work') {
@@ -266,13 +266,13 @@ function fx(t, cam) {
   S.longer.update(t, T(107), T(112), V(427, 2, -2.6), cam); S.shorter.update(t, T(110), T(112), V(414.5, 2, -15.5), cam);
   S.out.update(t, T(115), T(117), V(1600, 2.4, 1.4), cam); S.fat2.update(t, T(124), T(128), V(1600, 2.2, 1.1), cam); S.thin2.update(t, T(132), T(134), V(1600, 2.2, -1.1), cam);
   S.turn1.update(t, T(141), T(143), V(1598 + 2 * Math.PI * 1.0, 2.6, 9), cam); S.turn2.update(t, T(141), T(143), V(1598 + 2 * Math.PI * 0.7, 2.0, 12), cam); S.more.update(t, T(138), T(143), V(1603, 3.8, 10.5), cam);
-  S.nosteer.update(t, T(147), T(150), () => tr.cabSeat().add(V(0, 1.3, 0)), cam); S.cones.update(t, T(150), T(152), () => tr.wheelWorld(0).add(V(0, 1.2, 0)), cam);
+  S.nosteer.update(t, T(147), T(150), () => tr.cabSeat().add(V(0, 2.1, 0)), cam); S.cones.update(t, T(150), T(152), () => tr.wheelWorld(0).add(V(0, 1.2, 0)), cam);
 }
 
 // =============== CAMERA (director) ===============
 const CINE = new Cine({ blend: 0.28 });
 const loco = () => (TP.plan ? TP.plan.T.loco.position.clone().add(V(0, 2.2, 0)) : V()); const front = () => (TP.plan ? TP.plan.T.pilot().add(V(0, 0.6, 0)) : V());
-const cab = () => (TP.plan ? TP.plan.T.cabSeat().add(V(0, 0.5, 0)) : V()); const wheelW = () => (TP.plan ? TP.plan.T.wheelWorld(0).add(V(0, 0.2, 0)) : V());
+const cab = () => (TP.plan ? TP.plan.T.cabSeat().add(V(0, 1.2, 0)) : V()); const wheelW = () => (TP.plan ? TP.plan.T.wheelWorld(0).add(V(0, 0.2, 0)) : V());
 const mid = () => (TP.plan ? TP.plan.T.tender.position.clone().add(V(0, 2, 0)) : V()); const head = (c, dy = 0) => () => c.headWorld().add(V(0, dy, 0));
 const pt = (x, y, z) => { const f = () => V(x, y, z); f.pure = true; return f; };
 const HR = { rel: () => (TP.plan ? TP.plan.T.loco.rotation.y : 0) };   // shot angles relative to the train (180 = left side, 0 = right side, 90 = front, -90 = back)
@@ -318,7 +318,7 @@ const BEATS = [
   { t0: T(152), t1: T(159), beat: 'ending', at: loco, size: 8, big: 30, az: -60 },
   { t0: T(159), t1: T(166), beat: 'reveal', at: mid, size: 4, big: 20, az: 30 },
   { t0: T(166), t1: T(169), shot: 'whip', at: head(BANKER, -0.2), size: 2.4, az: -40 },
-  { t0: T(169), t1: DURATION + 0.1, shot: 'craneUp', at: () => BANKER.bodyWorld(), size: 2.8, big: 5.5, az: 25 },
+  { t0: T(169), t1: DURATION + 0.1, shot: 'orbit', at: () => BANKER.headWorld().add(V(0, -0.45, 0)), size: 2.6, az: 30, over: { az: [35, 15], el: [14, 10] } },
 ];
 for (const b of BEATS) if (cutAt.has(+b.t0.toFixed(3))) b.cut = true;
 window.SHOTLOG = direct(CINE, BEATS);
@@ -330,10 +330,11 @@ window.renderFrame = function (f) {
   const t = f / FPS; Flat2D.T = t;
   setup(t, null);
   const cam = guard(CINE.at(t), t); const cp = V(...cam.pos);
-  setup(t, cp); fx(t, cp);
+  setup(t, cp);
   const z = zoneAt(t); const indoor = z === 'saloon' && t > T(48);
-  applyLook(LOOK, { shadowCenter: [cam.look[0], 0, cam.look[2]], shadowSize: 30, pl: indoor ? [{ pos: [819, 4.4, 0], col: [1.0, 0.8, 0.45], range: 9 }] : z === 'bank' ? [{ pos: [1218, 4.5, 0], col: [1.0, 0.9, 0.7], range: 12 }] : z === 'town' && t > T(166) ? [{ pos: [-34, 3.4, -0.5], col: [1.0, 0.85, 0.6], range: 8 }] : [] });
+  applyLook(LOOK, { shadowCenter: [cam.look[0], 0, cam.look[2]], shadowSize: 30, pl: indoor ? [{ pos: [819, 4.4, 0], col: [1.0, 0.8, 0.45], range: 9 }] : z === 'bank' ? [{ pos: [1218, 4.5, 0], col: [1.0, 0.9, 0.7], range: 12 }] : z === 'town' && t > T(166) ? [{ pos: [-33, 4.5, 1.5], col: [1.0, 0.9, 0.7], range: 10 }] : [] });
   C.setCam({ pos: cam.pos, look: cam.look, fov: cam.fov, roll: cam.roll, near: 0.05, far: 900 });
+  fx(t, cp);   // after setCam: signs auto-fit to THIS frame's lens
   dofU.uFocus.value = cam.focus; dofU.uAper.value = cam.ap * PX * 0.3; dofU.uMaxC.value = 5 * PX;   // light background blur only: keep everything crisp dofU.uTime.value = f * 0.37;
   dofU.uFade.value = Math.max(0, 1 - t / 0.2) + Math.max(0, (t - (DURATION - 0.35)) / 0.35);
   dofU.uFlash.value = (Math.abs(t - HIT_SAL) < 0.08 || Math.abs(t - HIT_BANK) < 0.08) ? 0.25 : 0;
