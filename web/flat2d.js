@@ -101,7 +101,7 @@ export class Flat2D {
         if (kn) a = s > 0 ? R(-62 * kn) : R(8 * kn);   // kneel: front thigh forward, back knee on the ground
         const knee = [hx + Math.sin(a) * L1, hipY + Math.cos(a) * L1]; let kb = a + R(Math.max(0, Math.cos(ph + (s > 0 ? 0 : Math.PI))) * amp * 1.2); if (kn) kb = s > 0 ? R(0) : R(88 * kn); else if (!amp) kb = a - R(s * (free ? 7 : 2)) + R(free ? 12 : 3);   // shin swings BACK (character faces left by default)
         const foot = [knee[0] + Math.sin(kb) * L2, Math.min(992, knee[1] + Math.cos(kb) * L2)];
-        g.strokeStyle = INK; g.lineWidth = 13; g.beginPath(); g.moveTo(hx, hipY - 10); g.lineTo(knee[0], knee[1]); g.lineTo(foot[0], foot[1]); g.stroke();
+        g.strokeStyle = INK; g.lineWidth = 15; g.beginPath(); g.moveTo(hx, hipY - 10); g.lineTo(knee[0], knee[1]); g.lineTo(foot[0], foot[1]); g.stroke();
         g.fillStyle = INK; g.beginPath(); g.ellipse(foot[0] - 10, foot[1] + 1, 20, 9.5, 0, 0, 7); g.fill();
       } }
     g.save(); g.translate(256 + (p.hip || 0) * 0.6, hipY); g.rotate(R(-lean) + R((p.hip || 0) * 0.08)); g.translate(-256, -hipY);   // +lean = forward; hip shift tilts the torso a little
@@ -111,13 +111,13 @@ export class Flat2D {
     const arm = (s, a) => {
       const [sa, eb] = a || [22, 6]; const sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30, L1 = 84, L2 = 78; const a1 = R(sa), a2 = R(sa + eb);
       const el = [sx + s * Math.sin(a1) * L1, sy + Math.cos(a1) * L1], hd = [el[0] + s * Math.sin(a2) * L2, el[1] + Math.cos(a2) * L2];
-      g.strokeStyle = INK; g.lineWidth = 12; g.beginPath(); g.moveTo(sx, sy); g.lineTo(el[0], el[1]); g.lineTo(hd[0], hd[1]); g.stroke();
-      g.fillStyle = '#3a2620'; g.beginPath(); g.arc(hd[0], hd[1], 18, 0, 7); g.fill(); g.lineWidth = 3; g.stroke();
+      g.strokeStyle = INK; g.lineWidth = 17; g.beginPath(); g.moveTo(sx, sy); g.lineTo(el[0], el[1]); g.lineTo(hd[0], hd[1]); g.stroke();
+      g.fillStyle = '#3a2620'; g.beginPath(); g.arc(hd[0], hd[1], 24, 0, 7); g.fill(); g.lineWidth = 3; g.stroke();
       g.fillStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.arc(hd[0] - 5, hd[1] - 5, 4, 0, 7); g.fill();
       hd.ang = s * (sa + eb); hd.s = s; return hd;
     };
     const HH = p.handHead; const headHand = HH ? [256 + (HH === 'R' ? 1 : -1) * 128, 400 - 130 + 26 + bob - 40] : null;
-    if (HH) { const s = HH === 'R' ? 1 : -1, sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30; g.strokeStyle = INK; g.lineWidth = 12; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + s * 90, sy - 40); g.lineTo(headHand[0] + s * 10, headHand[1] + 10); g.stroke(); }
+    if (HH) { const s = HH === 'R' ? 1 : -1, sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30; g.strokeStyle = INK; g.lineWidth = 17; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + s * 90, sy - 40); g.lineTo(headHand[0] + s * 10, headHand[1] + 10); g.stroke(); }
     this.handL = HH === 'L' ? null : arm(-1, p.armL); this.handR = HH === 'R' ? null : arm(1, p.armR);
     if (p.prop) { const hd = (p.propHand === 'L' ? this.handL : this.handR) || this.handR; if (hd) this.prop(g, p.prop, hd); }
     // ---- head ----
@@ -127,7 +127,7 @@ export class Flat2D {
     this.wpath(g, headPts); g.fillStyle = o.skin; g.fill();
     g.save(); this.wpath(g, headPts); g.clip();
     if (p.tint) { const [tc, tk] = Array.isArray(p.tint) ? p.tint : [p.tint, 0.7]; g.globalAlpha = tk; g.fillStyle = tc; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); g.globalAlpha = 1; }
-    { const sh = g.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.1, r * 0.1, r * 0.15, r * 1.15); sh.addColorStop(0, 'rgba(255,255,255,0.28)'); sh.addColorStop(0.55, 'rgba(255,255,255,0)'); sh.addColorStop(0.85, 'rgba(90,60,50,0.10)'); sh.addColorStop(1, 'rgba(70,40,40,0.28)'); g.fillStyle = sh; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); }   // soft 3D shading + sheen on the head
+    { const sh = g.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.1, r * 0.1, r * 0.15, r * 1.15); sh.addColorStop(0, 'rgba(255,255,255,0.45)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(0.78, 'rgba(90,60,60,0.16)'); sh.addColorStop(1, 'rgba(60,30,40,0.42)'); g.fillStyle = sh; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); }   // soft 3D shading + sheen on the head
     if (o.hair && (o.hairStyle === 'bangs' || o.hairStyle === 'cap')) { g.save(); g.translate((p.turn || 0) * 16, 0); this.hair(g, r); g.restore(); }
     g.restore();
     this.outline(g, headPts, 5.5);
@@ -273,11 +273,11 @@ export class Flat2D {
       g.save(); g.translate(s * ex, ey); g.scale(ek, ek); g.translate(-s * ex, -ey);
       const x = s * ex; g.strokeStyle = INK; g.fillStyle = '#55555e';
       if (eyes === 'lid') {   // reference eye: small black pupil, upper lid covering part of it (lid 0..1), lid can tilt (angry / worried)
-        const lid = f.lid ?? 0.45, tl = (f.lidTilt || 0) * s; const ew = 10, eh = 13, cy = ey - 4;
+        const lid = f.lid ?? 0.45, tl = (f.lidTilt || 0) * s; const ew = 13, eh = 17, cy = ey - 4;
         g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, cy + ly, ew, eh, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(x + lx - 3, cy + ly + 2, 2.6, 0, 7); g.fill();
         const ly0 = cy - eh + lid * eh * 2; g.fillStyle = this.o.skin; g.beginPath(); g.moveTo(x - 20, cy - eh - 6); g.lineTo(x + 20, cy - eh - 6); g.lineTo(x + 20, ly0 - tl * 14); g.lineTo(x - 20, ly0 + tl * 14); g.closePath(); g.fill();
         g.strokeStyle = INK; g.lineWidth = 4.5; g.beginPath(); g.moveTo(x - 15, ly0 + tl * 10); g.lineTo(x + 15, ly0 - tl * 10); g.stroke(); }
-      else if (eyes === 'dot') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 6 + ly, 9.5, 14.5, 0, 0, 7); g.fill(); }
+      else if (eyes === 'dot') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 6 + ly, 13, 19.5, 0, 0, 7); g.fill(); }
       else if (eyes === 'sly') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 4, 12, 7, 0, 0, 7); g.fill(); g.lineWidth = 5; g.beginPath(); g.moveTo(x - 17, ey - 9 - s * 3); g.lineTo(x + 17, ey - 9 + s * 3); g.stroke(); }
       else if (eyes === 'calm') {      // reference eye: grey half-lidded ellipse with a lid line
         g.beginPath(); g.ellipse(x + lx, ey + ly + 2, 14, 8.5, 0, 0, 7); g.fill();
@@ -290,10 +290,10 @@ export class Flat2D {
       else if (eyes === 'happy') { g.lineWidth = 4.5; g.beginPath(); g.arc(x, ey + 8, 13, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
       else if (eyes === 'sleepy') { g.beginPath(); g.ellipse(x + lx, ey + 5, 13, 5, 0, 0, Math.PI); g.fill(); g.lineWidth = 4; g.beginPath(); g.moveTo(x - 16, ey + 4); g.lineTo(x + 16, ey + 4); g.stroke(); }
       const bs = s < 0 ? f.browL : f.browR;
-      if (bs !== undefined) { const b = bs; const by = ey - 30 - Math.max(0, b) * 10; g.lineWidth = 6; g.beginPath(); g.moveTo(x - s * 15, by + (b < 0 ? -b * 9 : -b * 2)); g.quadraticCurveTo(x, by - 4 - Math.max(0, b) * 3, x + s * 15, by + (b < 0 ? b * 3 : b * 6)); g.stroke(); }
+      if (bs !== undefined) { const b = bs; const by = ey - 32 - Math.max(0, b) * 10; g.lineWidth = 8.5; g.beginPath(); g.moveTo(x - s * 15, by + (b < 0 ? -b * 9 : -b * 2)); g.quadraticCurveTo(x, by - 4 - Math.max(0, b) * 3, x + s * 15, by + (b < 0 ? b * 3 : b * 6)); g.stroke(); }
       else if (f.sly) { g.lineWidth = 7; g.beginPath(); g.moveTo(x - s * 4 + s * 22, ey - 40); g.lineTo(x - s * 20, ey - 26); g.stroke(); }
-      else if (!brow) { const by = ey - (eyes === 'wide' ? 46 : 34); g.lineWidth = 5; g.beginPath(); g.moveTo(x - s * 13, by + 3); g.quadraticCurveTo(x, by - 6, x + s * 15, by + 2); g.stroke(); }
-      else if (brow) { const by = ey - (eyes === 'wide' || eyes === 'tiny' ? 46 : 26) - Math.max(0, brow) * 8; g.lineWidth = 5; g.beginPath(); g.moveTo(x - s * 15, by + (brow < 0 ? -brow * 9 : -brow * 3)); g.lineTo(x + s * 15, by + (brow < 0 ? brow * 3 : brow * 5)); g.stroke(); }
+      else if (!brow) { const by = ey - (eyes === 'wide' ? 46 : 36); g.lineWidth = 8.5; g.beginPath(); g.moveTo(x - s * 13, by + 3); g.quadraticCurveTo(x, by - 6, x + s * 15, by + 2); g.stroke(); }
+      else if (brow) { const by = ey - (eyes === 'wide' || eyes === 'tiny' ? 48 : 30) - Math.max(0, brow) * 8; g.lineWidth = 8.5; g.beginPath(); g.moveTo(x - s * 15, by + (brow < 0 ? -brow * 9 : -brow * 3)); g.lineTo(x + s * 15, by + (brow < 0 ? brow * 3 : brow * 5)); g.stroke(); }
     g.restore(); }
     if (this.o.beard) { g.fillStyle = this.o.beard; g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(-r * 0.72, r * 0.38); g.quadraticCurveTo(-r * 0.62, r * 1.12, 0, r * 1.16); g.quadraticCurveTo(r * 0.62, r * 1.12, r * 0.72, r * 0.38); g.quadraticCurveTo(r * 0.4, r * 0.86, 0, r * 0.84); g.quadraticCurveTo(-r * 0.4, r * 0.86, -r * 0.72, r * 0.38); g.closePath(); g.fill(); g.stroke(); }
     if (this.o.glasses) { g.strokeStyle = INK; g.lineWidth = 4.5; g.fillStyle = 'rgba(200,230,255,0.25)'; for (const s of [-1, 1]) { g.beginPath(); if (this.o.glasses === 'square') g.rect(s * 40 - 22, -18, 44, 34); else g.arc(s * 40, -2, 24, 0, 7); g.fill(); g.stroke(); } g.beginPath(); g.moveTo(-16, -6); g.quadraticCurveTo(0, -14, 16, -6); g.stroke(); }
