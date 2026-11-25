@@ -71,7 +71,7 @@ export class Flat2D {
       bob: (p.bob || 0) + 2.2 * breathe - ON * 10, hop: (p.hop || 0), tilt: (p.tilt || 0) + 3 * Math.sin(t * 0.8 + sd) + ON * 9 * (sd % 2 > 1 ? 1 : -1) + E * 2 * Math.sin(t * 5 + sd),
       squash: (p.squash || 0) + Math.min(0.06, ON * 0.08), lean: (p.lean || 0) + 1.5 * Math.sin(t * 0.7 + sd), hatOff: (p.hatOff || 0) + ON * 8 };
   }
-  headWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.5 : 0.70), 0)); }
+  headWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.5 : 0.76), 0)); }
   bodyWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.35 : 0.5), 0)); }
   update(p = {}, cam) {
     p = this.alive(p); this.draw(p); this.tex.needsUpdate = true;
@@ -90,50 +90,50 @@ export class Flat2D {
     const flip = p.flip ? -1 : 1; g.translate(256, 0); g.scale(flip, 1); g.translate(-256, 0);
     g.lineJoin = 'round'; g.lineCap = 'round';
     const kn = p.kneel || 0, drop = 175 * kn; const bob = (p.bob || 0) - (p.hop || 0) + drop, sq = p.squash || 0, lean = p.lean || 0;
-    const hipY = 712 + ((p.bob || 0) - (p.hop || 0)) * 0.7 + drop;
+    const hipY = 736 + ((p.bob || 0) - (p.hop || 0)) * 0.7 + drop;
     if (p.lines) this.speedLines(g, p.lines);
     // ---- legs: long thin lines, tiny dark feet ----
     if (!o.bust) { const ph = p.walk || 0, amp = p.amp ?? 0;
       for (const s of [-1, 1]) {
-        const sw = Math.sin(ph + (s > 0 ? 0 : Math.PI)); let a = R(amp * sw + (p.legOut || 0) * s); const hx = 256 + s * 20 + (p.hip || 0) * 0.5, L1 = 146, L2 = 138;
+        const sw = Math.sin(ph + (s > 0 ? 0 : Math.PI)); let a = R(amp * sw + (p.legOut || 0) * s); const hx = 256 + s * 22 + (p.hip || 0) * 0.5, L1 = 134, L2 = 126;
         const hipS = p.hip || 0, free = hipS !== 0 && Math.sign(hipS) !== s;   // contrapposto: weight on one leg, the other knee bends
         if (!amp && !kn) a += R(s * (free ? 9 : 3));   // feet a little apart, the free leg a bit wider
         if (kn) a = s > 0 ? R(-62 * kn) : R(8 * kn);   // kneel: front thigh forward, back knee on the ground
         const knee = [hx + Math.sin(a) * L1, hipY + Math.cos(a) * L1]; let kb = a + R(Math.max(0, Math.cos(ph + (s > 0 ? 0 : Math.PI))) * amp * 1.2); if (kn) kb = s > 0 ? R(0) : R(88 * kn); else if (!amp) kb = a - R(s * (free ? 7 : 2)) + R(free ? 12 : 3);   // shin swings BACK (character faces left by default)
         const foot = [knee[0] + Math.sin(kb) * L2, Math.min(992, knee[1] + Math.cos(kb) * L2)];
-        g.strokeStyle = INK; g.lineWidth = 16; g.beginPath(); g.moveTo(hx, hipY - 10); g.lineTo(knee[0], knee[1]); g.lineTo(foot[0], foot[1]); g.stroke();
+        g.strokeStyle = INK; g.lineWidth = 13; g.beginPath(); g.moveTo(hx, hipY - 10); g.lineTo(knee[0], knee[1]); g.lineTo(foot[0], foot[1]); g.stroke();
         g.fillStyle = INK; g.beginPath(); g.ellipse(foot[0] - 10, foot[1] + 1, 20, 9.5, 0, 0, 7); g.fill();
       } }
     g.save(); g.translate(256 + (p.hip || 0) * 0.6, hipY); g.rotate(R(-lean) + R((p.hip || 0) * 0.08)); g.translate(-256, -hipY);   // +lean = forward; hip shift tilts the torso a little
-    const top = 448 + bob + sq * 14, hem = 722 + bob * 0.6;   // reference proportions: head 35% / torso 33% / legs 32%
+    const top = 400 + bob + sq * 14, hem = 742 + bob * 0.6;   // adult proportions: head ~27%, long bean torso, legs ~28%   // reference proportions: head 35% / torso 33% / legs 32%
     { const bw = (o.width || 1) * 1.5; g.save(); g.translate(256, 0); g.scale(bw, 1); g.translate(-256, 0); this.body(g, o, top, hem); this.extras(g, o, top, hem); g.restore(); }
     // ---- arms: thin lines, round dark hands ----
     const arm = (s, a) => {
       const [sa, eb] = a || [22, 6]; const sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30, L1 = 84, L2 = 78; const a1 = R(sa), a2 = R(sa + eb);
       const el = [sx + s * Math.sin(a1) * L1, sy + Math.cos(a1) * L1], hd = [el[0] + s * Math.sin(a2) * L2, el[1] + Math.cos(a2) * L2];
-      g.strokeStyle = INK; g.lineWidth = 15.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(el[0], el[1]); g.lineTo(hd[0], hd[1]); g.stroke();
-      g.fillStyle = '#3a2620'; g.beginPath(); g.arc(hd[0], hd[1], 22, 0, 7); g.fill(); g.lineWidth = 3; g.stroke();
+      g.strokeStyle = INK; g.lineWidth = 12; g.beginPath(); g.moveTo(sx, sy); g.lineTo(el[0], el[1]); g.lineTo(hd[0], hd[1]); g.stroke();
+      g.fillStyle = '#3a2620'; g.beginPath(); g.arc(hd[0], hd[1], 18, 0, 7); g.fill(); g.lineWidth = 3; g.stroke();
       g.fillStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.arc(hd[0] - 5, hd[1] - 5, 4, 0, 7); g.fill();
       hd.ang = s * (sa + eb); hd.s = s; return hd;
     };
-    const HH = p.handHead; const headHand = HH ? [256 + (HH === 'R' ? 1 : -1) * 140, 448 - 145 + 22 + bob - 40] : null;
-    if (HH) { const s = HH === 'R' ? 1 : -1, sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30; g.strokeStyle = INK; g.lineWidth = 15.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + s * 90, sy - 40); g.lineTo(headHand[0] + s * 10, headHand[1] + 10); g.stroke(); }
+    const HH = p.handHead; const headHand = HH ? [256 + (HH === 'R' ? 1 : -1) * 128, 400 - 130 + 26 + bob - 40] : null;
+    if (HH) { const s = HH === 'R' ? 1 : -1, sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30; g.strokeStyle = INK; g.lineWidth = 12; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + s * 90, sy - 40); g.lineTo(headHand[0] + s * 10, headHand[1] + 10); g.stroke(); }
     this.handL = HH === 'L' ? null : arm(-1, p.armL); this.handR = HH === 'R' ? null : arm(1, p.armR);
     if (p.prop) { const hd = (p.propHand === 'L' ? this.handL : this.handR) || this.handR; if (hd) this.prop(g, p.prop, hd); }
     // ---- head ----
-    const r = 116 * (o.head ?? 1.42), hx = 256 + (p.headX || 0), hy = 448 - r + 22 + bob + sq * 22;   // big head like the reference; bottom sits on the collar
+    const r = 116 * (o.head ?? 1.12), hx = 256 + (p.headX || 0), hy = 400 - r + 26 + bob + sq * 22;   // big head like the reference; bottom sits on the collar
     g.save(); g.translate(hx, hy); g.rotate(R(p.tilt || 0)); g.scale(1 + sq * 0.12, 1 - sq * 0.1);
-    const headPts = this.ell(0, 0, r, r * 1.0, 56);
+    const headPts = this.ell(0, 0, r * 1.07, r * 0.94, 64);   // slightly wide oval head (reference)
     this.wpath(g, headPts); g.fillStyle = o.skin; g.fill();
     g.save(); this.wpath(g, headPts); g.clip();
     if (p.tint) { const [tc, tk] = Array.isArray(p.tint) ? p.tint : [p.tint, 0.7]; g.globalAlpha = tk; g.fillStyle = tc; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); g.globalAlpha = 1; }
     { const sh = g.createRadialGradient(-r * 0.35, -r * 0.45, r * 0.1, r * 0.1, r * 0.15, r * 1.15); sh.addColorStop(0, 'rgba(255,255,255,0.28)'); sh.addColorStop(0.55, 'rgba(255,255,255,0)'); sh.addColorStop(0.85, 'rgba(90,60,50,0.10)'); sh.addColorStop(1, 'rgba(70,40,40,0.28)'); g.fillStyle = sh; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); }   // soft 3D shading + sheen on the head
     if (o.hair && (o.hairStyle === 'bangs' || o.hairStyle === 'cap')) { g.save(); g.translate((p.turn || 0) * 16, 0); this.hair(g, r); g.restore(); }
     g.restore();
-    this.outline(g, headPts, 9);
+    this.outline(g, headPts, 5.5);
     if (o.hair && o.hairStyle === 'tufts') { g.save(); g.translate((p.turn || 0) * 14, 0); this.tufts(g, r); g.restore(); }
     if (o.hair && ['pompadour', 'side', 'messy', 'pigtails'].includes(o.hairStyle)) this.bigHair(g, r);
-    { const tu = clamp(p.turn || 0, -0.8, 0.8); g.save(); const fk = r / 116 * 1.06; g.translate(tu * 52 * fk, 4 * fk); g.scale((1 - 0.2 * Math.abs(tu)) * fk, fk); this._tu = tu; this.face(g, p.face || {}, 116); this._tu = 0; g.restore(); }   // facial features scale with the head
+    { const tu = clamp(p.turn || 0, -0.8, 0.8); g.save(); const fk = r / 116 * 0.95; g.translate(tu * 52 * fk, 16 * fk); g.scale((1 - 0.2 * Math.abs(tu)) * fk, fk); this._tu = tu; this.face(g, p.face || {}, 116); this._tu = 0; g.restore(); }   // facial features scale with the head
     if (p.blush) { g.fillStyle = `rgba(230,60,60,${0.55 * p.blush})`; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 62, 40, 28, 15, 0, 0, 7); g.fill(); } g.strokeStyle = 'rgba(180,30,30,0.6)'; g.lineWidth = 3; for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(s * 50 + k * 10 - 10, 32); g.lineTo(s * 50 + k * 10 - 16, 48); g.stroke(); } }
     if (p.tears) { const T = Flat2D.T || 0; g.fillStyle = '#7cc8ff'; g.strokeStyle = INK; g.lineWidth = 2.5; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * 40 - 8, 8); g.lineTo(s * 40 + 8, 8); g.lineTo(s * 46, 120); g.lineTo(s * 34, 120); g.closePath(); g.globalAlpha = 0.85; g.fill(); g.globalAlpha = 1; for (let k = 0; k < 2; k++) { const y = 20 + ((T * 140 + k * 50 + (s > 0 ? 25 : 0)) % 110); g.beginPath(); g.arc(s * 42, y, 6, 0, 7); g.fill(); g.stroke(); } } }
     g.save(); g.translate((p.turn || 0) * 12, 0); this.hat(g, r, p.hatOff || 0); g.restore();
@@ -264,7 +264,7 @@ export class Flat2D {
     }
   }
   face(g, f, r) {
-    const lx = (f.look?.[0] || 0) * 8, ly = (f.look?.[1] || 0) * 6, ey = -2, ex = 45;
+    const lx = (f.look?.[0] || 0) * 8, ly = (f.look?.[1] || 0) * 6, ey = -4, ex = 42;
     const eyes = f.eyes || 'calm', mouth = f.mouth || 'smile', brow = f.brow ?? 0;
     
     const TU = this._tu || 0;
@@ -277,7 +277,7 @@ export class Flat2D {
         g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, cy + ly, ew, eh, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(x + lx - 3, cy + ly + 2, 2.6, 0, 7); g.fill();
         const ly0 = cy - eh + lid * eh * 2; g.fillStyle = this.o.skin; g.beginPath(); g.moveTo(x - 20, cy - eh - 6); g.lineTo(x + 20, cy - eh - 6); g.lineTo(x + 20, ly0 - tl * 14); g.lineTo(x - 20, ly0 + tl * 14); g.closePath(); g.fill();
         g.strokeStyle = INK; g.lineWidth = 4.5; g.beginPath(); g.moveTo(x - 15, ly0 + tl * 10); g.lineTo(x + 15, ly0 - tl * 10); g.stroke(); }
-      else if (eyes === 'dot') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 6 + ly, 10.5, 16.5, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(x + lx - 3, ey - 11 + ly, 3, 0, 7); g.fill(); }
+      else if (eyes === 'dot') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 6 + ly, 9.5, 14.5, 0, 0, 7); g.fill(); }
       else if (eyes === 'sly') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 4, 12, 7, 0, 0, 7); g.fill(); g.lineWidth = 5; g.beginPath(); g.moveTo(x - 17, ey - 9 - s * 3); g.lineTo(x + 17, ey - 9 + s * 3); g.stroke(); }
       else if (eyes === 'calm') {      // reference eye: grey half-lidded ellipse with a lid line
         g.beginPath(); g.ellipse(x + lx, ey + ly + 2, 14, 8.5, 0, 0, 7); g.fill();
@@ -290,9 +290,9 @@ export class Flat2D {
       else if (eyes === 'happy') { g.lineWidth = 4.5; g.beginPath(); g.arc(x, ey + 8, 13, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
       else if (eyes === 'sleepy') { g.beginPath(); g.ellipse(x + lx, ey + 5, 13, 5, 0, 0, Math.PI); g.fill(); g.lineWidth = 4; g.beginPath(); g.moveTo(x - 16, ey + 4); g.lineTo(x + 16, ey + 4); g.stroke(); }
       const bs = s < 0 ? f.browL : f.browR;
-      if (bs !== undefined) { const b = bs; const by = ey - 30 - Math.max(0, b) * 10; g.lineWidth = 8; g.beginPath(); g.moveTo(x - s * 15, by + (b < 0 ? -b * 9 : -b * 2)); g.quadraticCurveTo(x, by - 4 - Math.max(0, b) * 3, x + s * 15, by + (b < 0 ? b * 3 : b * 6)); g.stroke(); }
+      if (bs !== undefined) { const b = bs; const by = ey - 30 - Math.max(0, b) * 10; g.lineWidth = 6; g.beginPath(); g.moveTo(x - s * 15, by + (b < 0 ? -b * 9 : -b * 2)); g.quadraticCurveTo(x, by - 4 - Math.max(0, b) * 3, x + s * 15, by + (b < 0 ? b * 3 : b * 6)); g.stroke(); }
       else if (f.sly) { g.lineWidth = 7; g.beginPath(); g.moveTo(x - s * 4 + s * 22, ey - 40); g.lineTo(x - s * 20, ey - 26); g.stroke(); }
-      else if (!brow) { const by = ey - (eyes === 'wide' ? 46 : 38); g.lineWidth = 7; g.beginPath(); g.moveTo(x - s * 13, by + 3); g.quadraticCurveTo(x, by - 6, x + s * 15, by + 2); g.stroke(); }
+      else if (!brow) { const by = ey - (eyes === 'wide' ? 46 : 34); g.lineWidth = 5; g.beginPath(); g.moveTo(x - s * 13, by + 3); g.quadraticCurveTo(x, by - 6, x + s * 15, by + 2); g.stroke(); }
       else if (brow) { const by = ey - (eyes === 'wide' || eyes === 'tiny' ? 46 : 26) - Math.max(0, brow) * 8; g.lineWidth = 5; g.beginPath(); g.moveTo(x - s * 15, by + (brow < 0 ? -brow * 9 : -brow * 3)); g.lineTo(x + s * 15, by + (brow < 0 ? brow * 3 : brow * 5)); g.stroke(); }
     g.restore(); }
     if (this.o.beard) { g.fillStyle = this.o.beard; g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(-r * 0.72, r * 0.38); g.quadraticCurveTo(-r * 0.62, r * 1.12, 0, r * 1.16); g.quadraticCurveTo(r * 0.62, r * 1.12, r * 0.72, r * 0.38); g.quadraticCurveTo(r * 0.4, r * 0.86, 0, r * 0.84); g.quadraticCurveTo(-r * 0.4, r * 0.86, -r * 0.72, r * 0.38); g.closePath(); g.fill(); g.stroke(); }
