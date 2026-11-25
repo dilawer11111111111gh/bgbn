@@ -9,7 +9,7 @@ import { role, act } from '../../web/roles.js';
 import { sstep, clamp, lerp } from '../../web/motion.js';
 import { WORDS } from './words.js';
 import { ENERGY, ONSET } from './energy.js';
-export const DURATION = 26.95;
+export const DURATION = 32.85;
 const T = (i) => WORDS[i][1];
 const DOCK = 1.2;   // dock deck height (water = 0)
 let WATER = null;
@@ -88,8 +88,8 @@ const S = { sec: new Sign('2 SECONDS', { bg: '#e8402a', fg: '#fff', h: 0.7 }), u
   same2: new Sign('SAME IRON!', { bg: '#f6d84a', h: 0.6 }), buoy: new Sign('BUOYANCY!', { bg: '#7ad85a', h: 1.1 }) };
 const B = { sparks: new Burst({ n: 30, dur: 1, life: 0.35, speed: [2, 5], dir: [0, 1, 0.4], spread: 0.9, g: -10, size: [0.05, 0.12], tex: 'spark', add: true, seed: 1 }),
   sparks2: new Burst({ n: 30, dur: 1, life: 0.35, speed: [2, 5], dir: [0, 1, 0.4], spread: 0.9, g: -10, size: [0.05, 0.12], tex: 'spark', add: true, seed: 2 }),
-  splash: new Burst({ n: 50, dur: 0.25, life: 1.3, speed: [3, 9], dir: [0, 1, 0.3], spread: 0.7, g: -12, size: [0.6, 1.6], grow: 1.2, tex: 'splash', seed: 3 }),
-  splash2: new Burst({ n: 40, dur: 0.25, life: 1.1, speed: [2, 6], dir: [0, 1, 0.3], spread: 0.7, g: -12, size: [0.4, 1.1], grow: 1.0, tex: 'splash', seed: 4 }),
+  splash: new Burst({ n: 34, dur: 0.25, life: 1.1, speed: [3, 8], dir: [0, 1, 0.1], spread: 0.6, g: -12, size: [0.3, 0.8], grow: 0.8, tex: 'splash', opacity: 0.75, seed: 3 }),
+  splash2: new Burst({ n: 28, dur: 0.25, life: 1.0, speed: [2, 6], dir: [0, 1, 0.1], spread: 0.6, g: -12, size: [0.25, 0.7], grow: 0.8, tex: 'splash', opacity: 0.75, seed: 4 }),
   bubbles: new Burst({ n: 60, dur: 2, life: 1.6, speed: [0.5, 1.6], dir: [0, 1, 0], spread: 0.5, g: 1.5, size: [0.12, 0.35], tex: 'bubble', seed: 5 }),
   bubbles2: new Burst({ n: 40, dur: 2, life: 2.0, speed: [0.3, 1.0], dir: [0, 1, 0], spread: 0.4, g: 1.2, size: [0.1, 0.28], tex: 'bubble', seed: 6 }),
   confetti: new Burst({ n: 90, dur: 0.6, life: 2.4, speed: [4, 8], dir: [0, 1, 0], spread: 0.8, g: -4, size: [0.12, 0.2], tex: 'confetti', seed: 7 }),
@@ -183,35 +183,24 @@ function fx(t, st) {
 }
 
 // =================== CAMERA (director) ===================
-const CINE = new Cine({ blend: 0.28 }); const pt = (x, y, z) => { const f = () => V(x, y, z); f.pure = true; return f; };
+const CINE = new Cine({ blend: 0.6 }); const pt = (x, y, z) => { const f = () => V(x, y, z); f.pure = true; return f; };
 const burlH = () => BURL.headWorld().add(V(0, -0.35, 0)), pipH = () => PIP.headWorld().add(V(0, -0.3, 0)), bboat = () => BURLB.position.clone().add(V(0, 1.6, 0)), pboat = () => PIPB.position.clone().add(V(0, 0.6, 0));
+const CALM = { kick: 2, swing: 1, shake: 0.15 };   // readable pacing: gentle transitions, no camera jerks
 const BEATS = [
-  { t0: 0, t1: T(5), beat: 'establish', at: pt(0, 2, 0), az: 20, big: 34, mid: 20 },
-  { t0: T(5), t1: T(7), cut: true, shot: 'dollyIn', at: () => V(-4.5, 1.2, 8.2), size: 5, az: 70 },
-  { t0: T(7), t1: T(9), shot: 'orbit', at: () => V(-4.5, 1.0, 9.0), size: 6.5, az: 55, over: { az: [60, 40], el: [8, 10] } },
-  { t0: T(9), t1: T(16), cut: true, shot: 'craneDown', at: burlH, big: 7, size: 2.6, az: 25 },
-  { t0: T(16), t1: T(18), shot: 'track', at: bboat, heading: Math.PI / 2, side: -1, size: 5, over: { az: [-70, -40] } },
-  { t0: T(18), t1: T(24), shot: 'low', at: burlH, size: 2.6, az: -20 },
-  { t0: T(24), t1: T(27), cut: true, shot: 'whip', at: pipH, size: 2.2, az: -20 },
-  { t0: T(27), t1: T(31), shot: 'orbit', at: pipH, size: 2.6, az: -30 },
-  { t0: T(31), t1: T(36), shot: 'orbit', at: () => V(12.2, DOCK + 0.9, -8.6), size: 5.0, az: 22, over: { az: [30, 12], el: [10, 8] } },
-  { t0: T(36), t1: T(41), shot: 'orbit', at: () => V(12.1, DOCK + 1.3, -8.6), size: 6.2, az: 25, over: { az: [30, 8], el: [12, 9] } },
-  { t0: T(41), t1: T(47), shot: 'handheld', at: pt(-11.5, DOCK + 1.3, -1.5), size: 6.8, az: 22 },
-  { t0: T(47), t1: T(50), cut: true, shot: 'drone', at: pt(0, 1.5, 2), big: 26, mid: 16, az: 15 },
-  { t0: T(50), t1: T(52), shot: 'orbit', at: bboat, size: 5.5, az: 80, over: { az: [90, 60], el: [4, 6] } },
-  { t0: T(52), t1: T(53), shot: 'closeup', at: burlH, size: 1.6, az: 30 },
-  { t0: T(53), t1: T(57), shot: 'orbit', at: () => V(-4.5, 0.8, 9.5), size: 7, az: 75, over: { az: [80, 60], el: [10, 6] } },
-  { t0: T(57), t1: T(60), shot: 'orbit', at: pboat, size: 4.5, az: 60, over: { az: [70, 40], el: [5, 6] } },
-  { t0: T(60), t1: T(61), shot: 'track', at: pboat, size: 4.6, az: 90, over: { az: [95, 80], el: [4, 5] } },
-  { t0: T(61), t1: T(63), shot: 'orbit', at: () => PIPB.position.clone().add(V(0, 1.4, 0)), size: 5.5, az: -30, over: { az: [-30, -5], el: [12, 10] } },
-  { t0: T(63), t1: T(68), cut: true, shot: 'static', at: () => V(0.5, -1.2, 9), size: 13, az: 90, over: { el: [2, 3] } },
-  { t0: T(68), t1: T(76), shot: 'dollyIn', at: () => PIPB.position.clone().add(V(0, 0.6, 0)), size: 8.5, az: 92 },
-  { t0: T(76), t1: T(77), shot: 'closeup', at: () => PIPB.position.clone().add(V(3.2, 4.2, 0)), size: 3, az: 90 },
-  { t0: T(77), t1: T(82), shot: 'orbit', at: () => V(0.5, -2.0, 8.5), size: 12, az: 80, over: { az: [85, 100], el: [2, 3] } },
-  { t0: T(82), t1: T(86), shot: 'static', at: () => V(0.5, -1.0, 8.5), size: 13, az: 95 },
-  { t0: T(86), t1: T(88), shot: 'orbit', at: () => PIPB.position.clone().add(V(0, 1.4, 0)), size: 5.5, az: 60, over: { az: [65, 45], el: [12, 10] } },
-  { t0: T(88), t1: T(90), cut: true, shot: 'whip', at: burlH, size: 3, az: 70 },
-  { t0: T(90), t1: DURATION + 0.1, shot: 'orbit', at: burlH, size: 3.4, az: 120, over: { az: [125, 100], el: [6, 10] } },
+  { t0: 0, t1: T(5), beat: 'establish', at: pt(0, 2, 0), az: 20, big: 30, mid: 20, over: CALM },
+  { t0: T(5), t1: T(9), cut: true, shot: 'orbit', at: () => V(-4.5, 1.0, 9.0), size: 7, az: 55, over: { ...CALM, az: [60, 45], el: [8, 9] } },
+  { t0: T(9), t1: T(16), cut: true, shot: 'craneDown', at: burlH, big: 6, size: 2.8, az: 25, over: CALM },
+  { t0: T(16), t1: T(21), shot: 'orbit', at: () => V(-5.6, DOCK + 1.6, -2.4), size: 5.2, az: -35, over: { ...CALM, az: [-40, -25], el: [6, 7] } },
+  { t0: T(21), t1: T(24), shot: 'low', at: burlH, size: 2.8, az: -20, over: { ...CALM, az: [-22, -12] } },
+  { t0: T(24), t1: T(31), cut: true, shot: 'orbit', at: pipH, size: 2.8, az: -25, over: { ...CALM, az: [-28, -10], el: [5, 6] } },
+  { t0: T(31), t1: T(41), shot: 'orbit', at: () => V(12.1, DOCK + 1.1, -8.6), size: 6.0, az: 25, over: { ...CALM, az: [28, 12], el: [10, 9] } },
+  { t0: T(41), t1: T(47), shot: 'orbit', at: pt(-11.5, DOCK + 1.3, -1.5), size: 6.8, az: 22, over: { ...CALM, az: [24, 12], el: [6, 6] } },
+  { t0: T(47), t1: T(52), cut: true, shot: 'drone', at: pt(-1, 1.5, 3), big: 22, mid: 16, az: 15, over: CALM },
+  { t0: T(52), t1: T(57), shot: 'orbit', at: () => V(-4.5, 1.6, 9.0), size: 6.5, az: 70, over: { ...CALM, az: [72, 60], el: [8, 7] } },
+  { t0: T(57), t1: T(63), shot: 'orbit', at: pboat, size: 5.5, az: 60, over: { ...CALM, az: [65, 85], el: [8, 6] } },
+  { t0: T(63), t1: T(77), cut: true, shot: 'static', at: () => V(0.5, -1.2, 9), size: 13, az: 90, over: { ...CALM, el: [2, 3] } },
+  { t0: T(77), t1: T(88), shot: 'orbit', at: () => V(0.5, -1.4, 8.5), size: 12, az: 85, over: { ...CALM, az: [86, 96], el: [2, 3] } },
+  { t0: T(88), t1: DURATION + 0.1, cut: true, shot: 'orbit', at: burlH, size: 3.4, az: 120, over: { ...CALM, az: [122, 108], el: [6, 9] } },
 ];
 direct(CINE, BEATS);
 const composer = makeComposer({ sat: 1.4, con: 1.07, bloom: 0.25 });
