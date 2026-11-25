@@ -4,12 +4,12 @@
 import { Flat2D } from '../../web/flat2d.js';
 import { act } from '../../web/roles.js';
 const C = [
- [{ body: 'vest', coat: '#2a9a8a', shirt: '#f4f0e6', bandana: '#d8343a', hat: 'engineer', hatCol: '#3a5a9a', band: '#f4f0e6', hair: '#6a3a1e', hairStyle: 'tufts', rest: 'hip', width: 1.0, seed: 2 }, { face: 'smug', turn: 0.35 }],
- [{ body: 'vest', coat: '#e8b83a', shirt: '#fff', bow: '#1a1a1a', buttons: '#c89a2a', pocket: 1, hat: 'bowler', hatCol: '#2a2a2e', band: '#2a2a2e', hair: '#3a2418', hairStyle: 'tufts', rest: 'pockets', width: 1.2, seed: 4 }, { face: 'angry', tint: ['#8a4ad0', 0.8], steam: 1, turn: -0.2 }],
- [{ body: 'overalls', coat: '#5b86c4', shirt: '#f2b53a', patch: '#c8342a', hat: 'ball', hatCol: '#d23a32', band: '#d23a32', hair: '#6a3a1e', hairStyle: 'tufts', rest: 'hip', size: 1.75, width: 1.05, seed: 7 }, { face: 'grin', turn: 0.1 }],
- [{ body: 'bean', coat: '#f1e6c8', shirt: '#fff', tie: '#1a1a1a', badge: '#e8b83a', hat: null, hair: '#3a2418', hairStyle: 'pompadour', rest: 'hip', size: 2.0, width: 0.9, seed: 5 }, { face: 'evil', turn: 0.3 }],
- [{ body: 'coat', coat: '#3a5ab0', tie: null, badge: null, hat: null, hair: '#6a4630', hairStyle: 'messy', rest: 'hang', size: 1.85, width: 1.0, seed: 9 }, { face: 'happy', turn: -0.25 }],
- [{ body: 'dress', coat: '#d8343a', hat: null, hair: '#6a4630', hairStyle: 'pigtails', band: '#f2c63a', rest: 'hang', size: 1.4, width: 0.9, seed: 11 }, { ...act(1, [[0, 'wave']]), face: 'idea', turn: 0.1 }],
+ [{ body: 'vest', coat: '#2a9a8a', shirt: '#f4f0e6', bandana: '#d8343a', hat: 'engineer', hatCol: '#3a5a9a', band: '#f4f0e6', hair: '#6a3a1e', hairStyle: 'tufts', rest: 'hip', width: 1.0, seed: 2 }, { face: 'smug', turn: 0.55, tilt: -7 }],
+ [{ body: 'vest', coat: '#e8b83a', shirt: '#fff', bow: '#1a1a1a', buttons: '#c89a2a', pocket: 1, hat: 'bowler', hatCol: '#2a2a2e', band: '#2a2a2e', hair: '#3a2418', hairStyle: 'tufts', rest: 'pockets', width: 1.2, seed: 4 }, { face: 'angry', tint: ['#8a4ad0', 0.8], steam: 1, turn: -0.5, tilt: 6 }],
+ [{ body: 'overalls', coat: '#5b86c4', shirt: '#f2b53a', patch: '#c8342a', hat: 'ball', hatCol: '#d23a32', band: '#d23a32', hair: '#6a3a1e', hairStyle: 'tufts', rest: 'hip', size: 1.75, width: 1.05, seed: 7 }, { face: 'grin', turn: 0.4, tilt: 5 }],
+ [{ body: 'bean', coat: '#f1e6c8', shirt: '#fff', tie: '#1a1a1a', badge: '#e8b83a', hat: null, hair: '#3a2418', hairStyle: 'pompadour', rest: 'hip', size: 2.0, width: 0.9, seed: 5 }, { face: 'evil', turn: -0.55, tilt: -8 }],
+ [{ body: 'coat', coat: '#3a5ab0', tie: null, badge: null, hat: null, hair: '#6a4630', hairStyle: 'messy', rest: 'hang', size: 1.85, width: 1.0, seed: 9 }, { face: 'happy', turn: 0.5, tilt: 7 }],
+ [{ body: 'dress', coat: '#d8343a', hat: null, hair: '#6a4630', hairStyle: 'pigtails', band: '#f2c63a', rest: 'hang', size: 1.4, width: 0.9, seed: 11 }, { ...act(1, [[0, 'wave']]), face: 'idea', turn: -0.4, tilt: -6 }],
 ];
 const o = document.getElementById('o').getContext('2d'); const gr = o.createLinearGradient(0, 0, 0, 1000); gr.addColorStop(0, '#3a8ae0'); gr.addColorStop(0.7, '#9ad0f4'); gr.addColorStop(0.7, '#c87a4a'); gr.addColorStop(1, '#9a5a32'); o.fillStyle = gr; o.fillRect(0, 0, 2400, 1000);
 C.forEach(([opt, pose], i) => { Flat2D.T = 1.3 + i; const c = new Flat2D({ res: 1.2, ...opt }); c.draw(c.alive({ e: 0.2, ...pose })); const k = (opt.size || 1.85) / 2.0; o.drawImage(c.cv, 20 + i * 395, 960 - 900 * k, 450 * k, 900 * k); });
