@@ -81,6 +81,18 @@ export const POSE = {
   laugh:    (t) => ({ armL: [30, -120], armR: [30, -120], squash: 0.07 * Math.sin(t * 30), tilt: 8 * Math.sin(t * 12) }),
   angry:    (t) => ({ armL: [70, -60 + 12 * Math.sin(t * 30)], armR: [70, -60 + 12 * Math.sin(t * 30 + 1)], hop: Math.abs(Math.sin(t * 20)) * 10, lean: 6 }),
   sad:      { armL: [5, 0], armR: [5, 0], lean: 8, tilt: -10, bob: 10 },
+  kneel:    { armL: [30, 40], armR: [60, 50], kneel: 1 },
+  crouch:   { armL: [40, 60], armR: [40, 60], kneel: 0.5, lean: 10 },
+  crossArms:{ armL: [25, -150], armR: [25, -150], lean: -4 },
+  thumbsUp: { armL: [14, 6], armR: [70, -95], tilt: 6 },
+  facepalm: { armL: [14, 6], handHead: 'R', tilt: 10, lean: 6 },
+  proud:    { armL: [40, -125], armR: [40, -125], lean: -8, squash: -0.05 },
+  laughPoint: (t) => ({ armL: [30, -120], armR: [95, 0], squash: 0.07 * Math.sin(t * 30), tilt: 10 * Math.sin(t * 12), hop: Math.abs(Math.sin(t * 14)) * 12 }),
+  hammer:   (t) => ({ armL: [40, 40], armR: [150 - 120 * Math.abs(Math.sin(t * 9)), 20], prop: 'hammer', lean: 6 }),
+  row:      (t) => ({ armL: [70 + 30 * Math.sin(t * 7), 30], armR: [70 + 30 * Math.sin(t * 7), 30], prop: 'paddle', lean: 8 * Math.sin(t * 7) }),
+  flail:    (t) => ({ armL: [165 + 15 * Math.sin(t * 22), -20 * Math.sin(t * 22)], armR: [165 + 15 * Math.sin(t * 22 + 2), -20 * Math.sin(t * 22 + 2)], hop: Math.abs(Math.sin(t * 16)) * 20 }),
+  swim:     (t) => ({ armL: [90 + 70 * Math.sin(t * 8), 20], armR: [90 + 70 * Math.sin(t * 8 + Math.PI), 20], walk: t * 10, amp: 20 }),
+  presenter:{ armL: [14, 6], armR: [70, 30], lean: 3 },
   shock:    (t) => ({ armL: [120, -30], armR: [120, -30], hop: 30, squash: -0.08 }),
 };
 const lerpA = (a, b, k) => (Array.isArray(a) && Array.isArray(b) ? a.map((v, i) => v + (b[i] - v) * k) : (typeof a === 'number' && typeof b === 'number' ? a + (b - a) * k : k < 0.5 ? a : b));
