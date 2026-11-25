@@ -71,7 +71,7 @@ export class Flat2D {
       bob: (p.bob || 0) + 2.2 * breathe - ON * 10, hop: (p.hop || 0), tilt: (p.tilt || 0) + 3 * Math.sin(t * 0.8 + sd) + ON * 9 * (sd % 2 > 1 ? 1 : -1) + E * 2 * Math.sin(t * 5 + sd),
       squash: (p.squash || 0) + Math.min(0.06, ON * 0.08), lean: (p.lean || 0) + 1.5 * Math.sin(t * 0.7 + sd), hatOff: (p.hatOff || 0) + ON * 8 };
   }
-  headWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.5 : 0.68), 0)); }
+  headWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.5 : 0.70), 0)); }
   bodyWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.h * (this.o.bust ? 0.35 : 0.5), 0)); }
   update(p = {}, cam) {
     p = this.alive(p); this.draw(p); this.tex.needsUpdate = true;
@@ -101,7 +101,7 @@ export class Flat2D {
         if (kn) a = s > 0 ? R(-62 * kn) : R(8 * kn);   // kneel: front thigh forward, back knee on the ground
         const knee = [hx + Math.sin(a) * L1, hipY + Math.cos(a) * L1]; let kb = a + R(Math.max(0, Math.cos(ph + (s > 0 ? 0 : Math.PI))) * amp * 1.2); if (kn) kb = s > 0 ? R(0) : R(88 * kn); else if (!amp) kb = a - R(s * (free ? 7 : 2)) + R(free ? 12 : 3);   // shin swings BACK (character faces left by default)
         const foot = [knee[0] + Math.sin(kb) * L2, Math.min(992, knee[1] + Math.cos(kb) * L2)];
-        g.strokeStyle = INK; g.lineWidth = 13; g.beginPath(); g.moveTo(hx, hipY - 10); g.lineTo(knee[0], knee[1]); g.lineTo(foot[0], foot[1]); g.stroke();
+        g.strokeStyle = INK; g.lineWidth = 16; g.beginPath(); g.moveTo(hx, hipY - 10); g.lineTo(knee[0], knee[1]); g.lineTo(foot[0], foot[1]); g.stroke();
         g.fillStyle = INK; g.beginPath(); g.ellipse(foot[0] - 10, foot[1] + 1, 20, 9.5, 0, 0, 7); g.fill();
       } }
     g.save(); g.translate(256 + (p.hip || 0) * 0.6, hipY); g.rotate(R(-lean) + R((p.hip || 0) * 0.08)); g.translate(-256, -hipY);   // +lean = forward; hip shift tilts the torso a little
@@ -111,17 +111,17 @@ export class Flat2D {
     const arm = (s, a) => {
       const [sa, eb] = a || [22, 6]; const sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30, L1 = 84, L2 = 78; const a1 = R(sa), a2 = R(sa + eb);
       const el = [sx + s * Math.sin(a1) * L1, sy + Math.cos(a1) * L1], hd = [el[0] + s * Math.sin(a2) * L2, el[1] + Math.cos(a2) * L2];
-      g.strokeStyle = INK; g.lineWidth = 10.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(el[0], el[1]); g.lineTo(hd[0], hd[1]); g.stroke();
-      g.fillStyle = '#3a2620'; g.beginPath(); g.arc(hd[0], hd[1], 19, 0, 7); g.fill(); g.lineWidth = 3; g.stroke();
+      g.strokeStyle = INK; g.lineWidth = 15.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(el[0], el[1]); g.lineTo(hd[0], hd[1]); g.stroke();
+      g.fillStyle = '#3a2620'; g.beginPath(); g.arc(hd[0], hd[1], 22, 0, 7); g.fill(); g.lineWidth = 3; g.stroke();
       g.fillStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.arc(hd[0] - 5, hd[1] - 5, 4, 0, 7); g.fill();
       hd.ang = s * (sa + eb); hd.s = s; return hd;
     };
     const HH = p.handHead; const headHand = HH ? [256 + (HH === 'R' ? 1 : -1) * 140, 448 - 145 + 22 + bob - 40] : null;
-    if (HH) { const s = HH === 'R' ? 1 : -1, sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30; g.strokeStyle = INK; g.lineWidth = 10.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + s * 90, sy - 40); g.lineTo(headHand[0] + s * 10, headHand[1] + 10); g.stroke(); }
+    if (HH) { const s = HH === 'R' ? 1 : -1, sx = 256 + s * 44 * (o.width || 1) * 1.5, sy = top + 30; g.strokeStyle = INK; g.lineWidth = 15.5; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + s * 90, sy - 40); g.lineTo(headHand[0] + s * 10, headHand[1] + 10); g.stroke(); }
     this.handL = HH === 'L' ? null : arm(-1, p.armL); this.handR = HH === 'R' ? null : arm(1, p.armR);
     if (p.prop) { const hd = (p.propHand === 'L' ? this.handL : this.handR) || this.handR; if (hd) this.prop(g, p.prop, hd); }
     // ---- head ----
-    const r = 116 * (o.head ?? 1.25), hx = 256 + (p.headX || 0), hy = 448 - r + 22 + bob + sq * 22;   // big head like the reference; bottom sits on the collar
+    const r = 116 * (o.head ?? 1.42), hx = 256 + (p.headX || 0), hy = 448 - r + 22 + bob + sq * 22;   // big head like the reference; bottom sits on the collar
     g.save(); g.translate(hx, hy); g.rotate(R(p.tilt || 0)); g.scale(1 + sq * 0.12, 1 - sq * 0.1);
     const headPts = this.ell(0, 0, r, r * 1.0, 56);
     this.wpath(g, headPts); g.fillStyle = o.skin; g.fill();
@@ -133,7 +133,7 @@ export class Flat2D {
     this.outline(g, headPts, 9);
     if (o.hair && o.hairStyle === 'tufts') { g.save(); g.translate((p.turn || 0) * 14, 0); this.tufts(g, r); g.restore(); }
     if (o.hair && ['pompadour', 'side', 'messy', 'pigtails'].includes(o.hairStyle)) this.bigHair(g, r);
-    { const tu = clamp(p.turn || 0, -0.8, 0.8); g.save(); const fk = r / 116; g.translate(tu * 46 * fk, 6 * fk); g.scale((1 - 0.2 * Math.abs(tu)) * fk, fk); this._tu = tu; this.face(g, p.face || {}, 116); this._tu = 0; g.restore(); }   // facial features scale with the head
+    { const tu = clamp(p.turn || 0, -0.8, 0.8); g.save(); const fk = r / 116 * 1.06; g.translate(tu * 52 * fk, 4 * fk); g.scale((1 - 0.2 * Math.abs(tu)) * fk, fk); this._tu = tu; this.face(g, p.face || {}, 116); this._tu = 0; g.restore(); }   // facial features scale with the head
     if (p.blush) { g.fillStyle = `rgba(230,60,60,${0.55 * p.blush})`; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 62, 40, 28, 15, 0, 0, 7); g.fill(); } g.strokeStyle = 'rgba(180,30,30,0.6)'; g.lineWidth = 3; for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(s * 50 + k * 10 - 10, 32); g.lineTo(s * 50 + k * 10 - 16, 48); g.stroke(); } }
     if (p.tears) { const T = Flat2D.T || 0; g.fillStyle = '#7cc8ff'; g.strokeStyle = INK; g.lineWidth = 2.5; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * 40 - 8, 8); g.lineTo(s * 40 + 8, 8); g.lineTo(s * 46, 120); g.lineTo(s * 34, 120); g.closePath(); g.globalAlpha = 0.85; g.fill(); g.globalAlpha = 1; for (let k = 0; k < 2; k++) { const y = 20 + ((T * 140 + k * 50 + (s > 0 ? 25 : 0)) % 110); g.beginPath(); g.arc(s * 42, y, 6, 0, 7); g.fill(); g.stroke(); } } }
     g.save(); g.translate((p.turn || 0) * 12, 0); this.hat(g, r, p.hatOff || 0); g.restore();
@@ -269,7 +269,7 @@ export class Flat2D {
     
     const TU = this._tu || 0;
     for (const s of [-1, 1]) {
-      const near = Math.sign(TU) === s ? 1 : Math.sign(TU) === -s ? -1 : 0, ek = 1 + near * Math.abs(TU) * 0.28;   // perspective: the eye on the turned side is nearer
+      const near = Math.sign(TU) === s ? 1 : Math.sign(TU) === -s ? -1 : 0, ek = 1 + near * Math.abs(TU) * 0.36;   // perspective: the eye on the turned side is nearer
       g.save(); g.translate(s * ex, ey); g.scale(ek, ek); g.translate(-s * ex, -ey);
       const x = s * ex; g.strokeStyle = INK; g.fillStyle = '#55555e';
       if (eyes === 'lid') {   // reference eye: small black pupil, upper lid covering part of it (lid 0..1), lid can tilt (angry / worried)
