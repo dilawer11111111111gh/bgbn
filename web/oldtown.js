@@ -66,20 +66,30 @@ export function facade(K, o) {
   for (let f = 1; f <= floors; f++) bx(trim, w + 0.1, 0.16, 0.12, 0, f * fh, 0.05);
   bx(trim, w + 0.5, 0.35, 0.5, 0, H - 0.2, 0.2); bx(trim, w + 0.7, 0.14, 0.62, 0, H + 0.02, 0.26); bx(brick, w + 0.1, 0.3, 0.2, 0, H - 0.55, 0.06);
   for (let i = 0; i <= 8; i++) bx(trim, 0.14, 0.32, 0.3, -w / 2 + 0.25 + i * (w - 0.5) / 8, H - 0.5, 0.15);
-  // windows on upper floors
+  // corner quoins (stone blocks sticking out) + pilasters
+  for (const sd of [-1, 1]) for (let k = 0; k < Math.floor(H / 0.5); k++) bx(trim, k % 2 ? 0.42 : 0.62, 0.42, 0.1, sd * (w / 2 - (k % 2 ? 0.21 : 0.31)), 0.3 + k * 0.5, 0.04);
+  // roof: pitched back roof + chimneys (silhouette depth)
+  { const p = P(0, H + 0.6, -d - 1.4); K.box('roof', w + 0.2, 0.18, 3.4, p[0], p[1], p[2], ry, -s * 0.38); }
+  for (const cx of [-w * 0.3, w * 0.28]) { bx(brick, 0.7, 1.6, 0.7, cx, H + 0.9, -d - 0.9); bx(trim, 0.86, 0.14, 0.86, cx, H + 1.72, -d - 0.9); }
+  // windows on upper floors: RECESSED (deep reveal frame), real muntins, deep sills, pediments
   const cw = w / cols;
   for (let f = 1; f < floors; f++) for (let c = 0; c < cols; c++) {
     const lx = -w / 2 + cw * (c + 0.5), ly = f * fh + fh * 0.5 + 0.05, ww = Math.min(0.95, cw * 0.42), wh = 1.35;
-    const lit = r() < 0.3;
-    bx(lit ? glassLit : glass, ww, wh, 0.04, lx, ly, 0.01);
-    if (r() < 0.7) { bx(curtain, ww * 0.3, wh * 0.92, 0.03, lx - ww * 0.33, ly, 0.035); bx(curtain, ww * 0.3, wh * 0.92, 0.03, lx + ww * 0.33, ly, 0.035); }
-    bx(trim, ww + 0.16, 0.1, 0.12, lx, ly + wh / 2 + 0.03, 0.06); bx(trim, ww + 0.16, 0.08, 0.12, lx, ly - wh / 2 - 0.02, 0.06);
-    bx(trim, 0.08, wh, 0.12, lx - ww / 2 - 0.04, ly, 0.06); bx(trim, 0.08, wh, 0.12, lx + ww / 2 + 0.04, ly, 0.06);
-    bx(trim, ww + 0.36, 0.1, 0.26, lx, ly - wh / 2 - 0.1, 0.12);  // sill
-    bx(trim, ww + 0.4, 0.2, 0.2, lx, ly + wh / 2 + 0.2, 0.1); bx(trim, ww + 0.52, 0.06, 0.26, lx, ly + wh / 2 + 0.32, 0.12); // lintel
-    if (r() < 0.85) { const open = r() < 0.5 ? 0 : 0.9; for (const sd of [-1, 1]) { const sx = lx + sd * (ww / 2 + 0.08 + ww * 0.22), a = open * sd; const p = P(sx + (open ? sd * 0.1 : 0), ly, 0.06 + (open ? 0.18 : 0)); K.box(shut, ww * 0.44, wh, 0.05, p[0], p[1], p[2], ry + a * 0.9); } }
-    if (r() < 0.25) { bx('pot', ww * 0.9, 0.18, 0.2, lx, ly - wh / 2 - 0.0, 0.2); for (let k = 0; k < 4; k++) { const p = P(lx - ww * 0.36 + k * ww * 0.24, ly - wh / 2 + 0.17, 0.2); K.add('flower', new THREE.IcosahedronGeometry(0.09, 0), p[0], p[1], p[2]); } }
+    const lit = r() < 0.3, rd = 0.2;   // reveal depth
+    bx(lit ? glassLit : glass, ww, wh, 0.04, lx, ly, 0.02);
+    if (r() < 0.75) { bx(curtain, ww * 0.3, wh * 0.92, 0.03, lx - ww * 0.34, ly, 0.055); bx(curtain, ww * 0.3, wh * 0.92, 0.03, lx + ww * 0.34, ly, 0.055); }
+    bx('reveal', 0.1, wh, rd, lx - ww / 2 - 0.05, ly, rd / 2); bx('reveal', 0.1, wh, rd, lx + ww / 2 + 0.05, ly, rd / 2); bx('reveal', ww + 0.2, 0.1, rd, lx, ly + wh / 2 + 0.05, rd / 2);
+    bx(trim, 0.045, wh, 0.05, lx, ly, 0.08); bx(trim, ww, 0.045, 0.05, lx, ly + wh * 0.12, 0.08); bx(trim, ww, 0.045, 0.05, lx, ly - wh * 0.22, 0.08);   // muntins
+    bx(trim, ww + 0.36, 0.11, 0.18, lx, ly + wh / 2 + 0.05, rd + 0.06); bx(trim, ww + 0.36, 0.11, 0.18, lx, ly - wh / 2 - 0.05, rd + 0.06);
+    bx(trim, 0.11, wh + 0.2, 0.18, lx - ww / 2 - 0.16, ly, rd + 0.06); bx(trim, 0.11, wh + 0.2, 0.18, lx + ww / 2 + 0.16, ly, rd + 0.06);
+    bx(trim, ww + 0.56, 0.12, 0.42, lx, ly - wh / 2 - 0.16, 0.24); bx(trim, 0.12, 0.16, 0.16, lx - ww / 2 - 0.1, ly - wh / 2 - 0.28, 0.12); bx(trim, 0.12, 0.16, 0.16, lx + ww / 2 + 0.1, ly - wh / 2 - 0.28, 0.12);  // sill + brackets
+    if ((f + c + seed) % 3 === 0) { const p = P(lx, ly + wh / 2 + 0.36, 0.24); K.add(trim, new THREE.CylinderGeometry(0.01, (ww + 0.5) * 0.62, 0.3, 3, 1).rotateZ(0).rotateY(Math.PI / 6).scale(1, 1, 0.35), p[0], p[1], p[2], ry); }
+    else { bx(trim, ww + 0.5, 0.22, 0.3, lx, ly + wh / 2 + 0.28, 0.18); bx(trim, ww + 0.66, 0.07, 0.4, lx, ly + wh / 2 + 0.42, 0.22); }
+    if (r() < 0.85) { const open = r() < 0.5 ? 0 : 0.9; for (const sd of [-1, 1]) { const sx = lx + sd * (ww / 2 + 0.24 + ww * 0.22); const p = P(sx + (open ? sd * 0.12 : 0), ly, rd + 0.1 + (open ? 0.18 : 0)); K.box(shut, ww * 0.44, wh, 0.07, p[0], p[1], p[2], ry + sd * open * 0.9); } }
+    if (r() < 0.3) { bx('pot', ww * 0.9, 0.2, 0.24, lx, ly - wh / 2 - 0.0, 0.34); for (let k = 0; k < 5; k++) { const p = P(lx - ww * 0.4 + k * ww * 0.2, ly - wh / 2 + 0.16, 0.34); K.add('flower', new THREE.IcosahedronGeometry(0.085, 0), p[0], p[1], p[2]); } }
   }
+  // balcony (on request) across floor 2
+  if (o.balcony) { const by = fh + 0.15; bx(trim, w * 0.6, 0.14, 1.0, 0, by, 0.5); bx('iron', w * 0.6, 0.05, 0.05, 0, by + 0.95, 1.0); for (let k = 0; k <= 22; k++) bx('iron', 0.03, 0.9, 0.03, -w * 0.3 + k * w * 0.6 / 22, by + 0.5, 1.0); for (const sd of [-1, 1]) bx('iron', 0.05, 0.05, 1.0, sd * w * 0.3, by + 0.95, 0.5); for (const sd of [-1, 0, 1]) bx(trim, 0.16, 0.5, 0.5, sd * w * 0.27, by - 0.3, 0.25); }
   // ground floor: door + shop windows + awning + sign
   const gy = fh * 0.5;
   bx(trim, w + 0.1, 0.25, 0.14, 0, 0.12, 0.05);
@@ -87,6 +97,8 @@ export function facade(K, o) {
   bx(trim, 1.3, 0.16, 0.18, 0, 2.3, 0.08); bx(trim, 0.14, 2.2, 0.18, -0.6, 1.1, 0.08); bx(trim, 0.14, 2.2, 0.18, 0.6, 1.1, 0.08);
   for (const sd of [-1, 1]) { const lx = sd * (w / 4 + 0.4), ww = w / 2 - 1.8; bx(ground === 'shop' ? glass : brick, ww, 1.6, 0.04, lx, 1.35, 0.01); bx(trim, ww + 0.2, 0.12, 0.2, lx, 2.2, 0.08); bx(trim, ww + 0.3, 0.2, 0.3, lx, 0.5, 0.12); bx(trim, 0.1, 1.6, 0.16, lx - ww / 2 - 0.05, 1.35, 0.07); bx(trim, 0.1, 1.6, 0.16, lx + ww / 2 + 0.05, 1.35, 0.07); bx(trim, 0.06, 1.6, 0.1, lx, 1.35, 0.05);
     for (let k = 0; k < 3; k++) bx(r() < 0.5 ? 'crate' : 'goods', 0.25, 0.25, 0.25, lx - 0.4 + k * 0.4, 0.73, -0.05); }
+  for (const px of [-w / 2 + 0.35, -0.85, 0.85, w / 2 - 0.35]) { bx(trim, 0.3, 2.45, 0.24, px, 1.23, 0.1); bx(trim, 0.42, 0.18, 0.32, px, 2.5, 0.12); bx(trim, 0.4, 0.2, 0.32, px, 0.1, 0.12); }
+  bx(trim, w + 0.2, 0.3, 0.34, 0, 2.62, 0.14);
   if (awning) for (let i = 0; i < 1; i++) { const p = P(0, 2.75, 0.6); K.box(awning, w - 0.6, 0.06, 1.3, p[0], p[1], p[2], ry, s * 0.32); const p2 = P(0, 2.53, 1.22); K.box(awning, w - 0.6, 0.28, 0.04, p2[0], p2[1], p2[2], ry); }
   if (sign) { const p = P(0, fh + 0.62, 0.2); K.box(sign, Math.min(w - 1, 4.4), 0.8, 0.08, p[0], p[1], p[2], ry); bx(trim, Math.min(w - 1, 4.4) + 0.2, 0.96, 0.06, 0, fh + 0.62, 0.15); }
   return { top: base + H };

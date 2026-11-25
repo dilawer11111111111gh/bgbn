@@ -13,11 +13,11 @@ const W = new THREE.Group(); stage.world.add(W); W.add(C.makeSky());
 // ---------------- materials ----------------
 const K = new Kit(W);
 const bricks = [['brick', '#b65a34'], ['brick2', '#c98a52'], ['brick3', '#9a4a36'], ['brick4', '#d8b48a'], ['brick5', '#8f6a5a']];
-bricks.forEach(([k, c], i) => K.mat(k, { map: TEX.bricks(c, '#ecd6b0', 3 + i), uv: 2.2 }));
+bricks.forEach(([k, c], i) => K.mat(k, { map: TEX.bricks(c, '#ecd6b0', 3 + i), uv: 1.15 }));
 K.mat('trim', { color: 0xf3ead6 }); K.mat('trim2', { color: 0xe9d29a }); K.mat('trim3', { color: 0xdfe6e8 });
 K.mat('shut', { map: TEX.slats('#2f6b3a'), local: true }); K.mat('shut2', { map: TEX.slats('#2c4f7a'), local: true }); K.mat('shut3', { map: TEX.slats('#8a2f2a'), local: true });
 K.mat('glassD', { map: TEX.glass(false), local: true }); K.mat('glassL', { map: TEX.glass(true), local: true, emis: 0.35 });
-K.mat('curtain', { color: 0xc23a33 }); K.mat('curtain2', { color: 0xe2b34a });
+K.mat('reveal', { color: 0xcfc2a6 }); K.mat('roof', { color: 0x5a4a4e }); K.mat('curtain', { color: 0xc23a33 }); K.mat('curtain2', { color: 0xe2b34a });
 K.mat('doorDark', { color: 0x2a1a12 }); K.mat('door', { map: TEX.planks('#6a3f22', 9, 3), uv: 0.6 });
 K.mat('crate', { map: TEX.planks('#c08a4c', 4, 4), uv: 0.6 }); K.mat('crateEdge', { color: 0x8a5a2c }); K.mat('goods', { color: 0xd9b060 });
 K.mat('awning', { map: TEX.stripes('#c8342a', '#f3e6c8'), local: true }); K.mat('awning2', { map: TEX.stripes('#2d6a4a', '#f3e6c8'), local: true });
@@ -36,8 +36,8 @@ K.mat('mesa', { color: 0xd08a5a }); K.mat('mesa2', { color: 0xc27a50 }); K.mat('
 K.box('mud', 120, 0.1, 40, 0, -0.05, 3.2);
 for (const [x, z, a, b] of [[-1.5, -0.6, 1.1, 0.5], [3.2, 1.6, 1.6, 0.7], [-6, 2.4, 1.3, 0.6], [7.5, -0.2, 0.9, 0.45], [12, 3, 1.8, 0.8], [-12, 0.5, 1.2, 0.5]]) { const g = new THREE.CircleGeometry(1, 28); g.scale(a, b, 1); K.add('puddle', g, x, 0.006, z, 0, -Math.PI / 2); }
 for (const [z0, z1] of [[-4.0, -2.4], [8.9, 10.5]]) { K.box('plank', 80, 0.25, z1 - z0, 0, 0.125, (z0 + z1) / 2); K.box('post', 80, 0.08, 0.1, 0, 0.21, z0 < 0 ? z1 : z0); }
-const NORTH = [[-26, 8, 3, 'brick5', 'shut3', 'sign5'], [-17.5, 8.6, 4, 'brick2', 'shut2', 'sign2'], [-9, 8.2, 4, 'brick4', 'shut', null], [0, 9, 5, 'brick', 'shut', 'hotelSign'], [9.2, 8.6, 4, 'brick3', 'shut2', 'sign3'], [18, 8.4, 3, 'brick2', 'shut', 'sign4'], [26.5, 8, 4, 'brick4', 'shut3', null]];
-NORTH.forEach(([x, w, fl, br, sh, sg], i) => facade(K, { x, zf: -4, w, floors: fl, brick: br, shut: sh, sign: sg, seed: 10 + i, cols: Math.round(w / 3), trim: i % 2 ? 'trim2' : 'trim', curtain: i % 2 ? 'curtain2' : 'curtain', awning: i % 2 ? 'awning2' : 'awning' }));
+const NORTH = [[-26, 8, 3, 'brick5', 'shut3', 'sign5'], [-17.5, 8.6, 4, 'brick2', 'shut2', 'sign2'], [-9, 8.2, 4, 'brick4', 'shut', null], [0, 9, 5, 'brick', 'shut', 'hotelSign'], [9.2, 8.6, 4, 'brick3', 'shut2', null, 1], [18, 8.4, 3, 'brick2', 'shut', 'sign4'], [26.5, 8, 4, 'brick4', 'shut3', null]];
+NORTH.forEach(([x, w, fl, br, sh, sg, bal], i) => facade(K, { x, balcony: !!bal, zf: -4, w, floors: fl, brick: br, shut: sh, sign: sg, seed: 10 + i, cols: Math.round(w / 3), trim: i % 2 ? 'trim2' : 'trim', curtain: i % 2 ? 'curtain2' : 'curtain', awning: i % 2 ? 'awning2' : 'awning' }));
 const SOUTH = [[-21, 8.6, 3, 'brick3', 'shut', 'sign4'], [-12.4, 8.4, 4, 'brick', 'shut2', null], [-4, 8.2, 3, 'brick4', 'shut3', 'sign2'], [4.4, 8.4, 4, 'brick2', 'shut', 'sign5'], [13, 8.6, 4, 'brick5', 'shut2', null], [21.6, 8.4, 3, 'brick', 'shut3', 'sign3']];
 SOUTH.forEach(([x, w, fl, br, sh, sg], i) => facade(K, { x, zf: 10.5, face: -1, w, floors: fl, brick: br, shut: sh, sign: sg, seed: 40 + i, cols: Math.round(w / 3), trim: i % 2 ? 'trim' : 'trim3', curtain: i % 2 ? 'curtain' : 'curtain2', awning: i % 2 ? 'awning' : 'awning2' }));
 for (const [x, z] of [[-2.3, -3.55], [-2.95, -3.5], [-2.6, -2.95]]) barrel(K, x, 0.25, z, 0.95);
@@ -61,9 +61,9 @@ const moteTex = (() => { const c = document.createElement('canvas'); c.width = c
 const MOTES = []; for (let i = 0; i < 70; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05), C.fxMat(moteTex, { opacity: 0.8 })); stage.cards.add(m); MOTES.push({ m, x: -8 + C.hash(i) * 16, y: 0.4 + C.hash(i + 50) * 4, z: -3 + C.hash(i + 99) * 6, s: 0.6 + C.hash(i + 7) }); }
 
 // ---------------- cast (flat 2D) ----------------
-const CLEM = new Flat2D({ coat: '#34508e', trim: '#f4ead2', tie: '#c4302a', hat: 'top', hatCol: '#2a2224', band: '#8a2a24' });
-const MAYOR = new Flat2D({ coat: '#4f7a3a', trim: '#f4ead2', tie: '#e0b03a', vest: '#c8a04a', hat: 'bowler', hatCol: '#4a3226', band: '#2a1a14', mustache: true, hair: '#5a3a26', size: 1.78 });
-const GUEST = new Flat2D({ bust: true, coat: '#e6d6b8', trim: '#fff', tie: null, hat: 'nightcap', hatCol: '#5a7ac0', band: '#f4f0e0', res: 1.4 });
+const CLEM = new Flat2D({ coat: '#34508e', tie: '#e0b03a', hat: 'top', hatCol: '#3a2622', band: '#a02a24', hair: '#231812', seed: 2 });
+const MAYOR = new Flat2D({ coat: '#5d7a32', tie: '#2f5aa8', hat: 'flat', hatCol: '#6a4630', band: '#4a2e1e', mustache: true, hair: '#2a1a12', size: 1.8, seed: 5 });
+const GUEST = new Flat2D({ bust: true, coat: '#ece2cc', tie: null, badge: '#ece2cc', hat: 'nightcap', hatCol: '#5a7ac0', band: '#f4f0e0', hair: '#7a5236', res: 1.4, seed: 9 });
 const say = (t, t0, t1) => (t > t0 && t < t1 ? ['talk', 'o', 'talk', 'smile', 'grin'][Math.floor(t * 11) % 5] : null);
 
 function setup(t, cam) {
@@ -86,7 +86,7 @@ function setup(t, cam) {
     hatOff: mShock ? 30 + 20 * Math.sin(t * 25) : 0, hop: mShock ? Math.max(0, Math.sin((t - 4.15) * 10)) * 40 : 0, lean: mShock ? -4 : 2,
     face: mShock ? { eyes: 'wide', mouth: 'o', brow: 1.4, look: [0.5, -1] } : t > 2.2 && t < 3.1 ? { eyes: 'happy', mouth: say(t, 2.2, 3.1) || 'grin', brow: -0.2 } : { eyes: 'dot', mouth: 'smile', brow: -0.4, look: [0.6, 0] },
   }, cam);
-  GUEST.place(0, 6.15, -3.965);
+  GUEST.place(0, 6.12, -3.925);
   const yawn = t > 3.15 && t < 3.9;
   GUEST.update({ face: yawn ? { eyes: 'closed', mouth: 'yawn', brow: 0.4 } : t > 3.9 ? { eyes: 'sleepy', mouth: 'flat', brow: 0.2, look: [0, 1] } : { eyes: 'closed', mouth: 'smile' }, tilt: yawn ? -8 : 4 * Math.sin(t * 2) }, cam);
   for (const d of MOTES) { const k = t * 0.25 * d.s; d.m.position.set(d.x + Math.sin(k * 3 + d.y) * 0.4, d.y + Math.sin(k * 2 + d.x) * 0.3, d.z + Math.cos(k * 2.6 + d.x) * 0.3); if (cam) d.m.lookAt(cam); const sz = d.s * 0.9; d.m.scale.set(sz, sz, sz); }
@@ -100,7 +100,7 @@ const pair = () => CLEM.bodyWorld().lerp(MAYOR.bodyWorld(), 0.5).add(V(0, 0.25, 
  [1.15, 2.25, { rig: 'push', at: clemB, size: [3.2, 1.7], az: [32, 14], el: [3, 6], fov: 34, shake: 0.4, focus: clemB, ap: 4 }],
  [2.25, 2.75, { rig: 'orbit', at: () => MAYOR.headWorld().add(V(0, -0.35, 0)), size: [1.5, 1.2], az: [-40, -10], el: [6, 4], fov: 32, shake: 0.45, ap: 5 }],
  [2.75, 3.15, { rig: 'orbit', at: () => CLEM.headWorld().add(V(0, -0.35, 0)), size: [1.4, 1.2], az: [30, 5], el: [4, 8], fov: 32, shake: 0.45, ap: 5 }],
- [3.15, 4.0, { rig: 'crane', at: guestH, size: [2.4, 0.75], az: [-12, 6], el: [-14, 4], fov: 30, shake: 0.3, ap: 5 }],
+ [3.15, 4.0, { rig: 'crane', at: guestH, size: [2.8, 1.35], az: [-12, 6], el: [-14, 4], fov: 30, shake: 0.3, ap: 5 }],
  [4.0, 5.05, { rig: 'low', at: clemH, size: [1.5, 1.15], az: [36, -24], fov: 30, shake: 1.0, fovKick: 9, ease: 'snap', ap: 6 }],
 ].forEach(([a, b, s]) => CINE.shot(a, b, s));
 function guard(c) { const p = c.pos; if (p[1] < 3.2) p[2] = Math.max(p[2], -2.35); p[2] = Math.max(p[2], -3.6); p[1] = Math.max(p[1], 0.45); return c; }
