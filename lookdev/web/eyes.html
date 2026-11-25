@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><script type="importmap">{"imports":{"three":"../../web/vendor/three.module.js"}}</script></head><body style="margin:0">
+<canvas id="o" width="2400" height="1500"></canvas>
+<script type="module">
+import { Flat2D } from '../../web/flat2d.js';
+const looks = [['neutral', 0.3], ['happy', -0.2], ['smug', 0.5], ['sideeye', 0.4], ['suspicious', -0.3], ['scheming', -0.5], ['evil', 0.3], ['angry', -0.2], ['sad', 0.2], ['confused', 0.3], ['shock', 0], ['dreamy', 0.4]];
+const opts = [{ hat: 'engineer', hatCol: '#3a5a9a', band: '#f4f0e6', hair: '#6a3a1e', hairStyle: 'tufts' }, { hat: 'ball', hatCol: '#d23a32', band: '#d23a32', hair: '#6a3a1e', hairStyle: 'tufts' }, { hat: 'bowler', hatCol: '#2a2a2e', band: '#2a2a2e', hair: '#3a2418', hairStyle: 'tufts' }, { hat: null, hair: '#3a2418', hairStyle: 'pompadour' }];
+const o = document.getElementById('o').getContext('2d'); o.fillStyle = '#8ec4ee'; o.fillRect(0, 0, 2400, 1500);
+looks.forEach(([f, turn], i) => { const c = new Flat2D({ res: 2, body: 'vest', coat: '#2a9a8a', bandana: '#d8343a', seed: 3 + i, ...opts[i % 4] }); Flat2D.T = 0.5; Flat2D.E = 0; Flat2D.ON = 0;
+  c.draw(c.alive({ face: f, turn, noBlink: true, tilt: (i % 2 ? 5 : -5), e: 0 })); const S = 2; const col = i % 6, row = Math.floor(i / 6);
+  o.drawImage(c.cv, 56 * S, 70 * S, 400 * S, 650 * S, col * 400, row * 750, 400, 650);
+  o.fillStyle = '#1a1a1a'; o.font = 'bold 38px sans-serif'; o.textAlign = 'center'; o.fillText(f.toUpperCase(), col * 400 + 200, row * 750 + 735); });
+window.ready = true;
+</script></body></html>

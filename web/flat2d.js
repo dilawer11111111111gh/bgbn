@@ -18,14 +18,17 @@ function softShadowTex() {
 let SHT = null;
 // expression presets (use by name: face:'shock')
 export const FACES = {
-  neutral: { eyes: 'dot', mouth: 'smirk1' }, calm: { eyes: 'lid', lid: 0.5, mouth: 'smirk1' },
-  happy: { eyes: 'dot', mouth: 'bigsmile' }, grin: { eyes: 'dot', mouth: 'grin' }, laugh: { eyes: 'happy', mouth: 'laugh', brow: 0.5 },
-  proud: { eyes: 'lid', lid: 0.6, mouth: 'smirk1', browL: 0.5, browR: 0.1 }, smug: { eyes: 'lid', lid: 0.58, look: [0.8, 0], mouth: 'smirk1', browL: 0.9, browR: -0.3 },
-  sideeye: { eyes: 'lid', lid: 0.55, look: [1, 0], mouth: 'line', browL: -0.5, browR: 0.6 }, evil: { eyes: 'lid', lid: 0.6, lidTilt: -0.3, mouth: 'grin', brow: -1.0 },
-  angry: { eyes: 'lid', lid: 0.45, lidTilt: -0.4, mouth: 'talk', brow: -1.5 }, grumpy: { eyes: 'lid', lid: 0.55, lidTilt: -0.3, mouth: 'frown', brow: -1.2 },
+  neutral: { eyes: 'lid', lid: 0.12, squint: 0.05, mouth: 'smirk1' }, calm: { eyes: 'lid', lid: 0.35, squint: 0.1, mouth: 'smirk1' },
+  happy: { eyes: 'lid', lid: 0.05, squint: 0.26, mouth: 'bigsmile', brow: 0.3 }, grin: { eyes: 'lid', lid: 0.06, squint: 0.24, mouth: 'grin', brow: 0.2 }, laugh: { eyes: 'happy', mouth: 'laugh', brow: 0.5 },
+  proud: { eyes: 'lid', lid: 0.5, squint: 0.15, mouth: 'smirk1', browL: 0.5, browR: 0.1, look: [0, -0.4] }, smug: { eyes: 'lid', lidL: 0.32, lidR: 0.45, squint: 0.12, look: [0.9, 0], mouth: 'smirk1', browL: 0.9, browR: -0.3 },
+  sideeye: { eyes: 'lid', lid: 0.36, squint: 0.12, look: [1, 0], mouth: 'line', browL: -0.5, browR: 0.6 }, suspicious: { eyes: 'lid', lidL: 0.48, lidR: 0.18, squintL: 0.18, squintR: 0.05, look: [0.6, 0], mouth: 'line', browL: -1.0, browR: 0.8 },
+  evil: { eyes: 'lid', lid: 0.38, lidTilt: -0.3, squint: 0.18, mouth: 'grin', brow: -1.0, look: [0.5, 0] }, scheming: { eyes: 'lid', lid: 0.4, squint: 0.2, lidTilt: -0.15, look: [-0.8, 0.2], mouth: 'smirk1', brow: -0.6 },
+  angry: { eyes: 'lid', lid: 0.3, lidTilt: -0.45, squint: 0.15, mouth: 'talk', brow: -1.5 }, grumpy: { eyes: 'lid', lid: 0.5, lidTilt: -0.3, squint: 0.2, mouth: 'frown', brow: -1.2 },
   shock: { eyes: 'tiny', mouth: 'scream', brow: 1.5 }, scared: { eyes: 'wide', mouth: 'wobble', brow: 1.3 }, panic: { eyes: 'tiny', mouth: 'wobble', brow: 1.6 },
-  confused: { eyes: 'lid', lid: 0.3, mouth: 'line', browL: 1.1, browR: -0.6 }, worried: { eyes: 'lid', lid: 0.3, lidTilt: 0.3, mouth: 'wobble', brow: 1.0 },
-  idea: { eyes: 'wide', mouth: 'grin', brow: 1.2 }, awe: { eyes: 'wide', mouth: 'smallO', brow: 1.2 }, sleepy: { eyes: 'sleepy', mouth: 'line' }, deadpan: { eyes: 'lid', lid: 0.62, mouth: 'line' },
+  confused: { eyes: 'lid', lidL: 0.05, lidR: 0.4, squintR: 0.2, look: [0, -0.6], mouth: 'line', browL: 1.1, browR: -0.6 }, worried: { eyes: 'lid', lid: 0.3, lidTilt: 0.45, look: [0, 0.4], mouth: 'wobble', brow: 1.0 },
+  sad: { eyes: 'lid', lid: 0.45, lidTilt: 0.5, look: [0, 0.7], mouth: 'frown', brow: 1.0 }, bored: { eyes: 'lid', lid: 0.62, look: [0, 0.3], mouth: 'line' },
+  idea: { eyes: 'wide', mouth: 'grin', brow: 1.2 }, awe: { eyes: 'wide', mouth: 'smallO', brow: 1.2 }, sleepy: { eyes: 'lid', lid: 0.82, mouth: 'line' }, deadpan: { eyes: 'lid', lid: 0.55, mouth: 'line' },
+  dreamy: { eyes: 'lid', lid: 0.38, squint: 0.16, look: [0.3, -0.8], mouth: 'smile', brow: 0.4 }, determined: { eyes: 'lid', lid: 0.32, lidTilt: -0.25, squint: 0.15, mouth: 'flat', brow: -0.8 },
 };
 const shade = (hex, k) => { const c = new THREE.Color(hex); c.multiplyScalar(k); return '#' + c.getHexString(); };
 // hand-drawn wobble: deterministic per character (no shimmer), tiny amplitude
@@ -272,11 +275,18 @@ export class Flat2D {
       const near = Math.sign(TU) === s ? 1 : Math.sign(TU) === -s ? -1 : 0, ek = 1 + near * Math.abs(TU) * 0.36;   // perspective: the eye on the turned side is nearer
       g.save(); g.translate(s * ex, ey); g.scale(ek, ek); g.translate(-s * ex, -ey);
       const x = s * ex; g.strokeStyle = INK; g.fillStyle = '#55555e';
-      if (eyes === 'lid') {   // reference eye: small black pupil, upper lid covering part of it (lid 0..1), lid can tilt (angry / worried)
-        const lid = f.lid ?? 0.45, tl = (f.lidTilt || 0) * s; const ew = 13, eh = 17, cy = ey - 4;
-        g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, cy + ly, ew, eh, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,0.85)'; g.beginPath(); g.arc(x + lx - 3, cy + ly + 2, 2.6, 0, 7); g.fill();
-        const ly0 = cy - eh + lid * eh * 2; g.fillStyle = this.o.skin; g.beginPath(); g.moveTo(x - 20, cy - eh - 6); g.lineTo(x + 20, cy - eh - 6); g.lineTo(x + 20, ly0 - tl * 14); g.lineTo(x - 20, ly0 + tl * 14); g.closePath(); g.fill();
-        g.strokeStyle = INK; g.lineWidth = 4.5; g.beginPath(); g.moveTo(x - 15, ly0 + tl * 10); g.lineTo(x + 15, ly0 - tl * 10); g.stroke(); }
+      if (eyes === 'lid') {   // EXPRESSIVE EYE: pupil (look), upper lid (coverage + tilt), lower lid (squint), per-side values
+        const sd = s < 0 ? 'L' : 'R'; let lid = f['lid' + sd] ?? f.lid ?? 0.3, sq = f['squint' + sd] ?? f.squint ?? 0.08; const tl = (f['lidTilt' + sd] ?? f.lidTilt ?? 0) * s; const cov = lid + sq; if (cov > 0.6) { lid *= 0.6 / cov; sq *= 0.6 / cov; }   // never squeeze the eye into a line
+        const ew = 14, eh = 20, cy = ey - 4, px = x + lx * 1.6, py = cy + ly * 1.4;
+        g.save(); g.beginPath(); g.ellipse(x, cy, ew + 3, eh + 3, 0, 0, 7); g.clip();
+        g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(px, py, ew * 0.82, eh * 0.9, 0, 0, 7); g.fill();
+        const top = cy - eh - 2 + lid * (eh * 2 + 4), bot = cy + eh + 2 - sq * (eh * 2 + 4);
+        g.fillStyle = this.o.skin; g.beginPath(); g.moveTo(x - 24, cy - eh - 8); g.lineTo(x + 24, cy - eh - 8); g.lineTo(x + 24, top - tl * 9); g.lineTo(x - 24, top + tl * 9); g.closePath(); g.fill();
+        g.beginPath(); g.moveTo(x - 24, cy + eh + 8); g.lineTo(x + 24, cy + eh + 8); g.lineTo(x + 24, bot); g.quadraticCurveTo(x, bot - sq * 10, x - 24, bot); g.closePath(); g.fill(); g.restore();
+        g.strokeStyle = INK; g.lineCap = 'round';
+        if (lid > 0.24) { g.lineWidth = 5; g.beginPath(); g.moveTo(x - ew - 2, top + tl * 8); g.quadraticCurveTo(x, top - 4, x + ew + 2, top - tl * 8); g.stroke(); }
+
+      }
       else if (eyes === 'dot') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 6 + ly, 13, 19.5, 0, 0, 7); g.fill(); }
       else if (eyes === 'sly') { g.fillStyle = '#1e1410'; g.beginPath(); g.ellipse(x + lx, ey - 4, 12, 7, 0, 0, 7); g.fill(); g.lineWidth = 5; g.beginPath(); g.moveTo(x - 17, ey - 9 - s * 3); g.lineTo(x + 17, ey - 9 + s * 3); g.stroke(); }
       else if (eyes === 'calm') {      // reference eye: grey half-lidded ellipse with a lid line
