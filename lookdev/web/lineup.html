@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><script type="importmap">{"imports":{"three":"../../web/vendor/three.module.js"}}</script></head><body style="margin:0;background:#8fc6f0">
+<canvas id="o" width="2600" height="1100"></canvas>
+<script type="module">
+import { Flat2D } from '../../web/flat2d.js';
+const L = [
+ [{ body:'overalls', coat:'#5b86c4', shirt:'#f2b53a', hat:'ball', hatCol:'#d23a32', band:'#d23a32', hair:'#5a3a26', hairStyle:'bangs', seed:3 }, { face:{eyes:'dot', mouth:'grin'}, armR:[150,40], armL:[20,10] }],
+ [{ body:'bean', coat:'#f1e6c8', shirt:'#fff', tie:'#2a1a14', badge:'#e8b03a', hat:null, hair:'#3a2418', hairStyle:'pompadour', seed:4 }, { face:{eyes:'sly', mouth:'smirk', sly:1}, armL:[15,30], armR:[40,95] }],
+ [{ body:'coat', coat:'#2f4f8a', tie:null, badge:'#f2e8d0', hat:null, hair:'#6a4630', hairStyle:'side', seed:5 }, { face:{eyes:'dot', mouth:'bigsmile'}, armL:[15,5], armR:[25,10] }],
+ [{ body:'dress', coat:'#d8343a', hat:null, hair:'#5a3a26', hairStyle:'pigtails', band:'#d8343a', size:1.4, seed:6 }, { face:{eyes:'wide', mouth:'grin'}, armL:[160,-10], armR:[30,10] }],
+ [{ body:'coat', coat:'#5d7a32', tie:'#2f5aa8', hat:'flat', hatCol:'#6a4630', band:'#4a2e1e', mustache:true, hair:'#2a1a12', seed:7 }, { face:{eyes:'wide', mouth:'scream', brow:1.2}, armL:[150,-20], armR:[150,-20], mark:'!' }],
+];
+const o = document.getElementById('o').getContext('2d');
+o.fillStyle = '#e6d2a8'; o.fillRect(0, 760, 2600, 340);
+L.forEach(([opt, pose], i) => { const c = new Flat2D({ res: 2, ...opt }); c.draw(pose); const k = (opt.size || 1.85) / 1.85; o.drawImage(c.cv, 40 + i * 510, 60 + 1040 * (1 - k), 512 * k, 1024 * k); });
+window.ready = true;
+</script></body></html>
