@@ -9,6 +9,7 @@ const mesh = (geo, m, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => { const me
 const rbox = (w, h, d, r) => new RoundedBoxGeometry(w, h, d, 3, Math.min(r, Math.min(w, h, d) / 2.05));
 const cylX = (r, len, m, x, y, z, seg = 28) => mesh(new THREE.CylinderGeometry(r, r, len, seg), m, x, y, z, 0, 0, Math.PI / 2);
 const G = 0.75;   // half gauge
+export const RAIL_TOP = 0.39;   // rails: centre 0.32, height 0.14 -> wheels sit ON this
 
 // one wheel (axle along z). kind: 'flat' | 'cone'.  side: +1 / -1 (cone: FAT on the inside = toward the centre of the train)
 function wheel(r, side, kind, cols) {
@@ -112,7 +113,7 @@ export function makeTrack(K, start, segs, o = {}) {
   const posAt = (q, der) => { let p; let y = 0, roll = 0, pitch = 0;
     if (der && q > der.s) { const d = at(der.s); const qq = Math.min(q, der.stop); const e = qq - der.s; p = { x: d.x + Math.cos(d.h) * e, z: d.z - Math.sin(d.h) * e, h: d.h }; y = (der.hop || 0) * Math.max(0, Math.sin(Math.min(1, e / (der.len || 8)) * Math.PI)); roll = (der.roll || 0) * Math.min(1, e / 4); }
     else p = at(q);
-    return { p: new THREE.Vector3(p.x, 0.26, p.z), h: p.h, y, roll, pitch }; };
+    return { p: new THREE.Vector3(p.x, RAIL_TOP - 0.02, p.z), h: p.h, y, roll, pitch }; };
   return { at, posAt, L, pts };
 }
 

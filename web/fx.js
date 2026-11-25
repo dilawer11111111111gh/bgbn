@@ -20,7 +20,7 @@ export class Sign {
       g.fillStyle = this.o.panel ? this.o.fg : this.o.bg; g.fillText(text, cx, H / 2 - (this.o.panel ? 8 : 0));
       if (this.o.arrow) { const ax = this.o.arrow === 'right' ? W - 120 : 120, d = this.o.arrow === 'right' ? 1 : -1; g.fillStyle = this.o.fg; g.beginPath(); g.moveTo(ax - d * 50, H / 2 - 30); g.lineTo(ax + d * 20, H / 2 - 30); g.lineTo(ax + d * 20, H / 2 - 60); g.lineTo(ax + d * 75, H / 2 - 8); g.lineTo(ax + d * 20, H / 2 + 44); g.lineTo(ax + d * 20, H / 2 + 14); g.lineTo(ax - d * 50, H / 2 + 14); g.closePath(); g.fill(); }
     });
-    const h = this.o.h, w = h * W / H; this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), C.cardMat(this.tex)); this.mesh.frustumCulled = false; this.mesh.visible = false; C.stage.cards.add(this.mesh);
+    const h = this.o.h, w = h * W / H; const mat = C.cardMat(this.tex); mat.depthTest = false; mat.depthWrite = false; this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); this.mesh.renderOrder = 50; this.mesh.frustumCulled = false; this.mesh.visible = false; C.stage.cards.add(this.mesh);   // signs always readable, never cut by walls
     this.pos = new THREE.Vector3();
   }
   // show between t0..t1 at world point p (Vector3 or fn), pops in with overshoot and wobbles

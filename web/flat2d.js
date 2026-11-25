@@ -22,7 +22,7 @@ const wob = (seed, i, a = 1.6) => Math.sin(i * 1.7 + seed * 3.1) * a + Math.sin(
 export class Flat2D {
   constructor(o = {}) {
     this.o = { coat: '#3b5ba8', tie: '#e0b03a', badge: '#f0b43a', collar: '#fbf6ec', hat: 'top', hatCol: '#3a2620', band: '#a02a24', skin: '#fdfaf2',
-      hair: '#2a1d16', hairStyle: 'bangs', bust: false, size: 1.85, res: 1.6, mustache: false, seed: 1, ...o };
+      hair: '#2a1d16', hairStyle: 'bangs', bust: false, size: 1.85, res: 2.0, front: 0, mustache: false, seed: 1, ...o };
     const S = this.S = this.o.res; this.cw = Math.round(512 * S); this.ch = Math.round((this.o.bust ? 512 : 1024) * S);
     this.cv = document.createElement('canvas'); this.cv.width = this.cw; this.cv.height = this.ch; this.g = this.cv.getContext('2d');
     this.tex = new THREE.CanvasTexture(this.cv); this.tex.colorSpace = THREE.NoColorSpace; this.tex.anisotropy = 8;
@@ -42,6 +42,7 @@ export class Flat2D {
   update(p = {}, cam) {
     this.draw(p); this.tex.needsUpdate = true;
     this.mesh.position.copy(this.pos); this.mesh.visible = !p.hide;
+    if (cam && this.o.front) { const d = cam.clone().sub(this.pos).setY(0).normalize().multiplyScalar(this.o.front); this.mesh.position.add(d); }   // riders / passengers: pulled toward the camera so they never sink into the vehicle
     if (cam) this.mesh.rotation.y = Math.atan2(cam.x - this.pos.x, cam.z - this.pos.z);
     if (this.shadow) { this.shadow.position.set(this.pos.x, this.pos.y + 0.012, this.pos.z); this.shadow.visible = !p.hide; const k = 1 - Math.min(0.5, (p.hop || 0) / 300); this.shadow.scale.set(k, k, k); }
   }
@@ -60,12 +61,12 @@ export class Flat2D {
     if (!o.bust) { const ph = p.walk || 0, amp = p.amp ?? 0;
       for (const s of [-1, 1]) {
         const sw = Math.sin(ph + (s > 0 ? 0 : Math.PI)), a = R(amp * sw + (p.legOut || 0) * s), hx = 256 + s * 20, L1 = 180, L2 = 170;
-        const knee = [hx + Math.sin(a) * L1, hipY + Math.cos(a) * L1], kb = a - R(Math.max(0, sw) * amp * 0.9);
+        const knee = [hx + Math.sin(a) * L1, hipY + Math.cos(a) * L1], kb = a + R(Math.max(0, Math.cos(ph + (s > 0 ? 0 : Math.PI))) * amp * 1.2);   // shin swings BACK (character faces left by default)
         const foot = [knee[0] + Math.sin(kb) * L2, Math.min(992, knee[1] + Math.cos(kb) * L2)];
         g.strokeStyle = INK; g.lineWidth = 7.5; g.beginPath(); g.moveTo(hx, hipY - 10); g.lineTo(knee[0], knee[1]); g.lineTo(foot[0], foot[1]); g.stroke();
-        g.fillStyle = INK; g.beginPath(); g.ellipse(foot[0] + 7, foot[1] + 2, 13, 6.5, 0, 0, 7); g.fill();
+        g.fillStyle = INK; g.beginPath(); g.ellipse(foot[0] - 8, foot[1] + 2, 14, 6.5, 0, 0, 7); g.fill();
       } }
-    g.save(); g.translate(256, hipY); g.rotate(R(lean)); g.translate(-256, -hipY);
+    g.save(); g.translate(256, hipY); g.rotate(R(-lean)); g.translate(-256, -hipY);   // +lean = forward
     const top = 442 + bob + sq * 14, hem = 652 + bob * 0.6;
     { const bw = o.width || 1; g.save(); g.translate(256, 0); g.scale(bw, 1); g.translate(-256, 0); this.body(g, o, top, hem); this.extras(g, o, top, hem); g.restore(); }
     // ---- arms: thin lines, round dark hands ----
@@ -205,6 +206,7 @@ export class Flat2D {
       else if (eyes === 'happy') { g.lineWidth = 4.5; g.beginPath(); g.arc(x, ey + 8, 13, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); }
       else if (eyes === 'sleepy') { g.beginPath(); g.ellipse(x + lx, ey + 5, 13, 5, 0, 0, Math.PI); g.fill(); g.lineWidth = 4; g.beginPath(); g.moveTo(x - 16, ey + 4); g.lineTo(x + 16, ey + 4); g.stroke(); }
       if (f.sly) { g.lineWidth = 7; g.beginPath(); g.moveTo(x - s * 4 + s * 22, ey - 40); g.lineTo(x - s * 20, ey - 26); g.stroke(); }
+      else if (!brow) { const by = ey - (eyes === 'wide' ? 44 : 30); g.lineWidth = 6; g.beginPath(); g.moveTo(x - s * 14, by + 2); g.quadraticCurveTo(x, by - 5, x + s * 16, by + 1); g.stroke(); }
       else if (brow) { const by = ey - (eyes === 'wide' ? 42 : 26) - Math.max(0, brow) * 8; g.lineWidth = 5; g.beginPath(); g.moveTo(x - s * 15, by + (brow < 0 ? -brow * 9 : -brow * 3)); g.lineTo(x + s * 15, by + (brow < 0 ? brow * 3 : brow * 5)); g.stroke(); }
     }
     if (this.o.beard) { g.fillStyle = this.o.beard; g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(-r * 0.86, r * 0.1); g.quadraticCurveTo(-r * 0.8, r * 1.15, 0, r * 1.18); g.quadraticCurveTo(r * 0.8, r * 1.15, r * 0.86, r * 0.1); g.quadraticCurveTo(r * 0.5, r * 0.55, 0, r * 0.42); g.quadraticCurveTo(-r * 0.5, r * 0.55, -r * 0.86, r * 0.1); g.closePath(); g.fill(); g.stroke(); }
