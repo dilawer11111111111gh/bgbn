@@ -4,6 +4,7 @@ import * as C from './core.js';
 import { mkLook, applyLook } from '../../web/looks.js';
 import { lerp, sstep } from '../../web/motion.js';
 import { Cine, T as CT } from '../../web/cine.js';
+import { direct } from '../../web/director.js';
 import { Flat2D } from '../../web/flat2d.js';
 import { Kit } from '../../web/oldtown.js';
 import { painted } from '../../web/tex.js';
@@ -78,13 +79,18 @@ function setup(t, cam) {
 const CINE = new Cine({ blend: 0.3 }); const P = CT.pt;
 const carC = (t) => V(carX(t) + 0.3, 1.0, 1.6), carF = (t) => V(carX(t) + 2.2, 0.75, 1.6);
 carC.pure = true; carF.pure = true;
-[[0, 1.25, { rig: 'fly', path: [[-24, 0.5, -10], [-21, 0.9, -6.5], [-18, 1.6, -3.5]], at: (t) => V(carX(t), 0.9, 1.6), fov: [36, 40], shake: 0.3, ap: 2.5, focus: (t) => V(carX(t), 0.9, 1.6) }],
- [1.25, 2.3, { rig: 'orbit', at: (t) => DRIVER.headWorld().add(V(0, -0.15, 0)), size: [1.6, 1.25], az: [-25, 25], el: [8, 12], fov: 34, shake: 0.5, ap: 5 }],
- [2.3, 3.1, { rig: 'low', at: carF, size: [2.0, 2.6], az: [80, 112], fov: 34, shake: 0.9, fovKick: 8, ap: 3 }],
- [3.1, 4.05, { rig: 'orbit', at: () => KID.headWorld().add(V(0, -0.25, 0)), size: [1.35, 1.15], az: [-25, 25], el: [4, 6], fov: 32, shake: 0.6, ap: 6 }],
- [4.05, 5.05, { rig: 'push', at: () => VILLAIN.headWorld().add(V(0, -0.2, 0)), size: [2.2, 1.1], az: [-10, 6], el: [3, 1], fov: 30, shake: 0.4, ease: 'snap', ap: 6 }],
- [5.05, 6.25, { rig: 'crane', at: carC, size: [3.0, 9.0], az: [-100, -85], el: [6, 34], fov: 38, shake: 0.2, ap: 1.2 }],
-].forEach(([a, b, s]) => CINE.shot(a, b, s));
+const kidH = () => KID.headWorld(), vilH = () => VILLAIN.headWorld().add(V(0, -0.1, 0)), drvH = () => DRIVER.headWorld();
+const carM = (t) => V(carX(t) + 0.2, 1.1, 1.6); carM.pure = true;
+window.SHOTLOG = direct(CINE, [
+  { t0: 0.0, t1: 1.1, beat: 'establish', at: carM, az: -40 },                       // drone: whole world, car on the road, ferris wheel far
+  { t0: 1.1, t1: 1.9, beat: 'move', at: carM, heading: 0, side: 1, size: 3.4 },      // track alongside the moving car
+  { t0: 1.9, t1: 2.6, shot: 'lead', at: drvH, heading: 0, size: 1.8 },               // in front: driver grinning at us
+  { t0: 2.6, t1: 3.25, beat: 'sees', from: () => KID.headWorld().add(V(0.15, 0, 0.25)), at: carM },   // POV: the kid sees the car
+  { t0: 3.25, t1: 3.95, beat: 'react', at: () => kidH().add(V(0, -0.15, 0)), az: 8 }, // close-up: kid cheers
+  { t0: 3.95, t1: 4.7, beat: 'villain', at: () => VILLAIN.bodyWorld().add(V(0, 0.3, 0)), size: 2.6, az: 20 },   // low angle: villain behind fence
+  { t0: 4.7, t1: 5.35, beat: 'realize', at: vilH, size: 1.0 },                       // dolly in: his evil idea
+  { t0: 5.35, t1: 6.25, beat: 'ending', at: carM, size: 3, big: 16, az: -95 },        // crane up: car drives off
+]);
 function guard(c, t) { const p = c.pos; p[1] = Math.max(p[1], 0.3); const cx = carX(t); if (Math.abs(p[0] - (cx + 0.1)) < 2.6 && Math.abs(p[2] - 1.6) < 1.1 && p[1] < 1.8) p[1] = 1.8; if (p[2] < -4.4 && p[2] > -4.8) p[2] = -4.4; return c; }
 
 const LOOK = mkLook({ sun: [0.45, 0.75, 0.5], lit: '#fff6e4', litK: 1.1, shade: '#8ea6d8', ambSky: '#eef6ff', ambGnd: '#e8f0c8', rim: '#fff4d8', rimDir: [-0.5, 0.3, -0.8], fog: '#cfe4f6', fogR: [40, 220],

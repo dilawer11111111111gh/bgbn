@@ -30,7 +30,7 @@ export function makeClassicCar(o = {}) {
   add(mesh(rbox(0.42, 0.18, 1.5, 0.07), SEAT, 0.0, 0.98, 0)); add(mesh(rbox(0.14, 0.46, 1.5, 0.06), SEAT, -0.22, 1.18, 0));
   add(mesh(rbox(0.42, 0.18, 1.5, 0.07), SEAT, -0.72, 0.98, 0)); add(mesh(rbox(0.14, 0.46, 1.5, 0.06), SEAT, -0.96, 1.18, 0));
   // steering wheel + column
-  const sw = new THREE.Group(); sw.position.set(0.42, 1.22, 0.36); sw.rotation.set(0, Math.PI / 2, 0); sw.rotateX(-0.45);
+  const sw = new THREE.Group(); sw.position.set(0.48, 1.08, 0.36); sw.rotation.set(0, Math.PI / 2, 0); sw.rotateX(-0.9);
   sw.add(mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 28), BLK)); sw.add(mesh(new THREE.BoxGeometry(0.32, 0.025, 0.025), BLK)); body.add(sw);
   add(mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.4), BLK, 0.55, 1.1, 0.36, 0, 0, 1.0));
   // roof (two-tone) on thin pillars, windshield frame (open, no glass so riders stay visible)
