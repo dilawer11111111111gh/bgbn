@@ -3,7 +3,7 @@
 // No cuts by default: neighbouring shots blend with a FAST swoosh (roll + fov kick) so every transition is a move through space (house style). {cut:true} gives a hard cut if a story needs it.
 // Rigs: static push orbit crane track pov ots dollyzoom low high fly.   Sizes: ecu cu mcu ms mws fs ws ews (or metres of frame height).
 import * as THREE from 'three';
-import { clamp, lerp, sstep, EASE, noise1 } from './motion.js';
+import { clamp, lerp, sstep, EASE, noise1, keyed } from './motion.js';
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const SIZE = { ecu: 0.16, cu: 0.42, mcu: 0.7, ms: 1.05, mws: 1.45, fs: 2.1, ws: 3.6, ews: 9 };
 // ---- target resolvers: fn(t) -> Vector3. Person-based ones read the CURRENT frame pose (call cam.at(t) after updating people). ----
@@ -25,7 +25,7 @@ export class Cine {
     let c = s.at(t); if (s.lag && s.at.pure) { const a = V(); for (let i = 0; i <= 4; i++) a.add(s.at(t - s.lag * i / 4)); c = a.multiplyScalar(1 / 5); }
     const fov = lerpA(s.fov ?? this.defaults.fov, u) + (s.fovKick || 0) * Math.sin(Math.PI * u0);
     const size = s.size ?? 'ms', S = (k) => (typeof k === 'number' ? k : SIZE[k] ?? 1.05); const H = Array.isArray(size) ? lerp(S(size[0]), S(size[1]), u) : S(size);
-    let d = (H / 2) / Math.tan((fov * Math.PI) / 360);
+    const HH = s.sizeK ? keyed(s.sizeK, t, 'inOut') : H; let d = (HH / 2) / Math.tan((fov * Math.PI) / 360);
     let az = lerpA(s.az ?? 0, u), el = lerpA(s.el ?? 8, u); const rel = s.rel && s.rel(t) !== undefined ? s.rel(t) * 180 / Math.PI : 0; az += rel;
     if (s.rig === 'crane') el = lerpA(s.el ?? [5, 55], u); if (s.rig === 'low') el = -10; if (s.rig === 'high') el = 60;
     const A = (az * Math.PI) / 180, E = (el * Math.PI) / 180; let pos = c.clone().add(V(Math.sin(A) * Math.cos(E), Math.sin(E), Math.cos(A) * Math.cos(E)).multiplyScalar(d)); let look = c.clone();

@@ -1,0 +1,3 @@
+// golf cast: our own characters (not copies of anyone's).
+export const MILO_O = { body: 'vest', coat: '#2a8a8a', shirt: '#f4f0e6', bandana: '#e8402a', width: 1.0, size: 1.95, hat: 'cap', hatCol: '#e2a83a', band: '#b8782a', hair: '#c8642a', hairStyle: 'messy', glasses: 'round', rest: 'hip', seed: 4, res: 2.2, wide: true, headroom: 400 };
+export const GUS_O = { body: 'bean', coat: '#d84a7a', shirt: '#fff', tie: '#f2c63a', badge: null, width: 1.3, size: 2.05, hat: 'flat', hatCol: '#f4f0e6', band: '#d84a7a', hair: '#e8c86a', hairStyle: 'side', mustache: true, rest: 'behind', seed: 9, res: 2.2, wide: true, headroom: 400 };

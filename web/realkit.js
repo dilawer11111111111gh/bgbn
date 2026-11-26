@@ -77,7 +77,7 @@ export class Sign {
     this.mesh.renderOrder = 60; this.mesh.visible = false; this.mesh.frustumCulled = false; scene.add(this.mesh);
   }
   update(t, t0, t1, p) {
-    const on = t >= t0 && t <= t1; this.mesh.visible = on; if (!on) return;
+    const on = t >= t0 && t <= t1 && !(window.NOSIGNS && !this.o.keep); this.mesh.visible = on; if (!on) return;
     const u = Math.min(1, (t - t0) / 0.22), out = Math.min(1, (t1 - t) / 0.15), s = 2.2; const k = (1 + (s + 1) * Math.pow(u - 1, 3) + s * Math.pow(u - 1, 2)) * out;
     this.mesh.position.copy(typeof p === 'function' ? p(t) : p); const d = cam.position.distanceTo(this.mesh.position); const fw = 2 * d * Math.tan((cam.fov * Math.PI) / 360) * cam.aspect;
     const w = this.mesh.geometry.parameters.width; const fit = w > fw * 0.82 ? (fw * 0.82) / w : 1; this.mesh.scale.setScalar(Math.max(0.001, k * fit));

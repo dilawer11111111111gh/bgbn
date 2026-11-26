@@ -1,0 +1,9 @@
+<!doctype html><html><head><meta charset="utf-8"><script type="importmap">{"imports":{"three":"../../web/vendor/three.module.js","three/addons/":"../../web/vendor/jsm/"}}</script></head>
+<body style="margin:0;background:#8fc8f0"><canvas id="c" width="2400" height="1000"></canvas><script type="module">
+import * as THREE from 'three'; import { Flat2D } from '../../web/flat2d.js'; import { loadMo, mo } from '../../web/mocap.js';
+const sc = new THREE.Scene(); import { MILO_O, GUS_O } from './cast.js'; let P0 = JSON.parse(decodeURIComponent(location.hash.slice(1) || '[]')); const O = { ...(P0.who === 'gus' ? GUS_O : MILO_O), res: 1, scene: sc };
+let P = P0.poses || P0; if (P.clip) { await loadMo([P.clip], './mocap'); P = P.times.map((tt) => ({ ...mo(P.clip, tt, { t0: 0, from: 0 }), face: P.face || 'neutral' })); } const c = document.getElementById('c').getContext('2d');
+Flat2D.T = 0; Flat2D.E = 0; Flat2D.ON = 0;
+P.forEach((p, i) => { const f = new Flat2D({ ...O }); f.draw(f.alive({ turn: 0, ...p })); c.drawImage(f.cv, i * 400 - 100, -150, 600, 1050 * 600 / 1024); });
+window.ready = true; window.renderFrame = () => 'ok';
+</script></body></html>
