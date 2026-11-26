@@ -1,0 +1,37 @@
+name: suraahi-render
+on:
+  push:
+    branches: [suraahi-render]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  seg:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Install ffmpeg + browser
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          npm i --no-save playwright@1.47.2 > /dev/null && npx playwright install --with-deps chromium > /dev/null
+      - name: Render this part (two halves in parallel)
+        run: |
+          read A B < <(sed -n "$(( ${{ matrix.part }} + 1 ))p" suraahi/ranges.txt); M=$(( (A + B) / 2 )); echo "frames $A-$B"
+          export APP=suraahi OSIZE=1920:1080
+          node suraahi/tools/render_job.cjs --tier good --from $A --to $M --out out/h0/part.mp4 --seg 60 > log0.txt 2>&1 &
+          node suraahi/tools/render_job.cjs --tier good --from $M --to $B --out out/h1/part.mp4 --seg 60 > log1.txt 2>&1 &
+          wait; tail -5 log0.txt log1.txt; cat suraahi/out/h0/job.json suraahi/out/h1/job.json
+          mkdir -p res && cp suraahi/out/h0/part.mp4 res/$(printf %05d $A).mp4 && cp suraahi/out/h1/part.mp4 res/$(printf %05d $M).mp4 && ls -la res
+      - name: Push the clips to their own branch
+        run: |
+          git config user.name "render-bot"; git config user.email "render-bot@users.noreply.github.com"
+          cp -r res /tmp/res; git checkout --orphan seg-part-${{ matrix.part }}; git rm -rq --cached . ; git clean -fdq -e node_modules
+          cp /tmp/res/*.mp4 .; git add *.mp4; git commit -qm "suraahi clips part ${{ matrix.part }}"
+          for i in 1 2 3; do git push -f origin HEAD:refs/heads/seg-part-${{ matrix.part }} && break; sleep 5; done

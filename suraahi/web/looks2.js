@@ -1,0 +1,11 @@
+// looks2.js : bright, vignette-free looks for each location / time of day
+import { mkLook } from '../../web/looks.js';
+const base = { vig: 0, grain: 0, vigCol: '#000000' };
+export const LK = {
+  dawn: mkLook({ ...base, sun: [0.75, 0.32, 0.25], lit: '#ffd9a8', litK: 1.1, shade: '#7a7aa8', ambSky: '#dfe6ff', ambGnd: '#f0d0b0', rim: '#ffb070', rimDir: [0.8, 0.3, -0.3], fog: '#f2c8a0', fogR: [60, 320], sky: ['#4a78c0', '#a8b8e0', '#ffc890', '#e8c090'], sat: 1.08, lo: '#f4f0ff', hi: '#fff2e0', contrast: 1.06, glow: 0.35, exposure: 1.05 }),
+  morning: mkLook({ ...base, sun: [0.55, 0.62, 0.35], lit: '#fff0d8', litK: 1.12, shade: '#8a90b8', ambSky: '#e6eeff', ambGnd: '#f4dcbc', rim: '#ffe0b0', rimDir: [0.5, 0.3, -0.8], fog: '#e8d8c0', fogR: [70, 330], sky: ['#3a78d0', '#88b0e8', '#f0dcc0', '#e8c890'], sat: 1.1, lo: '#f4f6ff', hi: '#fff6e8', contrast: 1.05, glow: 0.3, exposure: 1.06 }),
+  noon: mkLook({ ...base, sun: [0.35, 0.85, 0.3], lit: '#fff4e0', litK: 1.15, shade: '#8a8ab0', ambSky: '#e8f0ff', ambGnd: '#f8e0c0', rim: '#fff0d0', rimDir: [-0.5, 0.3, -0.8], fog: '#f0e0c8', fogR: [50, 260], sky: ['#2a70d0', '#78a8e8', '#e8e0d0', '#e0c898'], sat: 1.12, lo: '#f6f6ff', hi: '#fff8ea', contrast: 1.05, glow: 0.3, exposure: 1.05 }),
+  sunset: mkLook({ ...base, sun: [-0.8, 0.22, -0.45], lit: '#ffb878', litK: 1.15, shade: '#7a5a9a', ambSky: '#e0c8ff', ambGnd: '#ffc8a0', rim: '#ff9a50', rimDir: [-0.8, 0.2, -0.5], fog: '#e89a88', fogR: [50, 300], sky: ['#3a3a8a', '#b06a9a', '#ffa860', '#d08a70'], sat: 1.12, lo: '#f0e8ff', hi: '#fff0e0', contrast: 1.06, glow: 0.45, exposure: 1.05 }),
+  night: mkLook({ ...base, sun: [0.35, 0.72, 0.62], lit: '#9ab0e8', litK: 0.95, shade: '#3a4278', ambSky: '#b0c0ff', ambGnd: '#806a8a', rim: '#8ab0ff', rimDir: [-0.4, 0.4, -0.8], fog: '#1a2448', fogR: [60, 330], sky: ['#060c28', '#122050', '#2a3a70', '#141a38'], sat: 1.05, lo: '#e8f0ff', hi: '#fff4e4', contrast: 1.08, glow: 0.6, exposure: 1.1 }),
+  sunrise: mkLook({ ...base, sun: [0.57, 0.24, -0.8], lit: '#ffc88a', litK: 1.2, shade: '#7a6aa8', ambSky: '#e8d8ff', ambGnd: '#ffd0a8', rim: '#ffb060', rimDir: [0.8, 0.2, -0.6], fog: '#f0b8a0', fogR: [60, 330], sky: ['#3a5aa8', '#c890b0', '#ffc070', '#a07890'], sat: 1.12, lo: '#f2ecff', hi: '#fff2e0', contrast: 1.06, glow: 0.55, exposure: 1.08 }),
+};
