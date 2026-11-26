@@ -48,7 +48,7 @@ function beatGest(pose, who, t) { const L = PK[who]; for (let i = 0; i < L.lengt
 const envAt = (who, t) => { const e = VOICE.env[who]; const f = Math.round(t * FPS); let a = 0; for (let k = -1; k <= 1; k++) a += e[clamp(f + k, 0, e.length - 1)] || 0; return a / 3; };
 function talk(pose, who, t) { const x = featAt(who, t), pk = peakNear(who, t); pose.head = pose.head || { yaw: 0, pitch: 0, roll: 0 }; pose.head.pitch += 5 * pk; if (x.e < 0.03) return;
   pose.fx = { ...(pose.fx || {}) }; const o = clamp(x.e, 0, 1.1) * (1 - 0.85 * x.cl), rnd = clamp((x.lo - 0.42) * 2.6, 0, 1), wid = clamp((x.hi - 0.1) * 4, 0, 1);
-  pose.fx.open = (pose.fx.open || 0) + o * 0.58; pose.fx.oround = (pose.fx.oround || 0) + o * rnd * 0.9; pose.fx.mw = (pose.fx.mw || 0) + o * (wid * 0.55 - rnd * 0.35); pose.fx.teeth = (pose.fx.teeth || 0) + o * (0.25 + 0.5 * wid);
+  pose.fx.open = (pose.fx.open || 0) + Math.pow(o, 0.8) * 1.0; pose.fx.oround = (pose.fx.oround || 0) + o * rnd * 0.8; pose.fx.mw = (pose.fx.mw || 0) + o * (wid * 0.6 - rnd * 0.3) + 0.15 * o; pose.fx.teeth = (pose.fx.teeth || 0) + o * (0.5 + 0.5 * wid); pose.fx.smile = (pose.fx.smile || 0) - 0.15 * o; pose.jaw = (pose.jaw || 0) + Math.pow(o, 0.9) * 1.7 * (1 - 0.3 * wid);
   pose.fx.press = (pose.fx.press || 0) + 0.7 * x.cl; pose.fx.brow = (pose.fx.brow || 0) + 0.35 * pk;
   pose.head.yaw += 2.0 * Math.sin(t * 2.3) * Math.min(1, x.e); }
 // ---------------- props helpers ----------------
