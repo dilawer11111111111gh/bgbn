@@ -27,11 +27,12 @@ jobs:
           export APP=suraahi OSIZE=1920:1080
           node suraahi/tools/render_job.cjs --tier good --from $A --to $M --out out/h0/part.mp4 --seg 60 > log0.txt 2>&1 &
           node suraahi/tools/render_job.cjs --tier good --from $M --to $B --out out/h1/part.mp4 --seg 60 > log1.txt 2>&1 &
-          wait; tail -5 log0.txt log1.txt; cat suraahi/out/h0/job.json suraahi/out/h1/job.json
-          mkdir -p res && cp suraahi/out/h0/part.mp4 res/$(printf %05d $A).mp4 && cp suraahi/out/h1/part.mp4 res/$(printf %05d $M).mp4 && ls -la res
+          wait; tail -20 log0.txt log1.txt || true; cat suraahi/out/h0/job.json suraahi/out/h1/job.json || true
+          mkdir -p res && cp suraahi/out/h*/seg_good/[0-9]*.mp4 res/ 2>/dev/null || true; cp log0.txt res/log0_${{ matrix.part }}.txt; cp log1.txt res/log1_${{ matrix.part }}.txt; cp suraahi/out/h0/job.json res/job0.json || true; cp suraahi/out/h1/job.json res/job1.json || true; ls -la res
       - name: Push the clips to their own branch
+        if: always()
         run: |
           git config user.name "render-bot"; git config user.email "render-bot@users.noreply.github.com"
           cp -r res /tmp/res; git checkout --orphan seg-part-${{ matrix.part }}; git rm -rq --cached . ; git clean -fdq -e node_modules
-          cp /tmp/res/*.mp4 .; git add *.mp4; git commit -qm "suraahi clips part ${{ matrix.part }}"
+          cp /tmp/res/* .; git add -A . ':!node_modules'; git commit -qm "suraahi clips part ${{ matrix.part }}"
           for i in 1 2 3; do git push -f origin HEAD:refs/heads/seg-part-${{ matrix.part }} && break; sleep 5; done
