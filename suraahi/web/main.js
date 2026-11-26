@@ -7,11 +7,14 @@ import { LK } from './looks2.js';
 import { applyLook, mixLook } from '../../web/looks.js';
 import { Path, place, EASE, clamp, lerp, sstep, angLerp, hash } from '../../web/motion.js';
 import { applyTimeline } from '../../web/acting.js';
-import { Performer } from '../../web/perform.js';
+import { Performer, POSTURES } from '../../web/perform.js';
+import { MOODS } from '../../web/acting.js';
+import { EXPR } from './person.js';
 import { Cine, T as CT } from '../../web/cine.js';
 import { handOnProp, propInHand } from '../../web/props.js';
 import { N, J, VZ, GUARDS, KIDS, SHOP, SUR, BASKET, TOSS, CARPET, waveCarpet, updateTail, CUFFS, SHARDS, SMOKE, SPARK, REDSPARK, ORBS, FLASH, GLOW, SPEARS } from './cast.js';
 import { VOICE } from './voice.js';
+import { createQA } from '../../web/qa.js';
 const { dofU, FPS, PX } = C;
 export const DURATION = VOICE.duration;
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
@@ -31,11 +34,23 @@ function crPath(K, t) { let i = 0; while (i < K.length - 2 && t >= K[i + 1][0]) 
 // ---------------- scene timing ----------------
 const CUT1 = 60.9, CUT2 = 95.1, CUT3 = 134.0;
 const zoneAt = (t) => (t < CUT1 ? 'DES' : t < CUT2 ? 'BAZ' : t < CUT3 ? 'OAS' : 'PAL');
-// ---------------- lip sync from the voice envelope ----------------
+// ---------------- liveliness: eyes open, faces up, heads straight ----------------
+for (const k in EXPR) { if (k === 'sleepy') continue; const e = EXPR[k]; e.lid *= 0.35; e.wide = (e.wide || 0) + 0.12; if (e.browTilt > 0.8) e.browTilt *= 0.8; }
+for (const k in POSTURES) { const p = POSTURES[k]; p.hp *= 0.3; p.hr *= 0.3; p.lean *= 0.7; }
+for (const k in MOODS) { MOODS[k].hp *= 0.3; MOODS[k].jit *= 0.8; }
+// ---------------- lip sync from the voice (energy + spectrum -> mouth shapes) ----------------
+const FT = VOICE.feat, PK = VOICE.peaks;
+function featAt(who, t) { const F = FT[who], f = Math.round(t * FPS) + 1, g = (k, i) => F[k][clamp(i, 0, F[k].length - 1)] || 0; return { e: g('e', f) * 0.75 + g('e', f - 1) * 0.25, lo: g('lo', f), hi: g('hi', f), cl: g('cl', f) || g('cl', f - 1) * 0.5 }; }
+const peakNear = (who, t) => { let k = 0; for (const p of PK[who]) { const d = t - p; if (d > -0.12 && d < 0.5) k = Math.max(k, d < 0 ? 1 + d / 0.12 : 1 - d / 0.5); } return k; };
+// beat gestures on stressed words (hands free only); call right after poseFrom so custom arm poses can still override
+const BG = ['open', 'point', 'chest', 'open', 'fist', 'open'];
+function beatGest(pose, who, t) { const L = PK[who]; for (let i = 0; i < L.length; i++) { const p = L[i]; if (t > p - 0.35 && t < p + 1.1) { if (i % 2 === 1) return; applyTimeline(pose, [[p - 0.3, BG[(i >> 1) % BG.length], i % 4 === 0 ? 'L' : 'R', 0.25, 0.5, 0.4]], t, 0); return; } } }
 const envAt = (who, t) => { const e = VOICE.env[who]; const f = Math.round(t * FPS); let a = 0; for (let k = -1; k <= 1; k++) a += e[clamp(f + k, 0, e.length - 1)] || 0; return a / 3; };
-function talk(pose, who, t) { const e = envAt(who, t); if (e < 0.02) return; pose.fx = { ...(pose.fx || {}) }; const w = Math.min(1, e);
-  pose.fx.open = (pose.fx.open || 0) + w * 0.42 + 0.03; pose.fx.oround = (pose.fx.oround || 0) + w * 0.4 * (0.5 + 0.5 * Math.sin(t * 13.1)); pose.fx.mw = (pose.fx.mw || 0) - w * 0.25 * (0.5 + 0.5 * Math.sin(t * 8.3 + 1)); pose.fx.teeth = (pose.fx.teeth || 0) + w * 0.3;
-  pose.head = pose.head || { yaw: 0, pitch: 0, roll: 0 }; pose.head.pitch += w * 3.5 * Math.sin(t * 6.1); pose.head.yaw += w * 2.5 * Math.sin(t * 2.9); pose.head.roll += w * 1.5 * Math.sin(t * 3.7); }
+function talk(pose, who, t) { const x = featAt(who, t), pk = peakNear(who, t); pose.head = pose.head || { yaw: 0, pitch: 0, roll: 0 }; pose.head.pitch += 5 * pk; if (x.e < 0.03) return;
+  pose.fx = { ...(pose.fx || {}) }; const o = clamp(x.e, 0, 1.1) * (1 - 0.85 * x.cl), rnd = clamp((x.lo - 0.42) * 2.6, 0, 1), wid = clamp((x.hi - 0.1) * 4, 0, 1);
+  pose.fx.open = (pose.fx.open || 0) + o * 0.58; pose.fx.oround = (pose.fx.oround || 0) + o * rnd * 0.9; pose.fx.mw = (pose.fx.mw || 0) + o * (wid * 0.55 - rnd * 0.35); pose.fx.teeth = (pose.fx.teeth || 0) + o * (0.25 + 0.5 * wid);
+  pose.fx.press = (pose.fx.press || 0) + 0.7 * x.cl; pose.fx.brow = (pose.fx.brow || 0) + 0.35 * pk;
+  pose.head.yaw += 2.0 * Math.sin(t * 2.3) * Math.min(1, x.e); }
 // ---------------- props helpers ----------------
 const SUR_UP = V(0, 1, 0);
 function placeProp(prop, pos, yaw, extra = null) { prop.group.position.copy(pos); prop.group.rotation.set(0, yaw, 0); if (extra) prop.group.rotation.set(extra[0], yaw + extra[1], extra[2]); prop.group.updateMatrixWorld(true); }
@@ -46,7 +61,7 @@ const headOf = (P) => () => P.headWorld();
 // ================= PERFORMERS (emotion beats; lookAt = who they look at) =================
 const SURW = () => SUR.group.position.clone();
 const kidsMid = () => KIDS[0].headWorld().lerp(KIDS[1].headWorld(), 0.5);
-const pN = new Performer(21, { energy: 1.2 }).beats([
+const pN = new Performer(21, { energy: 1.6 }).beats([
   { t: 0, emo: 'tired' }, { t: 4.5, emo: 'tired', gaze: [0.3, 0.1] }, { t: 8.8, emo: 'shock', trans: 0.15 }, { t: 9.5, emo: 'worried', lookAt: SURW }, { t: 11.2, emo: 'curious', lookAt: SURW }, { t: 13, emo: 'awe' === 'x' ? 'x' : 'curious', lookAt: SURW, int: 1.2 },
   { t: 16.5, emo: 'hopeful', lookAt: SURW }, { t: 20.6, emo: 'curious', lookAt: SURW }, { t: 22.6, emo: 'shock', trans: 0.15 }, { t: 23.4, emo: 'terrified', lookAt: headOf(J), trans: 0.15 }, { t: 30, emo: 'afraid', lookAt: headOf(J) },
   { t: 33.4, emo: 'terrified', lookAt: headOf(J) }, { t: 37, emo: 'nervous', lookAt: headOf(J) }, { t: 41, emo: 'curious', lookAt: headOf(J) }, { t: 44.7, emo: 'hopeful', lookAt: headOf(J), int: 1.2 }, { t: 49.4, emo: 'suspicious', lookAt: headOf(J) }, { t: 53, emo: 'curious', lookAt: headOf(J) }, { t: 56.5, emo: 'worried', lookAt: headOf(J) },
@@ -59,7 +74,7 @@ const pN = new Performer(21, { energy: 1.2 }).beats([
   { t: 154.4, emo: 'shock', lookAt: SURW, trans: 0.15 }, { t: 155.4, emo: 'afraid', lookAt: headOf(VZ) }, { t: 159.9, emo: 'worried', lookAt: headOf(J) }, { t: 166.2, emo: 'afraid', lookAt: headOf(VZ) }, { t: 171.2, emo: 'pensive', gaze: [0, -0.4] },
   { t: 173, emo: 'determined', lookAt: headOf(VZ) }, { t: 175.3, emo: 'sad', lookAt: headOf(J) }, { t: 177, emo: 'hopeful', lookAt: headOf(J) }, { t: 179.6, emo: 'joy', lookAt: headOf(J), int: 1.3 }, { t: 183.8, emo: 'shock', lookAt: SURW, trans: 0.15 }, { t: 185.6, emo: 'relief', lookAt: headOf(J) },
   { t: 189.3, emo: 'joy', lookAt: headOf(J) }, { t: 195, emo: 'happy', lookAt: headOf(J) }, { t: 199.4, emo: 'love', lookAt: headOf(J) }, { t: 202.5, emo: 'joy', lookAt: headOf(J) }, { t: 206.5, emo: 'laugh', lookAt: headOf(J) }, { t: 210, emo: 'joy', gaze: [0.4, 0.2] }]);
-const pJ = new Performer(33, { energy: 1.45 }).beats([
+const pJ = new Performer(33, { energy: 1.8 }).beats([
   { t: 0, emo: 'neutral' }, { t: 23.4, emo: 'shock' }, { t: 25.1, emo: 'joy', int: 1.4, gaze: [0, 0.5] }, { t: 28.5, emo: 'laugh', int: 1.3, gaze: [0.2, 0.6] }, { t: 33.3, emo: 'curious', lookAt: headOf(N) }, { t: 37, emo: 'tired', lookAt: headOf(N) }, { t: 40.5, emo: 'happy', lookAt: headOf(N) },
   { t: 44.7, emo: 'proud', lookAt: headOf(N), int: 1.3 }, { t: 47, emo: 'happy', lookAt: headOf(N) }, { t: 52.9, emo: 'laugh', lookAt: headOf(N) }, { t: 55.5, emo: 'stern', lookAt: headOf(N) }, { t: 57.5, emo: 'sad', lookAt: headOf(N) },
   { t: CUT1, emo: 'happy', lookAt: headOf(N) }, { t: 66.4, emo: 'proud', lookAt: headOf(N) }, { t: 67.8, emo: 'joy', lookAt: () => BASKET.group.position.clone() }, { t: 70.6, emo: 'happy', lookAt: headOf(N) }, { t: 73.6, emo: 'curious', lookAt: kidsMid },
@@ -70,7 +85,7 @@ const pJ = new Performer(33, { energy: 1.45 }).beats([
   { t: 154.3, emo: 'angry', lookAt: headOf(VZ) }, { t: 159.8, emo: 'stern', lookAt: headOf(VZ), int: 1.2 }, { t: 166, emo: 'worried', lookAt: headOf(N) }, { t: 175.2, emo: 'sad', lookAt: headOf(N) }, { t: 177.2, emo: 'worried', lookAt: headOf(N) }, { t: 180.5, emo: 'shock', lookAt: headOf(N), trans: 0.2 },
   { t: 183.8, emo: 'shock', lookAt: SURW }, { t: 186, emo: 'hopeful', gaze: [0, -0.3] }, { t: 189.2, emo: 'shock', gaze: [0.2, -0.5] }, { t: 191.4, emo: 'joy', int: 1.3, gaze: [0, 0.4] }, { t: 195.1, emo: 'love', lookAt: headOf(N) }, { t: 199.4, emo: 'happy', lookAt: headOf(N) },
   { t: 203.5, emo: 'joy', lookAt: headOf(N) }, { t: 206.5, emo: 'laugh', lookAt: headOf(N), int: 1.3 }, { t: 210, emo: 'joy', gaze: [0.5, 0.2] }]);
-const pV = new Performer(41, { energy: 1.25 }).beats([
+const pV = new Performer(41, { energy: 1.55 }).beats([
   { t: 0, emo: 'evil', lookAt: headOf(N) }, { t: 83, emo: 'evil', lookAt: headOf(N), int: 1.2 }, { t: 86.5, emo: 'sneaky', lookAt: headOf(N) }, { t: 89.5, emo: 'evil', lookAt: () => BASKET.group.position.clone(), int: 1.3 },
   { t: CUT2, emo: 'evil', lookAt: headOf(N) }, { t: 118, emo: 'sneaky', lookAt: headOf(N) }, { t: 120.8, emo: 'stern', lookAt: headOf(N) }, { t: 123.2, emo: 'angry', lookAt: headOf(N), int: 1.3 }, { t: 126, emo: 'evil', lookAt: headOf(N) },
   { t: CUT3, emo: 'angry', lookAt: () => CARPET.group.position.clone() }, { t: 150.5, emo: 'evil', lookAt: () => CARPET.group.position.clone(), int: 1.3 }, { t: 153, emo: 'evil', lookAt: SURW },
@@ -147,7 +162,7 @@ function desert(t) {
     const p = ground.lerp(eye, lift); const shake = sstep(22.4, 23.2, t); p.add(V(Math.sin(t * 61) * 0.012 * shake, Math.sin(t * 47) * 0.01 * shake + (t > 16.9 && t < 17.15 ? 0.02 : 0), 0));
     placeProp(SUR, p, yaw + Math.PI + 0.35 * Math.sin(t * 0.8) * sstep(14, 15, t) * (1 - sstep(20, 20.6, t)), [shake * 0.1 * Math.sin(t * 53), 0, shake * 0.1 * Math.sin(t * 41)]);
     hold2(N, pose, SUR, 'hold', 1);
-    if (t > 20.7 && t < 22.6) { const k = bump(20.7, 22.6, t); SUR.group.updateMatrixWorld(true); const a = t * 9; const w = SUR.group.localToWorld(V(0.098, -0.03 + 0.04 * Math.sin(a), 0.04 * Math.cos(a))); pose.handR = { w, dir: [0, 0.3, 1], pn: [-1, 0, 0], k }; pose.gripR = { curl: 0.2, thumb: 0.3 }; } }
+    if (t > 20.7 && t < 22.6) { const k = bump(20.7, 22.6, t); SUR.group.updateMatrixWorld(true); const a = t * 9; const w = SUR.group.localToWorld(V(-0.135, -0.03 + 0.045 * Math.sin(a), 0.04 * Math.cos(a))); pose.handR = { w, dir: [0, 0.3, 1], pn: [-1, 0, 0], k }; pose.gripR = { curl: 0.2, thumb: 0.3 }; } }
   else { const u = ramp(23.3, 23.85, t); const a = V(H.x, H.y, H.z), b = V(0.3, 0.13, 1.15); const p = a.clone().lerp(b, u); p.y += Math.sin(Math.PI * u) * 0.5; if (u >= 1) p.copy(b);
     const rock = Math.max(0, 1 - (t - 23.85) / 2.5); placeProp(SUR, p, 0.4, [u < 1 ? u * 6 : Math.sin((t - 23.85) * 12) * 0.25 * rock, 0, u < 1 ? u * 3 : Math.cos((t - 23.85) * 10) * 0.2 * rock]);
     if (t < 23.7) hold2(N, pose, SUR, 'hold', 1 - ramp(23.3, 23.7, t)); }
@@ -155,9 +170,9 @@ function desert(t) {
   // glow
   S.glow = t < 10.4 ? 0.0 : t < 22.4 ? 0.55 + 0.35 * Math.sin(t * 2.6) : t < 23.4 ? lerp(0.9, 3.5, ramp(22.4, 23.4, t)) : lerp(3.5, 0.5, ramp(23.4, 25, t));
   // ---- jinn ----
-  if (J.root.visible) { const k = jinnK(t); const base = V(0.32, 0.55 + 0.08 * Math.sin(t * 1.6), 1.7); J.root.position.copy(base).lerp(V(0.3, 0.1, 1.2), 1 - Math.min(1, k)); J.root.scale.setScalar(J.height * Math.max(0.02, k));
+  if (J.root.visible) { const k = jinnK(t); const base = V(0.32, 0.22 + 0.06 * Math.sin(t * 1.6), 1.75); J.root.position.copy(base).lerp(V(0.3, 0.1, 1.2), 1 - Math.min(1, k)); J.root.scale.setScalar(J.height * Math.max(0.02, k));
     const jy = yawTo(J.root.position, N.root.position); J.root.rotation.set(0, jy, 0);
-    const jp = poseFrom(pJ, t, { walking: false, handsFree: true }, { walk: null });
+    const jp = poseFrom(pJ, t, { walking: false, handsFree: true }, { walk: null }); beatGest(jp, 'jinn', t);
     const roar = bump(25.0, 29.5, t); if (roar > 0.01) { jp.armL = { f: 140 * roar + 10, o: 8 - 50 * roar, b: 12 }; jp.armR = { f: 140 * roar + 10, o: 8 - 50 * roar, b: 12 }; delete jp.handL; delete jp.handR; jp.lean = -12 * roar; jp.head.pitch -= 20 * roar; }
     if (t > 37 && t < 40.5) applyTimeline(jp, [[37.2, 'neckBack', 'L', 0.4, 2.4, 0.5], [37.3, 'hips', 'R', 0.4, 2.4, 0.5]], t, 0);
     if (t > 41.2 && t < 44.2) applyTimeline(jp, [[41.4, 'chest', 'L', 0.35, 2.0, 0.4]], t, 0);
@@ -166,7 +181,7 @@ function desert(t) {
     if (t > 55.5 && t < 59.2) applyTimeline(jp, [[55.6, 'point', 'R', 0.3, 2.6, 0.5]], t, 0);
     talk(jp, 'jinn', t); J.update(jp); }
   // smoke + sparkles of the emergence
-  smokeSpiral(t, V(0.3, 0.3, 1.15), 23.15, 2.8);
+  smokeSpiral(t, V(0.3, 0.3, 1.15), 23.15, 2.0);
   burst(SPARK, 0, 30, t, 23.3, V(0.3, 0.35, 1.15), 2.4, 1.5, 0.3);
   rising(SPARK, 30, 30, t, 23.8, 26.5, () => J.root.position.clone().add(V(0, 0.9, 0)), 1.0);
   orbs(t);
@@ -198,12 +213,12 @@ function bazaar(t) {
   TOSS.forEach((m, j) => { const tl = TH[j]; if (t < tl) return; const kid = KIDS[j % 2]; const catchP = kid.palmWorld('L').lerp(kid.palmWorld('R'), 0.5).add(V(0, 0.05, 0)); const u = clamp((t - tl) / 0.62, 0, 1);
     const from = m.userData.from || N.palmWorld('L').clone(); const p = from.clone().lerp(catchP, u); p.y += Math.sin(Math.PI * u) * 0.9; m.position.copy(u < 1 ? p : catchP); m.visible = true; });
   // jinn floats behind him
-  { const rj = pathJ_baz.at(t); J.root.position.set(rj.x, 0.4 + 0.07 * Math.sin(t * 1.6), rj.z); J.root.rotation.set(0, rj.speed > 0.2 ? rj.yaw : angLerp(rj.yaw, yawTo(J.root.position, N.root.position), 0.8), 0); J.root.scale.setScalar(J.height);
-    const jp = poseFrom(pJ, t, { walking: false, handsFree: true }, { walk: null }); jp.lean = (jp.lean || 0) + 10 * clamp(rj.speed, 0, 1);
+  { const rj = pathJ_baz.at(t); J.root.position.set(rj.x, 0.18 + 0.05 * Math.sin(t * 1.6), rj.z); J.root.rotation.set(0, rj.speed > 0.2 ? rj.yaw : angLerp(rj.yaw, yawTo(J.root.position, N.root.position), 0.8), 0); J.root.scale.setScalar(J.height);
+    const jp = poseFrom(pJ, t, { walking: false, handsFree: true }, { walk: null }); beatGest(jp, 'jinn', t); jp.lean = (jp.lean || 0) + 10 * clamp(rj.speed, 0, 1);
     const snap = bump(67.4, 68.6, t); if (snap > 0.01) { jp.armL = { f: 125 * snap + 5, o: 10 - 25 * snap, b: 50 }; delete jp.handL; }
     talk(jp, 'jinn', t); J.update(jp); }
   // vazir in the dark arch, a guard behind him
-  { VZ.root.position.set(B + 14.5, 0, -6.6); VZ.root.rotation.set(0, -0.35, 0); const vp = poseFrom(pV, t, { walking: false, handsFree: true }, { walk: null });
+  { VZ.root.position.set(B + 14.5, 0, -6.6); VZ.root.rotation.set(0, -0.35, 0); const vp = poseFrom(pV, t, { walking: false, handsFree: true }, { walk: null }); beatGest(vp, 'vazir', t);
     if (t > 86.3 && t < 90) applyTimeline(vp, [[86.4, 'chin', 'R', 0.4, 2.5, 0.5]], t, 0); talk(vp, 'vazir', t); VZ.update(vp);
     const G = GUARDS[0]; G.root.position.set(B + 15.5, 0, -7.6); G.root.rotation.set(0, -0.6, 0); const gp = poseFrom(pG[0], t, { walking: false, handsFree: false }, { walk: null }); gp.armR = { f: 28, o: 10, b: 85 }; G.update(gp); spearIn(G, SPEARS[0]); }
   // shopkeeper behind his stall (north side, x=4)
@@ -230,15 +245,15 @@ function oasis(t) {
     placeProp(SUR, rest.clone().lerp(H, lift), yaw + Math.PI); hold2(N, pose, SUR, 'hold', 1); if (clutch > 0) pose.twist = (pose.twist || 0) - 22 * clutch * (1 - sstep(126.5, 127.5, t)); }
   talk(pose, 'naujawan', t); N.update(pose);
   // jinn over the water
-  { let jpz = V(O - 0.45, 0.42 + 0.07 * Math.sin(t * 1.4), -2.45); let jy = yawTo(jpz, N.root.position);
+  { let jpz = V(O - 0.45, 0.25 + 0.05 * Math.sin(t * 1.4), -2.3); let jy = yawTo(jpz, N.root.position);
     if (c && t > 132.6) { const s = sstep(132.6, 133.3, t); jpz = jpz.lerp(c.p.clone().addScaledVector(rightOf(c.yaw), -1.3).add(V(0, 0.4, 0)), s); jy = angLerp(jy, c.yaw, s); }
     J.root.position.copy(jpz); J.root.rotation.set(0, jy, 0); J.root.scale.setScalar(J.height);
-    const jp = poseFrom(pJ, t, { walking: false, handsFree: true }, { walk: null }); if (t > 99.7 && t < 106.5) jp.head.pitch -= 18 * bump(99.7, 106.5, t);
+    const jp = poseFrom(pJ, t, { walking: false, handsFree: true }, { walk: null }); beatGest(jp, 'jinn', t); if (t > 99.7 && t < 106.5) jp.head.pitch -= 18 * bump(99.7, 106.5, t);
     const clap = bump(131.1, 132.3, t); if (clap > 0.01) { jp.armL = { f: 75 * clap + 5, o: 12, b: 60 * clap }; jp.armR = { f: 75 * clap + 5, o: 12, b: 60 * clap }; delete jp.handL; delete jp.handR; }
     if (t > 116.5 && t < 122) applyTimeline(jp, [[116.6, 'fist', 'L', 0.3, 4.4, 0.5]], t, 0);
     talk(jp, 'jinn', t); J.update(jp); }
   // vazir + guards
-  if (vis) { const rv = place(VZ, pathV_oas, t, env); const vp = poseFrom(pV, t, { walking: rv.speed > 0.25, handsFree: rv.speed < 0.25 }, rv.pose);
+  if (vis) { const rv = place(VZ, pathV_oas, t, env); const vp = poseFrom(pV, t, { walking: rv.speed > 0.25, handsFree: rv.speed < 0.25 }, rv.pose); if (rv.speed < 0.25) beatGest(vp, 'vazir', t);
     if (t > 120.4 && t < 123.3) applyTimeline(vp, [[120.5, 'reach', 'L', 0.5, 2.0, 0.4]], t, 0); if (t > 124.1 && t < 126.6) applyTimeline(vp, [[124.2, 'point', 'L', 0.18, 1.6, 0.5]], t, 0);
     if (t > 132.8) { vp.head.pitch -= 30 * sstep(132.8, 133.5, t); } talk(vp, 'vazir', t); VZ.update(vp);
     GUARDS.forEach((G, i) => { const rg = place(G, pathG_oas[i], t, env); const gp = poseFrom(pG[i], t, { walking: rg.speed > 0.25, handsFree: false }, rg.pose); gp.armR = { f: 28, o: 10, b: 85 }; delete gp.handR;
@@ -258,7 +273,7 @@ function palace(t) {
     pose = poseFrom(pN, t, { walking: false, handsFree: t > 208.6 }, { walk: null, ...SIT(sk) }); if (crash > 0) { pose.lean = (pose.lean || 0) - 18 * crash; pose.armL = { f: 60, o: 50, b: 20 }; pose.armR = { f: 60, o: 50, b: 20 }; }
     if (t < 140 && t > CUT3) { const k = bump(135.5, 139.6, t); if (k > 0.01) { pose.armL = { f: 120 * k + 5, o: 10 - 30 * k, b: 20 }; delete pose.handL; } } }
   else { const sk = 1 - sstep(153.45, 154.1, t); N.root.position.copy(NP); const yaw = yawTo(NP, VZ.root.position); N.root.rotation.set(0, yaw, 0);
-    pose = poseFrom(pN, t, { walking: false, handsFree: t > 155.2 }, { walk: null, ...SIT(sk) });
+    pose = poseFrom(pN, t, { walking: false, handsFree: t > 155.2 }, { walk: null, ...SIT(sk) }); if (t > 155.2) beatGest(pose, 'naujawan', t);
     const reach = bump(154.3, 155.6, t); if (reach > 0.01) { pose.armL = { f: 80 * reach, o: 15, b: 20 }; pose.armR = { f: 70 * reach, o: 15, b: 20 }; delete pose.handL; delete pose.handR; }
     const shout = bump(179.6, 184.2, t); if (shout > 0.01) { pose.armL = { f: 75 * shout + 5, o: 60 * shout + 10, b: 15 }; pose.armR = { f: 75 * shout + 5, o: 60 * shout + 10, b: 15 }; delete pose.handL; delete pose.handR; pose.head.pitch -= 10 * shout; }
     if (t > 171.6 && t < 174.6) pose.fx = { ...(pose.fx || {}), lid: 0.6 * bump(171.6, 174.6, t) };
@@ -269,21 +284,22 @@ function palace(t) {
   talk(pose, 'naujawan', t); N.update(pose);
   // ---- vazir on the roof ----
   { const rv = place(VZ, pathV_pal, t, env); let vy = rv.yaw; if (t < 153) vy = c ? yawTo(VZ.root.position, c.p) : vy; if (t > 155.6) vy = yawTo(VZ.root.position, N.root.position) + (t > 159.8 && t < 166 ? -0.5 * sstep(159.8, 160.6, t) * (1 - sstep(165.6, 166.4, t)) : 0); VZ.root.rotation.y = vy;
-    const sitK = sstep(186.0, 187.1, t); const vp = poseFrom(pV, t, { walking: rv.speed > 0.25, handsFree: !vHas || t > 184.7 }, { ...rv.pose, ...SIT(sitK) });
+    const knock = EASE.outCubic(ramp(184.62, 185.0, t)); if (knock > 0) VZ.root.position.addScaledVector(fwdOf(VZ.root.rotation.y), -0.85 * knock);
+    const sitK = sstep(184.72, 185.05, t); const vp = poseFrom(pV, t, { walking: rv.speed > 0.25, handsFree: !vHas || t > 184.7 }, { ...rv.pose, ...SIT(sitK) });
     if (t < 153) { vp.head.pitch -= 25; const cast = bump(150.9, 152.1, t); if (cast > 0.01) { vp.armL = { f: 150 * cast + 5, o: 10 - 20 * cast, b: 10 }; delete vp.handL; } else if (t > 147 && t < 150.8) { vp.armL = { f: 140, o: -10, b: 60 }; delete vp.handL; } }
     if (t > 153.9 && !vHas) handOnProp(VZ, 'L', SUR, 'hold', vp, sstep(153.9, 154.4, t));
     if (vHas && t < 184.62) { const high = bump(155.3, 159.4, t); vp.armL = { f: lerp(45, 160, high), o: lerp(18, -12, high), b: lerp(80, 15, high) }; delete vp.handL; vp.gripL = { curl: 0.5, thumb: 0.5 };
       if (t > 166.2 && t < 170.8) applyTimeline(vp, [[166.3, 'point', 'R', 0.25, 4.0, 0.4]], t, 0); }
-    if (t > 184.62 && t < 186) { vp.armL = { f: 60, o: 40, b: 30 }; delete vp.handL; vp.lean = (vp.lean || 0) - 15; }
-    if (sitK > 0.01) { vp.lean = 10 * sitK; vp.armL = { f: 20, o: 10, b: 60 }; vp.armR = { f: 20, o: 10, b: 60 }; delete vp.handL; delete vp.handR; vp.head.pitch += 15 * sitK; }
+    const fl = bump(184.6, 185.6, t); if (fl > 0.01) { vp.armL = { f: 130 * fl + 10, o: 10 - 40 * fl, b: 20 }; vp.armR = { f: 130 * fl + 10, o: 10 - 40 * fl, b: 20 }; delete vp.handL; delete vp.handR; vp.head.pitch -= 20 * fl; }
+    if (sitK > 0.01 && t > 185.6) { vp.lean = 10 * sitK; vp.armL = { f: 20, o: 10, b: 60 }; vp.armR = { f: 20, o: 10, b: 60 }; delete vp.handL; delete vp.handR; vp.head.pitch += 15 * sitK; }
     talk(vp, 'vazir', t); VZ.update(vp);
     if (vHas && t < 184.62) { propInHand(VZ, 'L', SUR, 'hold'); const sh = sstep(183.7, 184.6, t); SUR.group.position.add(V(Math.sin(t * 71) * 0.015 * sh, Math.sin(t * 57) * 0.012 * sh, 0)); } }
   // ---- jinn ----
   { let jpz, jy; if (flying && t < 154) { jpz = c.p.clone().addScaledVector(rightOf(c.yaw), -1.35).addScaledVector(fwdOf(c.yaw), -0.2).add(V(0, 0.45 + 0.1 * Math.sin(t * 2), 0)); jy = c.yaw; }
-    else if (t < 208.6) { jpz = V(P_ + 0.05, 0.5 + 0.07 * Math.sin(t * 1.5), 0.6); jy = 0.2; if (t > 159.8 && t < 171) jy = yawTo(jpz, VZ.root.position); else if (t >= 171) jy = yawTo(jpz, N.root.position); if (t > 152.6 && t < 154.4) jpz.lerp(crPath(CK_FLY, Math.min(t, 152.6)).addScaledVector(rightOf(-1.2), -1.35).add(V(0, 0.45, 0)), 1 - sstep(152.6, 154.4, t)); }
-    else { jpz = V(P_ + 0.05, 0.5, 0.6).lerp(c.p.clone().addScaledVector(rightOf(c.yaw), -1.35).add(V(0, 0.45, 0)), sstep(208.6, 210.0, t)); jy = angLerp(yawTo(V(P_, 0, 0.6), N.root.position), c.yaw, sstep(209, 210.2, t)); }
+    else if (t < 208.6) { jpz = V(P_ + 0.05, 0.22 + 0.05 * Math.sin(t * 1.5), 0.6); jy = 0.2; if (t > 159.8 && t < 171) jy = yawTo(jpz, VZ.root.position); else if (t >= 171) jy = yawTo(jpz, N.root.position); if (t > 152.6 && t < 154.4) jpz.lerp(crPath(CK_FLY, Math.min(t, 152.6)).addScaledVector(rightOf(-1.2), -1.35).add(V(0, 0.45, 0)), 1 - sstep(152.6, 154.4, t)); }
+    else { jpz = V(P_ + 0.05, 0.22, 0.6).lerp(c.p.clone().addScaledVector(rightOf(c.yaw), -1.35).add(V(0, 0.45, 0)), sstep(208.6, 210.0, t)); jy = angLerp(yawTo(V(P_, 0, 0.6), N.root.position), c.yaw, sstep(209, 210.2, t)); }
     J.root.position.copy(jpz); J.root.rotation.set(0, jy, 0); J.root.scale.setScalar(J.height);
-    const jp = poseFrom(pJ, t, { walking: false, handsFree: true }, { walk: null }); if (flying) jp.lean = (jp.lean || 0) + 22;
+    const jp = poseFrom(pJ, t, { walking: false, handsFree: true }, { walk: null }); beatGest(jp, 'jinn', t); if (flying) jp.lean = (jp.lean || 0) + 22;
     const wide = bump(140.5, 146.3, t); if (wide > 0.01) { jp.armL = { f: 70 * wide + 8, o: 10 + 70 * wide, b: 10 }; jp.armR = { f: 70 * wide + 8, o: 10 + 70 * wide, b: 10 }; delete jp.handL; delete jp.handR; }
     if (t > 160 && t < 165.4) applyTimeline(jp, [[160.2, 'point', 'L', 0.3, 4.6, 0.5]], t, 0);
     const wrists = bump(189.0, 194.3, t); if (wrists > 0.01) { jp.armL = { f: 80 * wrists + 5, o: 5, b: 95 * wrists }; jp.armR = { f: 80 * wrists + 5, o: 5, b: 95 * wrists }; delete jp.handL; delete jp.handR; jp.head.pitch += 20 * wrists * (1 - sstep(191.5, 192.4, t)); }
@@ -294,8 +310,8 @@ function palace(t) {
   // red magic bolt from the vazir hits the carpet
   bolt(t, 151.15, 151.85, () => VZ.palmWorld('L'), () => crPath(CK_FLY, 151.85));
   // shatter
-  if (t > 184.62) shatter(t, 184.62); burst(SPARK, 0, 60, t, 184.62, S.shatterAt || V(), 3.0, 1.8, 1.2); flashAt(t, 184.62, 0.5, () => S.shatterAt || V(), 1.4);
-  if (t > 184.62 && t < 185.4) C.dofU.uFlash.value = 0.55 * (1 - ramp(184.62, 185.4, t));
+  if (t > 184.62) shatter(t, 184.62); burst(SPARK, 0, 60, t, 184.62, S.shatterAt || V(), 3.0, 1.8, 1.2); flashAt(t, 184.62, 0.35, () => S.shatterAt || V(), 0.35);
+  if (t > 184.62 && t < 185.4) C.dofU.uFlash.value = 0.22 * (1 - ramp(184.62, 185.3, t));
   if (t > 189.9) { burst(SPARK, 0, 30, t, 190.0, CUFFS[0].userData.p0 || V(), 1.0, 0.9, 0.5); }
   if (t > 207.6) trail(t, 208.4, 216.2);
   // glow + practical light
@@ -303,8 +319,8 @@ function palace(t) {
 }
 // ================= effects =================
 function spearIn(G, sp) { const p = G.palmWorld('R'); sp.group.position.copy(p).add(V(0, 0.15, 0)); sp.group.rotation.set(0.05, 0, 0.06); sp.group.visible = G.root.visible; }
-function smokeSpiral(t, origin, t0, dur) { SMOKE.forEach((m, i) => { const u = i / SMOKE.length, ts = t0 + u * dur * 0.75, p = (t - ts) / 1.5; if (p <= 0 || p >= 1) { m.visible = false; return; }
-  const a = 7 * p + i * 2.4, r = 0.1 + 0.6 * p, h = p * 2.6; m.position.copy(origin).add(V(Math.cos(a) * r, h, Math.sin(a) * r)); const s = (0.1 + 0.42 * Math.sin(Math.PI * Math.min(1, p * 1.3))) * (0.7 + 0.6 * hash(i)); m.scale.setScalar(s); m.visible = true; }); }
+function smokeSpiral(t, origin, t0, dur) { SMOKE.forEach((m, i) => { const u = i / SMOKE.length, ts = t0 + u * dur * 0.75, p = (t - ts) / 1.1; if (p <= 0 || p >= 1) { m.visible = false; return; }
+  const a = 7 * p + i * 2.4, r = 0.08 + 0.4 * p, h = p * 2.2; m.position.copy(origin).add(V(Math.cos(a) * r, h, Math.sin(a) * r)); const s = (0.08 + 0.26 * Math.sin(Math.PI * Math.min(1, p * 1.3))) * (0.7 + 0.6 * hash(i)); m.scale.setScalar(s); m.visible = true; }); }
 function dirHash(i) { const a = hash(i * 3.1) * Math.PI * 2, z = hash(i * 7.7) * 2 - 1, r = Math.sqrt(1 - z * z); return V(Math.cos(a) * r, z, Math.sin(a) * r); }
 function burst(pool, i0, n, t, t0, center, speed, life, up = 0) { for (let i = i0; i < i0 + n; i++) { const m = pool[i]; const d = hash(i * 1.3 + t0) * 0.25, p = (t - t0 - d) / life; if (p <= 0 || p >= 1) continue;
   const dir = dirHash(i + Math.floor(t0)); dir.y = Math.abs(dir.y) * 0.6 + up * 0.3; m.position.copy(center).addScaledVector(dir, speed * life * (1 - Math.pow(1 - p, 2)) * 0.5).add(V(0, -0.8 * p * p, 0)); m.scale.setScalar(0.035 * (1 - p) + 0.005); m.rotation.y = t * 6 + i; m.visible = true; } }
@@ -340,7 +356,7 @@ CINE.shot(0, 4.2, { rig: 'crane', at: CT.walker(pathN_des, T, 1.2), size: [7, 2.
   .shot(33.0, 36.7, { rig: 'push', at: CT.head(N), size: ['ms', 'mcu'], az: [10, 25], el: 16, fov: 30, rel: relY(N) })
   .shot(36.7, 44.3, { rig: 'orbit', at: mid(N, J), size: 3.0, az: [95, 72], el: [5, 9], fov: 34 })
   .shot(44.3, 49.1, { rig: 'orbit', at: CT.chest(J), size: [1.6, 1.25], az: [-15, 20], el: 4, fov: 32, rel: relY(J) })
-  .shot(49.1, 52.9, { rig: 'ots', from: CT.head(J), at: CT.head(N), fov: 32 })
+  .shot(49.1, 52.9, { rig: 'orbit', at: mid(N, J, 0.35), size: 2.2, az: [60, 45], el: 4, fov: 32 })
   .shot(52.9, 56.6, { rig: 'push', at: CT.head(J), size: ['ms', 'mcu'], az: [12, -6], el: 2, fov: 30, rel: relY(J) })
   .shot(56.6, CUT1, { rig: 'crane', at: mid(N, J), size: [3.0, 4.6], az: [120, 140], el: [8, 22], fov: 34 })
 // bazaar
@@ -371,12 +387,12 @@ CINE.shot(0, 4.2, { rig: 'crane', at: CT.walker(pathN_des, T, 1.2), size: [7, 2.
   .shot(152.0, 154.3, { rig: 'static', at: CT.pt(P_ - 0.7, 1.4, 2.4), size: 5.2, az: [10, 25], el: [10, 6], fov: 38, shake: 1.6 })
 // roof
   .shot(154.3, 159.5, { rig: 'push', at: CT.head(VZ), size: ['ms', 'mws'], az: [-25, -5], el: 0, fov: 32, rel: relY(VZ) })
-  .shot(159.5, 165.8, { rig: 'push', at: CT.head(J), size: ['ms', 'mcu'], az: [-10, 6], el: 3, fov: 30, rel: relY(J) })
+  .shot(159.5, 165.8, { rig: 'push', at: CT.head(J), size: ['ms', 'mcu'], az: [25, 35], el: 3, fov: 30, rel: relY(J) })
   .shot(165.8, 171.4, { rig: 'orbit', at: mid(N, VZ), size: 2.3, az: [-8, 8], el: 6, fov: 34 })
   .shot(171.4, 175.1, { rig: 'push', at: CT.head(N), size: ['mcu', 'cu'], az: [6, -6], el: 2, fov: 28, rel: relY(N) })
   .shot(175.1, 176.9, { rig: 'push', at: CT.head(J), size: 'mcu', az: [10, 0], el: 2, fov: 28, rel: relY(J) })
   .shot(176.9, 183.6, { rig: 'push', at: CT.head(N), size: ['ms', 'mcu'], az: [-18, 6], el: 3, fov: 30, rel: relY(N) })
-  .shot(183.6, 188.7, { rig: 'push', at: () => (SUR.group.visible ? SUR.group.position.clone() : (S.shatterAt || V()).clone()), size: [0.9, 2.6], az: [40, 55], el: [6, 10], fov: 30, rel: relY(VZ), ease: 'inOut' })
+  .shot(183.6, 188.7, { rig: 'push', at: () => (SUR.group.visible ? SUR.group.position.clone() : (S.shatterAt || V()).clone()), size: [1.3, 2.8], az: [40, 55], el: [6, 10], fov: 30, rel: relY(VZ), ease: 'inOut' })
   .shot(188.7, 195.1, { rig: 'crane', at: () => J.headWorld().add(V(0, -0.35, 0)), size: [1.6, 2.0], az: [-8, 12], el: [8, 2], fov: 32, rel: relY(J) })
   .shot(195.1, 199.4, { rig: 'orbit', at: mid(N, J), size: 2.5, az: [5, -10], el: 6, fov: 34 })
   .shot(199.4, 206.4, { rig: 'push', at: CT.head(N), size: ['ms', 'mcu'], az: [0, 14], el: 3, fov: 30, rel: relY(N) })
@@ -408,4 +424,7 @@ window.dbg = (f) => { const t = f / FPS; update(t); return { N: N.root.position.
 update(184.6); S.shatterAt = SUR.group.position.clone();
 update(189.98); CUFFS.forEach((c) => (c.userData.p0 = c.position.clone()));
 [74.4, 75.2, 76.0, 76.8].forEach((tl, j) => { update(tl); TOSS[j].userData.from = N.palmWorld('L').clone(); });
+const QENV = { actors: [], terrain: null, colliders: null, penTol: 0.035 }; const qa = createQA(QENV);
+window.qa = (f) => { const t = f / FPS; update(t); QENV.actors = [['N', N], ['J', J], ['V', VZ], ['G0', GUARDS[0]], ['G1', GUARDS[1]], ['K0', KIDS[0]], ['K1', KIDS[1]], ['S', SHOP]].filter(([n, P]) => P.root.visible).map(([name, P]) => ({ name, P, r: 0.26 }));
+  return qa.check(f).filter((i) => ['BODY_INTERPENETRATION', 'SELF_PENETRATION'].includes(i.type)); };
 window.ready = true;

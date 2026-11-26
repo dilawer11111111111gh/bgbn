@@ -18,7 +18,7 @@ function turban(P, col, o = {}) {   // wrapped turban on the head (+ optional je
 }
 // ============ young man (water-carrier): curly hair, cream shirt, purple vest, gold baggy shalwar, small red cap ============
 export const N = new Person({ skin: SKIN.wheatish, face: { ...FACES.oval, eyeSize: 1.06, age: 0.05 }, hair: '#1a110c', hairStyle: 'side', browColor: '#1a110c', top: '#ece2c8', sleeve: '#ece2c8',
-  baggy: true, bottom: '#d29a3a', shoe: '#6a3a20', sole: '#3a2010', eyeColor: '#3a2416', lip: '#a0605a', stubble: null, build: { w: 0.95, arm: 0.95 }, height: 0.92, headScale: 1.04, seed: 21 });
+  baggy: true, bottom: '#d29a3a', shoe: '#6a3a20', sole: '#3a2010', eyeColor: '#3a2416', lip: '#a0605a', stubble: '#2a1a12', mustache: '#1a110c', browW: 34, lashColor: '#0a0806', build: { w: 0.95, arm: 0.95 }, height: 0.92, headScale: 1.04, seed: 21 });
 { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.06, 18), M('#b02a2a')); cap.position.set(0.03, 0.19, -0.04); cap.rotation.set(-0.15, 0, -0.3); N.head.add(cap); S(N.head, M('#1a1a1a'), 0.014, 0.07, 0.23, -0.04); }
 { for (const sd of [-1, 1]) { const v = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.03), M('#6a2f78')); v.position.set(sd * 0.12, 0.38, 0.1); v.rotation.z = sd * 0.1; N.torso.add(v); const tr = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.4, 0.035), M('#e0b040', { emis: 0.1 })); tr.position.set(sd * 0.075, 0.38, 0.113); tr.rotation.z = sd * 0.1; N.torso.add(tr); } S(N.torso, M('#6a2f78'), 0.16, 0, 0.4, -0.05, 1.35, 1.35, 0.85); }
 // the water skin (mashk) on his back
@@ -26,7 +26,7 @@ export const MASHK = new THREE.Group(); { const m = M('#8a5a32'); S(MASHK, m, 0.
 // ============ JINN: blue, big, bare-chest look with gold vest trims, top-knot, braided beard, gold cuffs, smoky tail instead of legs ============
 const JBLUE = '#3f86d8';
 export const J = new Person({ skin: JBLUE, skinUnlit: 0.25, face: { ...FACES.square, w: 1.1, jaw: 1.05, brow: 0.9, eyeSize: 1.0, age: 0.3 }, hair: '#101018', hairStyle: 'gray', browColor: '#101018', beard: '#101018', beardFull: 0.7, mustache: '#101018',
-  top: JBLUE, sleeve: JBLUE, bottom: '#2a2a6a', belt: true, beltColor: '#e0b040', eyeColor: '#e8c040', lip: '#2a4a8a', build: { w: 1.32, d: 1.15, shoulder: 1.2, arm: 1.3, belly: 0.05 }, height: 1.12, headScale: 1.14, seed: 33 });
+  top: JBLUE, sleeve: JBLUE, bottom: '#2a2a6a', belt: true, beltColor: '#e0b040', eyeColor: '#e8c040', lip: '#2a4a8a', build: { w: 1.32, d: 1.15, shoulder: 1.2, arm: 1.3, belly: 0.05 }, height: 1.0, headScale: 1.14, seed: 33 });
 { const H = J.head; S(H, M('#101018'), 0.07, 0, 0.21, -0.04, 1, 0.9, 1); const knot = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.035, 0.08, 10), M('#e0b040', { emis: 0.2 })); knot.position.set(0, 0.27, -0.04); H.add(knot);
   const tail = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.38, 10), M('#101018')); tail.position.set(0, 0.17, -0.2); tail.rotation.x = -2.4; H.add(tail);
   for (const s of [-1, 1]) { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.008, 6, 14), M('#e8c040', { emis: 0.3 })); ring.position.set(s * 0.19, -0.06, 0.0); ring.rotation.y = Math.PI / 2; H.add(ring); }
@@ -70,7 +70,7 @@ export const SUR = (() => { const g = new THREE.Group(); const pts = [[0.0, 0], 
   const copper = tm(0xc8702e, { emis: 0.05 }); const body = new THREE.Mesh(new THREE.LatheGeometry(pts, 24), copper); g.add(body);
   for (const [y, r] of [[-0.06, 0.092], [0.0, 0.092], [0.08, 0.035]]) { const b = new THREE.Mesh(new THREE.TorusGeometry(r, 0.006, 6, 24), GLOW); b.rotation.x = Math.PI / 2; b.position.y = y; g.add(b); }
   const st = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.04, 12), tm(0x8a4a1e)); st.position.y = 0.2; g.add(st);
-  return { group: g, size: 0.09, grips: { body: { p: [0.09, -0.04, 0], dir: [0, 0, 1], pn: [-1, 0, 0], curl: 0.45, thumb: 0.5 }, neck: { p: [0.028, 0.12, 0], dir: [0, 0, 1], pn: [-1, 0, 0], curl: 0.9, thumb: 0.8 }, hold: { p: [0.094, -0.03, 0], dir: [0, 0, -1], pn: [-1, 0, 0], curl: 0.45, thumb: 0.5 }, top: { p: [0.0, 0.2, 0], dir: [0, 0, -1], pn: [0, -1, 0], curl: 0.8, thumb: 0.8 } } }; })();
+  return { group: g, size: 0.09, grips: { body: { p: [0.09, -0.04, 0], dir: [0, 0, 1], pn: [-1, 0, 0], curl: 0.45, thumb: 0.5 }, neck: { p: [0.028, 0.12, 0], dir: [0, 0, 1], pn: [-1, 0, 0], curl: 0.9, thumb: 0.8 }, hold: { p: [0.112, -0.03, 0], dir: [0, 0, -1], pn: [-1, 0, 0], curl: 0.4, thumb: 0.5 }, top: { p: [0.0, 0.2, 0], dir: [0, 0, -1], pn: [0, -1, 0], curl: 0.8, thumb: 0.8 } } }; })();
 W.add(SUR.group);
 // shards of the suraahi (shatter at the climax)
 export const SHARDS = Array.from({ length: 22 }, (_, i) => { const m = new THREE.Mesh(new THREE.TetrahedronGeometry(0.035 + (i % 4) * 0.01), i % 5 === 0 ? GLOW : tm(0xc8702e)); m.visible = false; W.add(m); return m; });
@@ -79,7 +79,7 @@ export const BASKET = (() => { const g = new THREE.Group(); const wv = tm(0xffff
   const b = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.13, 0.15, 22, 1, true), wv); g.add(b); const bt = new THREE.Mesh(new THREE.CircleGeometry(0.13, 20), wv); bt.rotation.x = -Math.PI / 2; bt.position.y = -0.075; g.add(bt);
   const rim = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.012, 6, 26), tm(0x8a5a2a)); rim.rotation.x = Math.PI / 2; rim.position.y = 0.075; g.add(rim);
   const fruit = []; const cols = [0xe8a020, 0xd03020, 0x6aa030, 0xe8d040, 0xa03070, 0xff7a30]; for (let i = 0; i < 14; i++) { const a = i * 2.39, r = i < 6 ? 0.11 : 0.05; const m = new THREE.Mesh(new THREE.SphereGeometry(0.048 + (i % 3) * 0.008, 14, 10), cm(cols[i % 6])); m.position.set(Math.cos(a) * r, 0.04 + (i < 6 ? 0 : 0.05) + (i > 11 ? 0.05 : 0), Math.sin(a) * r); m.userData.home = m.position.clone(); g.add(m); fruit.push(m); }
-  return { group: g, fruit, size: 0.01, grips: { side: { p: [0.2, 0.0, 0], dir: [0, 0, 1], pn: [-1, 0, 0], curl: 0.25, thumb: 0.4 }, hold: { p: [0.205, 0.02, 0], dir: [0, 0, -1], pn: [-1, 0, 0], curl: 0.35, thumb: 0.4 } } }; })();
+  return { group: g, fruit, size: 0.01, grips: { side: { p: [0.2, 0.0, 0], dir: [0, 0, 1], pn: [-1, 0, 0], curl: 0.25, thumb: 0.4 }, hold: { p: [0.225, 0.02, 0], dir: [0, 0, -1], pn: [-1, 0, 0], curl: 0.35, thumb: 0.4 } } }; })();
 W.add(BASKET.group);
 // thrown fruit (flying arcs to the kids)
 export const TOSS = Array.from({ length: 4 }, (_, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(0.055, 14, 10), cm([0xd03020, 0xe8a020, 0x6aa030, 0xff7a30][i])); m.visible = false; W.add(m); return m; });
