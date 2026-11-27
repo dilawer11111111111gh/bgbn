@@ -494,7 +494,7 @@ export class Person {
     const h = p.head || {}; let lkX = 0, lkY = 0, hYaw = 0, hPit = 0;
     if (p.lookAt && (p.lookAt.k ?? 1) > 0.001 && p.lookAt.w) {                 // look at a WORLD point: head takes ~70% of the turn, eyes the rest (natural, eyes lead)
       const k = p.lookAt.k ?? 1; this.torso.updateWorldMatrix(true, false); const v = this.torso.worldToLocal(p.lookAt.w.clone()).sub(V(0, 0.9, 0.01));
-      const yaw = Math.atan2(v.x, v.z), pitch = Math.atan2(-v.y, Math.hypot(v.x, v.z)), mY = rad(p.lookAt.maxYaw ?? 62), hy2 = clamp(yaw * 0.72, -mY, mY), hp2 = clamp(pitch * 0.6, -rad(32), rad(32));
+      const yaw = Math.atan2(v.x, v.z), pitch = Math.atan2(-v.y, Math.hypot(v.x, v.z)), mY = rad(p.lookAt.maxYaw ?? 62), hy2 = clamp(yaw * 0.72, -mY, mY), hp2 = clamp(pitch * 0.6, -rad(32), rad(p.lookAt.maxPitch ?? 32));
       hYaw = (hy2 * 180 / Math.PI) * k; hPit = (hp2 * 180 / Math.PI) * k; lkX = clamp((yaw - hy2) / 0.5, -1, 1) * k; lkY = clamp((pitch - hp2) / 0.38, -1, 1) * k; }
     this.head.rotation.set(rad((h.pitch || 0) + hPit) + 0.004 * Math.sin(T * 1.1 + this.seed), rad((h.yaw || 0) + hYaw), rad(h.roll || 0));
     this._updateFace(lkX || lkY ? { ...p, look: [clamp((p.look ? p.look[0] : 0) + lkX, -1, 1), clamp((p.look ? p.look[1] : 0) + lkY, -1, 1)] } : p, T);

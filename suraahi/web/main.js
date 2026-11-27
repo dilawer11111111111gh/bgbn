@@ -16,7 +16,9 @@ import { N, J, VZ, GUARDS, KIDS, SHOP, SUR, BASKET, TOSS, CARPET, waveCarpet, up
 import { VOICE } from './voice.js';
 import { createQA } from '../../web/qa.js';
 const { dofU, FPS, PX } = C;
-export const DURATION = VOICE.duration;
+export const DURATION = VOICE.duration; export const NDUR = VOICE.newDuration;
+const interp = (x, A, B) => { if (x <= A[0]) return B[0]; for (let i = 0; i < A.length - 1; i++) if (x < A[i + 1]) return B[i] + (B[i + 1] - B[i]) * (x - A[i]) / (A[i + 1] - A[i]); return B[B.length - 1]; };
+const OLDT = (tn) => interp(tn, VOICE.map.new, VOICE.map.old);
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 const L = (n) => VOICE.lines[n - 1];
 const bump = (a, b, t) => sstep(a, a + (b - a) * 0.3, t) * (1 - sstep(a + (b - a) * 0.7, b, t));
@@ -48,16 +50,22 @@ function beatGest(pose, who, t) { const L = PK[who]; for (let i = 0; i < L.lengt
 const envAt = (who, t) => { const e = VOICE.env[who]; const f = Math.round(t * FPS); let a = 0; for (let k = -1; k <= 1; k++) a += e[clamp(f + k, 0, e.length - 1)] || 0; return a / 3; };
 function talk(pose, who, t) { const x = featAt(who, t), pk = peakNear(who, t); pose.head = pose.head || { yaw: 0, pitch: 0, roll: 0 }; pose.head.pitch += 5 * pk; if (x.e < 0.03) return;
   pose.fx = { ...(pose.fx || {}) }; const o = clamp(x.e, 0, 1.1) * (1 - 0.85 * x.cl), rnd = clamp((x.lo - 0.42) * 2.6, 0, 1), wid = clamp((x.hi - 0.1) * 4, 0, 1);
-  pose.fx.open = (pose.fx.open || 0) + Math.pow(o, 0.8) * 1.0; pose.fx.oround = (pose.fx.oround || 0) + o * rnd * 0.8; pose.fx.mw = (pose.fx.mw || 0) + o * (wid * 0.6 - rnd * 0.3) + 0.15 * o; pose.fx.teeth = (pose.fx.teeth || 0) + o * (0.5 + 0.5 * wid); pose.fx.smile = (pose.fx.smile || 0) - 0.15 * o; pose.jaw = (pose.jaw || 0) + Math.pow(o, 0.9) * 1.7 * (1 - 0.3 * wid);
+  pose.fx.open = (pose.fx.open || 0) + Math.pow(o, 0.8) * 0.85; pose.fx.oround = (pose.fx.oround || 0) + o * rnd * 0.8; pose.fx.mw = (pose.fx.mw || 0) + o * (wid * 0.6 - rnd * 0.3) + 0.15 * o; pose.fx.teeth = (pose.fx.teeth || 0) + o * (0.5 + 0.5 * wid); pose.fx.smile = (pose.fx.smile || 0) - 0.15 * o; pose.jaw = (pose.jaw || 0) + Math.pow(o, 0.9) * 0.55 * (1 - 0.3 * wid);
   pose.fx.press = (pose.fx.press || 0) + 0.7 * x.cl; pose.fx.brow = (pose.fx.brow || 0) + 0.35 * pk;
   pose.head.yaw += 2.0 * Math.sin(t * 2.3) * Math.min(1, x.e); }
 // ---------------- props helpers ----------------
 const SUR_UP = V(0, 1, 0);
 function placeProp(prop, pos, yaw, extra = null) { prop.group.position.copy(pos); prop.group.rotation.set(0, yaw, 0); if (extra) prop.group.rotation.set(extra[0], yaw + extra[1], extra[2]); prop.group.updateMatrixWorld(true); }
 const holdPoint = (P, f = 0.34, up = 0.98, side = 0) => { const y = P.root.rotation.y; return P.root.position.clone().addScaledVector(fwdOf(y), f).addScaledVector(rightOf(y), side).add(V(0, up * P.height / 0.92, 0)); };
-const SIT = (k) => ({ sitK: k, sitF: 86, sitKn: 8, seatY: 0.12 });
+const SIT = (k) => ({ sitK: k, sitF: 86, sitKn: 8, seatY: 0.15 });
 const headOf = (P) => () => P.headWorld();
 
+// ================= LIVELINESS WRAPPER (every character) =================
+const WHO = new Map([[N, 'naujawan'], [J, 'jinn'], [VZ, 'vazir']]);
+const speakerAt = (t) => { for (const l of VOICE.lines) if (t >= l.t0 - 0.1 && t <= l.t1 + 0.2) return l.who; return null; };
+for (const P of [N, J, VZ, ...GUARDS, ...KIDS, SHOP]) { const up = P.update.bind(P); P.update = (p) => { p.head = p.head || { yaw: 0, pitch: 0, roll: 0 }; const t = p.t || 0;
+  const me = WHO.get(P), sp = speakerAt(t); if (sp && sp !== me) { const k = peakNear(sp, t); p.head.pitch += 4 * k; p.fx = { ...(p.fx || {}), brow: ((p.fx && p.fx.brow) || 0) + 0.25 * k }; }   // listeners react on the speaker's stressed words
+  p.head.pitch = clamp(p.head.pitch, -30, 9); p.head.roll = clamp(p.head.roll, -5, 5); if (p.lookAt) p.lookAt.maxPitch = 12; p.exScale = (p.exScale || 1) * 1.3; return up(p); }; }
 // ================= PERFORMERS (emotion beats; lookAt = who they look at) =================
 const SURW = () => SUR.group.position.clone();
 const kidsMid = () => KIDS[0].headWorld().lerp(KIDS[1].headWorld(), 0.5);
@@ -235,7 +243,7 @@ function oasis(t) {
   const NS = V(O + 0.5, 0, 0.4), NB = V(O - 0.95, 0, -0.75); const back = EASE.inOut(ramp(126.8, 128.7, t)); const np = NS.clone().lerp(NB, back);
   const c = S.carpet; let onCarpet = c && t > 132.15 ? 1 : 0; const sitK = (1 - sstep(115.2, 116.4, t)) + sstep(132.15, 132.7, t);
   let yaw = 2.79; if (t > 114.9) yaw = angLerp(2.79, yawTo(np, VZ.root.position), sstep(114.9, 116.5, t)); if (t > 126.7) yaw = angLerp(yaw, yawTo(np, VZ.root.position) + 0.0, 1);
-  if (onCarpet) { N.root.position.copy(c.p).add(V(0, 0.03, 0)); yaw = c.yaw; N.root.rotation.set(c.pitch * 0.5, yaw, c.roll * 0.5); } else { N.root.position.copy(np); N.root.rotation.set(0, yaw, 0); }
+  if (onCarpet) { N.root.position.copy(c.p).add(V(0, 0.07, 0)).addScaledVector(fwdOf(c.yaw), -0.3); yaw = c.yaw; N.root.rotation.set(c.pitch, yaw, c.roll, 'YXZ'); } else { N.root.position.copy(np); N.root.rotation.set(0, yaw, 0); }
   const pose = poseFrom(pN, t, { walking: back > 0 && back < 1, handsFree: t < 116 }, { walk: back > 0 && back < 1 ? (t - 126.8) * 1.6 : null, walkK: back > 0 && back < 1 ? 0.8 : 0, gait: 0.7, ...SIT(clamp(sitK, 0, 1)) });
   if (back > 0 && back < 1) pose.lean = (pose.lean || 0) - 8;
   // suraahi: on the sand beside him -> picked up -> clutched -> on the carpet in his lap
@@ -269,7 +277,7 @@ function palace(t) {
   const flying = t < 153.5 || t > 208.6; const crash = sstep(151.85, 152.2, t) * (1 - sstep(153.2, 153.6, t));
   // ---- young man ----
   let pose; const NP = V(P_ - 1.5, 0, 2.75);
-  if (flying) { const sk = t < 153.5 ? 1 - sstep(153.45, 154.1, t) : sstep(208.6, 209.3, t); N.root.position.copy(c.p).add(V(0, 0.03, 0)); N.root.rotation.set(c.pitch * 0.5, c.yaw, c.roll * 0.6);
+  if (flying) { const sk = t < 153.5 ? 1 - sstep(153.45, 154.1, t) : sstep(208.6, 209.3, t); N.root.position.copy(c.p).add(V(0, 0.07, 0)).addScaledVector(fwdOf(c.yaw), -0.3); N.root.rotation.set(c.pitch, c.yaw, c.roll, 'YXZ');
     pose = poseFrom(pN, t, { walking: false, handsFree: t > 208.6 }, { walk: null, ...SIT(sk) }); if (crash > 0) { pose.lean = (pose.lean || 0) - 18 * crash; pose.armL = { f: 60, o: 50, b: 20 }; pose.armR = { f: 60, o: 50, b: 20 }; }
     if (t < 140 && t > CUT3) { const k = bump(135.5, 139.6, t); if (k > 0.01) { pose.armL = { f: 120 * k + 5, o: 10 - 30 * k, b: 20 }; delete pose.handL; } } }
   else { const sk = 1 - sstep(153.45, 154.1, t); N.root.position.copy(NP); const yaw = yawTo(NP, VZ.root.position); N.root.rotation.set(0, yaw, 0);
@@ -353,11 +361,11 @@ CINE.shot(0, 4.2, { rig: 'crane', at: CT.walker(pathN_des, T, 1.2), size: [7, 2.
   .shot(20.7, 22.6, { rig: 'push', at: CT.obj(SUR.group), size: [0.55, 0.38], az: [-30, -18], el: 10, fov: 26, rel: relY(N) })
   .shot(22.6, 25.6, { rig: 'static', at: CT.pt(0.2, 1.5, 0.7), size: 3.4, az: [82, 96], el: [6, 12], fov: 38, shake: 1.6, kick: 12 })
   .shot(25.6, 33.0, { rig: 'low', at: CT.head(J), size: ['mws', 'ms'], az: [10, -15], fov: 34, rel: relY(J), shake: 0.8 })
-  .shot(33.0, 36.7, { rig: 'push', at: CT.head(N), size: ['ms', 'mcu'], az: [10, 25], el: 16, fov: 30, rel: relY(N) })
+  .shot(33.0, 36.7, { rig: 'ots', from: CT.head(J), at: CT.head(N), fov: 32, off: 1.05, back: 0.9, up: 0.25 })
   .shot(36.7, 44.3, { rig: 'orbit', at: mid(N, J), size: 3.0, az: [95, 72], el: [5, 9], fov: 34 })
   .shot(44.3, 49.1, { rig: 'orbit', at: CT.chest(J), size: [1.6, 1.25], az: [-15, 20], el: 4, fov: 32, rel: relY(J) })
   .shot(49.1, 52.9, { rig: 'orbit', at: mid(N, J, 0.35), size: 2.2, az: [60, 45], el: 4, fov: 32 })
-  .shot(52.9, 56.6, { rig: 'push', at: CT.head(J), size: ['ms', 'mcu'], az: [12, -6], el: 2, fov: 30, rel: relY(J) })
+  .shot(52.9, 56.6, { rig: 'ots', from: CT.head(N), at: CT.head(J), fov: 32, side: -1 })
   .shot(56.6, CUT1, { rig: 'crane', at: mid(N, J), size: [3.0, 4.6], az: [120, 140], el: [8, 22], fov: 34 })
 // bazaar
   .shot(CUT1, 66.3, { rig: 'track', at: CT.walker(pathN_baz, T, 1.3), lag: 0.15, size: 'fs', az: [62, 48], el: [6, 4], fov: 34, cut: true })
@@ -365,16 +373,16 @@ CINE.shot(0, 4.2, { rig: 'crane', at: CT.walker(pathN_des, T, 1.2), size: [7, 2.
   .shot(68.0, 70.8, { rig: 'push', at: CT.obj(BASKET.group), size: [0.8, 0.55], az: [10, -10], el: [28, 36], fov: 30, rel: relY(N) })
   .shot(70.8, 72.6, { rig: 'push', at: CT.head(N), size: ['mcu', 'cu'], az: [5, -5], el: 3, fov: 28, rel: relY(N) })
   .shot(72.6, 77.4, { rig: 'orbit', at: CT.pt(B + 3.2, 1.0, 0.6), size: 3.2, az: [12, 30], el: [8, 12], fov: 48 })
-  .shot(77.4, 82.1, { rig: 'push', at: CT.head(J), size: ['ms', 'mcu'], az: [-8, 8], el: 2, fov: 30, rel: relY(J) })
+  .shot(77.4, 82.1, { rig: 'ots', from: CT.head(N), at: CT.head(J), fov: 32 })
   .shot(82.1, 90.0, { rig: 'pov', from: (t) => V(B + 13.6, 1.85, -0.6).lerp(V(B + 14.2, 1.75, -3.6), EASE.inOut(ramp(82.1, 90, t))), at: CT.head(VZ), fov: 32, kick: 14, swing: 9 })
   .shot(90.0, CUT2, { rig: 'pov', from: (t) => V(B + 14.25, 1.74, -4.3).lerp(V(B + 14.4, 1.74, -4.95), EASE.inOut(ramp(90, CUT2, t))), at: CT.eyes(VZ), fov: 28 })
 // oasis
   .shot(CUT2, 99.4, { rig: 'crane', at: mid(N, J), size: [7, 2.8], az: [190, 175], el: [30, 8], fov: 36, cut: true })
   .shot(99.4, 107.4, { rig: 'low', at: CT.head(J), size: ['ms', 'mcu'], az: [8, -8], fov: 30, rel: relY(J) })
-  .shot(107.4, 112.1, { rig: 'push', at: CT.head(N), size: ['ms', 'mcu'], az: [-5, 10], el: 4, fov: 30, rel: relY(N) })
+  .shot(107.4, 112.1, { rig: 'ots', from: CT.head(J), at: CT.head(N), fov: 32, off: 1.05, back: 0.9, up: 0.25 })
   .shot(112.1, 115.0, { rig: 'orbit', at: mid(N, J), size: 2.5, az: [98, 85], el: 6, fov: 34 })
   .shot(115.0, 120.2, { rig: 'static', at: CT.pt(O + 4.0, 1.3, 1.3), size: 4.4, az: [200, 214], el: [8, 6], fov: 36 })
-  .shot(120.2, 123.2, { rig: 'push', at: CT.head(VZ), size: ['ms', 'mcu'], az: [-5, 8], el: 3, fov: 30, rel: relY(VZ) })
+  .shot(120.2, 123.2, { rig: 'ots', from: CT.head(N), at: CT.head(VZ), fov: 32 })
   .shot(123.2, 124.3, { rig: 'push', at: CT.head(N), size: ['mcu', 'cu'], az: [10, 5], el: 3, fov: 28, rel: relY(N), ease: 'snap' })
   .shot(124.3, 126.3, { rig: 'ots', from: CT.head(N), at: CT.head(VZ), fov: 32 })
   .shot(126.3, 131.2, { rig: 'orbit', at: mid(N, GUARDS[0]), size: 3.8, az: [150, 175], el: [10, 6], fov: 36, shake: 1.2 })
@@ -389,13 +397,13 @@ CINE.shot(0, 4.2, { rig: 'crane', at: CT.walker(pathN_des, T, 1.2), size: [7, 2.
   .shot(154.3, 159.5, { rig: 'push', at: CT.head(VZ), size: ['ms', 'mws'], az: [-25, -5], el: 0, fov: 32, rel: relY(VZ) })
   .shot(159.5, 165.8, { rig: 'push', at: CT.head(J), size: ['ms', 'mcu'], az: [25, 35], el: 3, fov: 30, rel: relY(J) })
   .shot(165.8, 171.4, { rig: 'orbit', at: mid(N, VZ), size: 2.3, az: [-8, 8], el: 6, fov: 34 })
-  .shot(171.4, 175.1, { rig: 'push', at: CT.head(N), size: ['mcu', 'cu'], az: [6, -6], el: 2, fov: 28, rel: relY(N) })
-  .shot(175.1, 176.9, { rig: 'push', at: CT.head(J), size: 'mcu', az: [10, 0], el: 2, fov: 28, rel: relY(J) })
+  .shot(171.4, 175.1, { rig: 'orbit', at: mid(N, VZ, 0.3), size: 2.2, az: [-6, 6], el: 5, fov: 34 })
+  .shot(175.1, 176.9, { rig: 'ots', from: CT.head(N), at: CT.head(J), fov: 32 })
   .shot(176.9, 183.6, { rig: 'push', at: CT.head(N), size: ['ms', 'mcu'], az: [-18, 6], el: 3, fov: 30, rel: relY(N) })
   .shot(183.6, 188.7, { rig: 'push', at: () => (SUR.group.visible ? SUR.group.position.clone() : (S.shatterAt || V()).clone()), size: [1.3, 2.8], az: [40, 55], el: [6, 10], fov: 30, rel: relY(VZ), ease: 'inOut' })
   .shot(188.7, 195.1, { rig: 'crane', at: () => J.headWorld().add(V(0, -0.35, 0)), size: [1.6, 2.0], az: [-8, 12], el: [8, 2], fov: 32, rel: relY(J) })
   .shot(195.1, 199.4, { rig: 'orbit', at: mid(N, J), size: 2.5, az: [5, -10], el: 6, fov: 34 })
-  .shot(199.4, 206.4, { rig: 'push', at: CT.head(N), size: ['ms', 'mcu'], az: [0, 14], el: 3, fov: 30, rel: relY(N) })
+  .shot(199.4, 206.4, { rig: 'ots', from: CT.head(J), at: CT.head(N), fov: 32, off: 1.05, back: 0.9, up: 0.25 })
   .shot(206.4, 209.6, { rig: 'orbit', at: CT.head(J), size: 'ms', az: [-10, 12], el: 3, fov: 32, rel: relY(J) })
   .shot(209.6, DURATION + 1, { rig: 'crane', at: carpetT, size: [3.2, 15], az: [-30, -42], el: [8, 16], fov: 38, ease: 'inOut' });
 // sky-tilt transitions: before a scene cut the camera tilts up into the sky, after it tilts down from the sky
@@ -409,14 +417,14 @@ function lookAt(t) { const Z = zoneAt(t); let L0;
   return L0; }
 const GLOWBASE = new THREE.Color(0x7ad8ff).convertSRGBToLinear();
 window.renderFrame = function (f) {
-  const t = f / FPS; update(t); const cam = camAt(t); const Z = zoneAt(t);
+  const tn = f / FPS, t = OLDT(tn); update(t); const cam = camAt(t); const Z = zoneAt(t);
   GLOW.color.copy(GLOWBASE).multiplyScalar(1 + 2.2 * S.glow);
   const pl = []; if (SUR.group.visible && S.glow > 0.05) pl.push({ pos: SUR.group.position.toArray(), col: [0.15 * Math.min(S.glow, 1.6), 0.4 * Math.min(S.glow, 1.6), 0.55 * Math.min(S.glow, 1.6)], range: 2.0 + Math.min(S.glow, 1.6) });
   if (Z === 'PAL' && t < 192) { const k = 1 - sstep(185, 192, t); pl.push({ pos: [P_ - 6.5, 2.1, -3.1], col: [1.0 * k, 0.55 * k, 0.2 * k], range: 7 }, { pos: [P_ + 5.5, 1.9, -7.4], col: [1.0 * k, 0.55 * k, 0.2 * k], range: 7 }); }
   const sc = Z === 'PAL' && t < 153.3 && S.carpet ? S.carpet.p.toArray() : cam.look; applyLook(lookAt(t), { pl, shadowCenter: sc, shadowSize: Z === 'PAL' && t < 153 ? 26 : 16 });
   C.setCam({ pos: cam.pos, look: cam.look, fov: cam.fov, roll: cam.roll, near: 0.05, far: 600 });
   dofU.uFocus.value = cam.focus; dofU.uAper.value = cam.ap * 0.45 * PX; dofU.uMaxC.value = 12 * PX; dofU.uTime.value = f * 0.37;
-  dofU.uFade.value = Math.max(1 - Math.min(1, t / 0.7), clamp((t - (DURATION - 1.6)) / 1.6, 0, 1)); if (!(t > 184.62 && t < 185.4)) dofU.uFlash.value = 0;
+  dofU.uFade.value = Math.max(1 - Math.min(1, tn / 0.6), clamp((tn - (NDUR - 1.4)) / 1.4, 0, 1)); if (!(t > 184.62 && t < 185.4)) dofU.uFlash.value = 0;
   C.drawFrame(); return 'ok';
 };
 window.dbg = (f) => { const t = f / FPS; update(t); return { N: N.root.position.toArray().map((v) => +v.toFixed(2)), J: J.root.position.toArray().map((v) => +v.toFixed(2)), V: VZ.root.position.toArray().map((v) => +v.toFixed(2)) }; };

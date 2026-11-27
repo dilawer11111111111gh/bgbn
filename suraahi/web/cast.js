@@ -17,7 +17,7 @@ function turban(P, col, o = {}) {   // wrapped turban on the head (+ optional je
   return g;
 }
 // ============ young man (water-carrier): curly hair, cream shirt, purple vest, gold baggy shalwar, small red cap ============
-export const N = new Person({ skin: SKIN.wheatish, face: { ...FACES.oval, eyeSize: 1.06, age: 0.05, lipFull: 1.45, mouthW: 1.15 }, hair: '#1a110c', hairStyle: 'side', browColor: '#1a110c', top: '#ece2c8', sleeve: '#ece2c8',
+export const N = new Person({ skin: SKIN.wheatish, face: { ...FACES.oval, eyeSize: 1.06, age: 0.05, lipFull: 1.25, mouthW: 1.1 }, hair: '#1a110c', hairStyle: 'side', browColor: '#1a110c', top: '#ece2c8', sleeve: '#ece2c8',
   baggy: true, bottom: '#d29a3a', shoe: '#6a3a20', sole: '#3a2010', eyeColor: '#3a2416', lip: '#b05a55', stubble: '#2a1a12', mustache: '#1a110c', browW: 34, lashColor: '#0a0806', build: { w: 0.95, arm: 0.95 }, height: 0.92, headScale: 1.04, seed: 21 });
 { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.06, 18), M('#b02a2a')); cap.position.set(0.03, 0.19, -0.04); cap.rotation.set(-0.15, 0, -0.3); N.head.add(cap); S(N.head, M('#1a1a1a'), 0.014, 0.07, 0.23, -0.04); }
 { for (const sd of [-1, 1]) { const v = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.03), M('#6a2f78')); v.position.set(sd * 0.12, 0.38, 0.1); v.rotation.z = sd * 0.1; N.torso.add(v); const tr = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.4, 0.035), M('#e0b040', { emis: 0.1 })); tr.position.set(sd * 0.075, 0.38, 0.113); tr.rotation.z = sd * 0.1; N.torso.add(tr); } S(N.torso, M('#6a2f78'), 0.16, 0, 0.4, -0.05, 1.35, 1.35, 0.85); }
@@ -25,7 +25,7 @@ export const N = new Person({ skin: SKIN.wheatish, face: { ...FACES.oval, eyeSiz
 export const MASHK = new THREE.Group(); { const m = M('#8a5a32'); S(MASHK, m, 0.17, 0, 0, 0, 1.0, 1.25, 0.6); S(MASHK, M('#6a4024'), 0.05, 0.02, 0.2, 0.0, 0.8, 1.2, 0.8); const st = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.62, 0.015), M('#4a2c18')); st.position.set(-0.06, 0.08, 0.13); st.rotation.z = 0.55; MASHK.add(st); MASHK.position.set(0.06, 0.32, -0.2); N.torso.add(MASHK); }
 // ============ JINN: blue, big, bare-chest look with gold vest trims, top-knot, braided beard, gold cuffs, smoky tail instead of legs ============
 const JBLUE = '#3f86d8';
-export const J = new Person({ skin: JBLUE, skinUnlit: 0.25, face: { ...FACES.square, w: 1.1, jaw: 1.05, brow: 0.9, eyeSize: 1.0, age: 0.3, lipFull: 1.5, mouthW: 1.25 }, hair: '#101018', hairStyle: 'gray', browColor: '#101018', beard: '#101018', beardFull: 0.7,
+export const J = new Person({ skin: JBLUE, skinUnlit: 0.25, face: { ...FACES.square, w: 1.1, jaw: 1.05, brow: 0.9, eyeSize: 1.0, age: 0.3, lipFull: 1.3, mouthW: 1.15 }, hair: '#101018', hairStyle: 'gray', browColor: '#101018', beard: '#101018', beardFull: 0.7,
   top: JBLUE, sleeve: JBLUE, bottom: '#2a2a6a', belt: true, beltColor: '#e0b040', eyeColor: '#e8c040', lip: '#1e3a78', build: { w: 1.32, d: 1.15, shoulder: 1.2, arm: 1.3, belly: 0.05 }, height: 1.0, headScale: 1.14, seed: 33 });
 { const H = J.head; S(H, M('#101018'), 0.07, 0, 0.21, -0.04, 1, 0.9, 1); const knot = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.035, 0.08, 10), M('#e0b040', { emis: 0.2 })); knot.position.set(0, 0.27, -0.04); H.add(knot);
   const tail = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.38, 10), M('#101018')); tail.position.set(0, 0.17, -0.2); tail.rotation.x = -2.4; H.add(tail);
@@ -48,7 +48,7 @@ export function updateTail(t, k = 1) {   // k: 0 = tail hidden in the bottle .. 
     const loc = V(sw + 0.1 * u * u, -u * 0.95 * J.height * k, -0.32 * u * u * J.height + sw2); loc.applyAxisAngle(V(0, 1, 0), yaw); m.position.copy(base).add(loc); m.scale.set(r, r * 1.25, r); m.visible = k > 0.01; });
 }
 // ============ VAZIR: tall, long face, black-red robe, tall turban with ruby, goatee ============
-export const VZ = new Person({ skin: SKIN.olive, face: { ...FACES.long, chin: 0.16, cheek: 0.1, noseL: 1.35, eyeSize: 0.9, age: 0.55, lipFull: 1.35, mouthW: 1.12 }, hair: '#0c0a0a', hairStyle: 'crop', browColor: '#0c0a0a', beard: '#0c0a0a', beardFull: 0.45, mustache: '#0c0a0a',
+export const VZ = new Person({ skin: SKIN.olive, face: { ...FACES.long, chin: 0.16, cheek: 0.1, noseL: 1.35, eyeSize: 0.9, age: 0.55, lipFull: 1.2, mouthW: 1.08 }, hair: '#0c0a0a', hairStyle: 'crop', browColor: '#0c0a0a', beard: '#0c0a0a', beardFull: 0.45, mustache: '#0c0a0a',
   coat: '#24121c', longCoat: true, shirt: '#8a1a24', noTie: true, top: '#8a1a24', bottom: '#3a1418', shoe: '#120a0a', eyeColor: '#2a1c10', lip: '#6a3a3a', wrinkles: 0.6, bags: true, build: { w: 0.92, d: 0.95, arm: 1.0 }, height: 0.98, headScale: 1.0, seed: 41 });
 turban(VZ, '#1a1018', { col2: '#8a1a24', tall: 1.25, jewel: '#e02040', plume: '#2a1a2a' });
 { for (const s of [-1, 1]) { const sh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.22), M('#8a1a24')); sh.position.set(s * 0.17, 0.6, 0); sh.rotation.z = -s * 0.3; VZ.torso.add(sh); } }
@@ -90,7 +90,7 @@ export const CARPET = (() => { const c = document.createElement('canvas'); c.wid
   const tex = new THREE.CanvasTexture(c); const geo = new THREE.PlaneGeometry(1.25, 1.9, 12, 18); geo.rotateX(-Math.PI / 2); const m = new THREE.Mesh(geo, tm(0xffffff, { map: tex, side: THREE.DoubleSide })); m.frustumCulled = false;
   const g = new THREE.Group(); g.add(m); const base = Float32Array.from(geo.attributes.position.array); const tas = []; for (const zs of [-1, 1]) for (let i = 0; i < 6; i++) { const t = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.09, 6), tm(0xe0b040)); t.userData.ix = -0.55 + i * 0.22; t.userData.iz = zs * 0.98; g.add(t); tas.push(t); }
   W.add(g); return { group: g, mesh: m, geo, base, tas }; })();
-export function waveCarpet(t, amp = 1, speed = 1) { const p = CARPET.geo.attributes.position, b = CARPET.base; for (let i = 0; i < p.count; i++) { const x = b[i * 3], z = b[i * 3 + 2]; const edge = Math.min(1, Math.abs(x) / 0.62) ** 2; p.array[i * 3 + 1] = amp * (0.035 * Math.sin(z * 4.2 - t * 6 * speed) + 0.05 * edge * Math.sin(z * 3 + t * 4)) + amp * 0.06 * Math.max(0, -z - 0.5) * Math.sin(t * 7 * speed); }
+export function waveCarpet(t, amp = 1, speed = 1) { const p = CARPET.geo.attributes.position, b = CARPET.base; for (let i = 0; i < p.count; i++) { const x = b[i * 3], z = b[i * 3 + 2]; const edge = Math.min(1, Math.abs(x) / 0.62) ** 2, ctr = 0.15 + 0.85 * Math.max(edge, Math.min(1, Math.abs(z) / 0.95) ** 2); p.array[i * 3 + 1] = ctr * amp * (0.035 * Math.sin(z * 4.2 - t * 6 * speed) + 0.05 * edge * Math.sin(z * 3 + t * 4)) + amp * 0.06 * Math.max(0, -z - 0.5) * Math.sin(t * 7 * speed); }
   p.needsUpdate = true; CARPET.geo.computeVertexNormals(); for (const ts of CARPET.tas) { const { ix, iz } = ts.userData; ts.position.set(ix, amp * 0.035 * Math.sin(iz * 4.2 - t * 6 * speed) - 0.04, iz * 0.97); ts.rotation.x = iz > 0 ? 1.2 : -1.2; } }
 // ================= MAGIC FX =================
 // blue smoke puffs (opaque spheres that grow / fade by shrinking), sparkles (tiny emissive stars), orbs

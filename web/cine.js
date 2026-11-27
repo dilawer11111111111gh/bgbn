@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { clamp, lerp, sstep, EASE, noise1 } from './motion.js';
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
-const SIZE = { ecu: 0.16, cu: 0.42, mcu: 0.7, ms: 1.05, mws: 1.45, fs: 2.1, ws: 3.6, ews: 9 };
+const SIZE = { ecu: 0.16, cu: 0.42, mcu: 0.7, ms: 1.05, mws: 1.45, fs: 2.1, ws: 3.6, ews: 9, ...(globalThis.__CINE_SIZE__ || {}) };
 // ---- target resolvers: fn(t) -> Vector3. Person-based ones read the CURRENT frame pose (call cam.at(t) after updating people). ----
 export const T = {
   head: (P) => () => P.headWorld(), chest: (P) => () => P.torso.localToWorld(V(0, 0.4, 0.1)), body: (P) => () => P.root.position.clone().add(V(0, 0.95 * P.height, 0)),
@@ -30,7 +30,7 @@ export class Cine {
     if (s.rig === 'crane') el = lerpA(s.el ?? [5, 55], u); if (s.rig === 'low') el = -10; if (s.rig === 'high') el = 60;
     const A = (az * Math.PI) / 180, E = (el * Math.PI) / 180; let pos = c.clone().add(V(Math.sin(A) * Math.cos(E), Math.sin(E), Math.cos(A) * Math.cos(E)).multiplyScalar(d)); let look = c.clone();
     if (s.rig === 'pov' && s.from) { pos = s.from(t).clone(); look = s.at(t).clone(); }
-    if (s.rig === 'ots' && s.from) { const a = s.from(t), b = c; const dir = b.clone().sub(a).setY(0).normalize(); const side = V(-dir.z, 0, dir.x); pos = a.clone().addScaledVector(dir, -0.45).addScaledVector(side, 0.3 * (s.side ?? 1)).add(V(0, 0.28, 0)); look = b.clone(); }
+    if (s.rig === 'ots' && s.from) { const a = s.from(t), b = c; const dir = b.clone().sub(a).setY(0).normalize(); const side = V(-dir.z, 0, dir.x); pos = a.clone().addScaledVector(dir, -(s.back ?? 1.0)).addScaledVector(side, (s.off ?? 0.62) * (s.side ?? 1)).add(V(0, s.up ?? 0.1, 0)); look = b.clone(); }
     if (s.rig === 'fly' && s.path) { const k = s.path; const n = k.length - 1, f = u * n, i = Math.min(n - 1, Math.floor(f)), w = f - i; pos = V(...k[i]).lerp(V(...k[i + 1]), w); }
     let roll = lerpA(s.roll ?? 0, u);
     if (s.pan) { look.add(V(...s.pan).multiplyScalar(u)); }
