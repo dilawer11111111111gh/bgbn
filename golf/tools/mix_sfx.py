@@ -20,9 +20,12 @@ def main():
         clip = load(fn); used.append(name)
         for c in spec['at']:
             t0, gain = c[0], 10 ** (c[1] / 20) if len(c) > 1 else 10 ** (spec.get('db', -6) / 20); dur = c[2] if len(c) > 2 else None
-            seg = clip
-            if dur:   # loop / trim to the asked length with short fades
-                L = int(dur * SR); reps = int(np.ceil(L / max(1, len(clip)))); seg = np.tile(clip, (reps, 1))[:L].copy(); f = min(len(seg) // 4, int(0.25 * SR)); ramp = np.linspace(0, 1, f)[:, None]; seg[:f] *= ramp; seg[-f:] *= ramp[::-1]
+            seg = clip; off = c[3] if len(c) > 3 else 0
+            if dur:   # loop / trim to the asked length with short fades; off = start inside the clip (seconds, or 'end' = take its last part)
+                L = int(dur * SR); src = clip[max(0, len(clip) - L):] if off == 'end' else clip[int(off * SR):]
+                reps = int(np.ceil(L / max(1, len(src)))); seg = np.tile(src, (reps, 1))[:L].copy(); f = min(len(seg) // 4, int(0.12 * SR)); ramp = np.linspace(0, 1, f)[:, None]
+                if off != 'end': seg[:min(f, int(0.02 * SR))] *= np.linspace(0, 1, min(f, int(0.02 * SR)))[:, None]
+                seg[-f:] *= ramp[::-1]
             a = int(t0 * SR)
             if a >= n: continue
             b = min(n, a + len(seg)); mix[a:b] += seg[:b - a] * gain

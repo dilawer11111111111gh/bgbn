@@ -33,7 +33,8 @@ export function installActing() {
       const u = this._from ? Math.min(1, (T - this._ft) / 0.16) : 1; if (u < 1 && this._from) { const A = this._from, e = u * u * (3 - 2 * u); const g = { ...(e < 0.5 ? { ...f, eyes: A.eyes, mouth: A.mouth } : f) };
         for (const k of NUM) if (k in A || k in f) { const a = A[k] ?? A.lid ?? 0.12, b = f[k] ?? f.lid ?? 0.12; g[k] = a + (b - a) * e; } if (A.look || f.look) { const la = A.look || [0, 0], lb = f.look || [0, 0]; g.look = la.map((v, j) => v + (lb[j] - v) * e); }
         if (f.lip) g.mouth = f.mouth; if (A.eyes !== f.eyes && e > 0.35 && e < 0.65 && A.eyes !== 'closed' && f.eyes !== 'closed') { g.eyes = 'lid'; g.lid = 0.55; } f = g; } else this._from = null;
-      this._cur = f; this._fT = T; p = { ...p, face: f }; }
+      this._cur = f; this._fT = T; const since = T - (this._ft ?? -9), fs = since >= 0 && since < 0.7 ? Math.exp(-since * 6) * Math.sin(since * 26) : 0, F = this._cur;
+      const fk = ['tiny', 'wide'].includes(F.eyes) || F.mouth === 'scream' ? 1.15 : ['squeeze', 'happy', 'closed'].includes(F.eyes) || ['laugh', 'psycho', 'grin'].includes(F.mouth) ? -1 : 0.6; p = { ...p, face: f, fs, fk }; }
     return _u.call(this, { turn: 0, ...p }, c); };
 }
 
@@ -48,7 +49,7 @@ export function makeSky() {
     for (let i = 0; i < 40; i++) { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, transparent: true, fog: false, depthWrite: false, toneMapped: false })); const a = cr() * Math.PI * 2; m.position.set(Math.cos(a) * 900, 120 + cr() * 380, Math.sin(a) * 900); const k = 60 + cr() * 90; m.scale.set(k * 2, k, 1); clouds.add(m); } }
   const stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 900 }, (_, i) => { const r = rng(5 + Math.floor(i / 3)); const a = r() * 6.28, b = 0.15 + r() * 1.3; return [Math.cos(a) * Math.cos(b) * 1300, Math.sin(b) * 1300, Math.sin(a) * Math.cos(b) * 1300][i % 3]; }), 3)), new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, fog: false, toneMapped: false })); scene.add(stars);
   const moon = new THREE.Mesh(new THREE.CircleGeometry(9, 40), new THREE.MeshBasicMaterial({ color: 0xfff8e0, toneMapped: false, fog: false })); scene.add(moon);
-  const fogDay = new THREE.FogExp2(0x9fd2f4, 0.0012), fogNight = new THREE.FogExp2(0x0a1430, 0.012);
+  const fogDay = new THREE.FogExp2(0xa8d8f4, 0.0008), fogNight = new THREE.FogExp2(0x0a1430, 0.012);
   return { update(cpos, n, grade) {
     scene.fog = n ? fogNight : fogDay; scene.background = null; dome.position.copy(cpos); clouds.position.set(cpos.x, 0, cpos.z); stars.position.copy(cpos); stars.visible = n;
     M.uniforms.top.value.setHex(n ? 0x0a1840 : 0x1d5fd6).convertSRGBToLinear(); M.uniforms.bot.value.setHex(n ? 0x2a4488 : 0x9fd2f4).convertSRGBToLinear(); clouds.children.forEach((c) => c.material.color.setHex(n ? 0x3a4a78 : 0xffffff).convertSRGBToLinear());
