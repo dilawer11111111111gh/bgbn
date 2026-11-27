@@ -250,12 +250,16 @@ const MILO = new Flat2D({ ...MILO_O, scene }), GUS = new Flat2D({ ...GUS_O, scen
 // the narration drives the leads: every stressed word lands as a springy head / brow / body accent
 const ACC = makeAccents(WORDS, ENERGY); for (const P of [MILO, GUS]) { const u0 = P.update.bind(P); P.update = (pose, c) => u0(pose.noAcc ? pose : withAccent(pose, ACC(Flat2D.T || 0, pose.acc ?? 1, P === MILO ? 0 : 1)), c); }
 const DOG = new Dog2D({ scene, size: 0.95 }), DOG2 = new Dog2D({ scene, size: 0.85, coat: '#f6f4ee', belly: '#ffffff', spot: '#2a2a2a', ear: '#2a2a2a', collar: '#2a5ad8', seed: 2 });
-const KEEP = new Flat2D({ ...role('shopkeeper', 1), scene, res: 1.6 });
-const GOLFERS = [new Flat2D({ ...role('gentleman', 0), scene, res: 1.6 }), new Flat2D({ ...role('lady', 1), scene, res: 1.6 }), new Flat2D({ ...role('tourist', 2), scene, res: 1.6, hat: 'ball', hatCol: '#e8302a' })];
-const CROWD = [['farmer', 0], ['lady', 1], ['kid', 2], ['grandpa', 0], ['girl', 1], ['tourist', 0], ['worker', 2], ['teen', 1], ['mayor', 0], ['baker', 1], ['kid', 4], ['gentleman', 1], ['lady', 3], ['musician', 0]].map(([id, k]) => new Flat2D({ ...role(id, k), scene, res: 1.3 }));
+// golf-world people: dressed for golf on the torso, real hair shapes, hats only where the story needs them (none here)
+const HAIRC = ['#2a1c16', '#6a3a1e', '#c8642a', '#e8c86a', '#9a9a9a', '#3a2418', '#b8743a'];
+const folk = (k, o = {}) => new Flat2D({ body: k % 4 === 3 ? 'dress' : 'polo', coat: ['#3a8ad8', '#f2c63a', '#4ab84a', '#e8402a', '#9a6ad8', '#2a9a8a', '#f28a3a', '#ffffff'][k % 8], pattern: ['stripes', null, 'plaid', null, 'argyle'][k % 5], patCol: 'rgba(255,255,255,0.3)', collarCol: '#ffffff', sleeves: true,
+  hair: HAIRC[k % 7], hairStyle: ['swept', 'curly', 'bun', 'quiff', 'ponytail', 'bald', 'spiky', 'pigtails', 'messy'][k % 9], hat: null, glasses: k % 5 === 2 ? 'round' : null, mustache: k % 6 === 4, seed: 20 + k, size: k % 7 === 2 ? 1.45 : 1.85 + (k % 3) * 0.06, width: 0.95 + (k % 3) * 0.12, scene, res: 1.4, ...o });
+const KEEP = folk(2, { coat: '#2a8a4a', pattern: null, logo: '#ffffff', hairStyle: 'swept', hair: '#3a2418', size: 1.9, res: 1.6 });
+const GOLFERS = [folk(0, { coat: '#ffffff', pattern: 'argyle', patCol: 'rgba(40,80,160,0.35)', patCol2: 'rgba(230,60,60,0.7)', hairStyle: 'bald', hair: '#9a9a9a', mustache: true, res: 1.6 }), folk(4, { body: 'dress', coat: '#f28ab8', pattern: 'stripes', hairStyle: 'ponytail', hair: '#e8c86a', res: 1.6 }), folk(1, { coat: '#3a8ad8', pattern: null, hairStyle: 'curly', hair: '#2a1c16', glasses: 'round', res: 1.6 })];
+const CROWD = Array.from({ length: 14 }, (_, k) => folk(k + 3));
 const PEOPLE = [MILO, GUS, KEEP, ...GOLFERS, ...CROWD];
 const hide = (c) => { c.mesh.visible = false; c.mesh.rotation.z = 0; c.mesh.scale.setScalar(1); c.mesh.material.depthTest = true; c.mesh.renderOrder = 0; if (c.shadow) { c.shadow.visible = false; c.shadow.scale.set(1, 1, 1); } };
-const MILO_DAY = { ...MILO_O }, MILO_PJ = { ...MILO_O, body: 'coat', coat: '#7aa8e8', tie: null, badge: null, bandana: null, hat: 'nightcap', hatCol: '#3a5ad8', glasses: 'round' };
+const MILO_DAY = { ...MILO_O }, MILO_PJ = { ...MILO_O, body: 'coat', coat: '#7aa8e8', pattern: 'stripes', patCol: 'rgba(255,255,255,0.45)', sleeves: false, tie: null, badge: null, bandana: null, hat: null, hairStyle: 'messy', glasses: 'round' };
 const outfit = (P, o) => Object.assign(P.o, o);
 const cardFront = (P, camPos, d) => P.mesh.position.add(V().subVectors(camPos, P.pos).setY(0).normalize().multiplyScalar(d));
 

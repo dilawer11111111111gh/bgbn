@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        part: [0, 1, 2, 3, 4, 5, 6, 7]
+        part: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,10 +22,10 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
           npm i --no-save playwright@1.47.2 > /dev/null && npx playwright install --with-deps chromium > /dev/null
-      - name: Render four equal segments (N/32 frames each) in parallel (all 4 CPUs)
+      - name: Render 4 interleaved chunks (80 chunks over 20 machines, so heavy scenes are shared by every machine)
         run: |
-          export APP=$(cat app.txt 2>/dev/null || echo tree); TIER=$(cat $APP/tier.txt 2>/dev/null || echo good); N=$(cat $APP/frames.txt 2>/dev/null || echo 1786); C=$(( (N + 31) / 32 )); A=$(( ${{ matrix.part }} * 4 * C ))
-          for k in 0 1 2 3; do S=$(( A + k * C )); E=$(( S + C )); [ $E -gt $N ] && E=$N; [ $S -lt $N ] && node $APP/tools/par_render_mb.cjs $TIER $S $E out/seg > log_$k.txt 2>&1 & done
+          export APP=$(cat app.txt 2>/dev/null || echo tree); TIER=$(cat $APP/tier.txt 2>/dev/null || echo good); N=$(cat $APP/frames.txt 2>/dev/null || echo 1786); C=$(( (N + 79) / 80 ))
+          for k in 0 1 2 3; do I=$(( ${{ matrix.part }} + k * 20 )); S=$(( I * C )); E=$(( S + C )); [ $E -gt $N ] && E=$N; [ $S -lt $N ] && node $APP/tools/par_render_mb.cjs $TIER $S $E out/seg > log_$k.txt 2>&1 & done
           wait; cat log_*.txt 2>/dev/null || true; mkdir -p out/seg; ls out/seg
       - uses: actions/upload-artifact@v4
         with: { name: 'seg-${{ matrix.part }}', path: 'out/seg/*.mp4', if-no-files-found: ignore }

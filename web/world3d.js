@@ -80,9 +80,12 @@ export function house(B, x, z, ry, o = {}) {
   for (const [yy, hh] of [[h - 0.08, 0.16]]) B.add(new THREE.BoxGeometry(w + 0.12, hh, d + 0.12), tm, 0, yy, 0, 0, 0, 0, 1, 1, 1, P);   // trim band
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.add(new THREE.BoxGeometry(0.16, h, 0.16), tm, sx * (w / 2 + 0.02), h / 2, sz * (d / 2 + 0.02), 0, 0, 0, 1, 1, 1, P);   // corner boards
   // gable roof: two tiled slabs + wall-coloured gables
-  const rh = w * 0.42, ang = Math.atan2(rh, w / 2), sl = Math.hypot(w / 2, rh) + 0.55, rd = d + 0.9;
+  const rh = w * (o.steep ?? (0.42 + (seed % 3) * 0.07)), ang = Math.atan2(rh, w / 2), sl = Math.hypot(w / 2, rh) + 0.55, rd = d + 0.9;
   for (const s of [-1, 1]) { const g = boxUV(sl, 0.16, rd, 1.6); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getY(i), uv.getX(i)); B.add(g, rm, s * (w / 4 - 0.2 * Math.cos(ang) * 0 + Math.cos(ang) * 0.12), h + rh / 2 - 0.05, 0, 0, 0, -s * ang, 1, 1, 1, P); }
   B.add(new THREE.BoxGeometry(0.25, 0.22, rd + 0.04), plain(shade(roof, 0.7), { r: 0.7 }), 0, h + rh + 0.04, 0, 0, 0, 0, 1, 1, 1, P);
+  for (const s of [-1, 1]) { B.add(new THREE.BoxGeometry(0.1, 0.26, rd + 0.02), tm, s * (w / 2 + 0.42), h - 0.18, 0, 0, 0, 0, 1, 1, 1, P); for (const sz of [-1, 1]) B.add(new THREE.BoxGeometry(sl, 0.2, 0.08), tm, s * (w / 4 + 0.1), h + rh / 2 - 0.12, sz * (rd / 2 + 0.02), 0, 0, -s * ang, 1, 1, 1, P); }
+  if (o.dormer ?? seed % 2 === 0) { const dz = d * 0.12, dh = rh * 0.42, dy = h + rh * 0.38; B.add(boxUV(1.5, dh, 1.6, 2), wm, 0, dy, dz + 1.1, 0, 0, 0, 1, 1, 1, P); { const sh2 = new THREE.Shape(); sh2.moveTo(-0.95, 0); sh2.lineTo(0.95, 0); sh2.lineTo(0, 0.7); sh2.closePath(); const dg = new THREE.ExtrudeGeometry(sh2, { depth: 1.8, bevelEnabled: false }); dg.translate(0, 0, -0.9); B.add(dg, rm, 0, dy + dh / 2, dz + 1.1, 0, 0, 0, 1, 1, 1, P); }
+    B.add(new THREE.BoxGeometry(0.75, 0.8, 0.06), GLASS, 0, dy, dz + 1.92, 0, 0, 0, 1, 1, 1, P); B.add(new THREE.BoxGeometry(0.95, 0.1, 0.12), tm, 0, dy + 0.45, dz + 1.93, 0, 0, 0, 1, 1, 1, P); B.add(new THREE.BoxGeometry(0.95, 0.1, 0.12), tm, 0, dy - 0.45, dz + 1.93, 0, 0, 0, 1, 1, 1, P); for (const sx of [-1, 1]) B.add(new THREE.BoxGeometry(0.1, 0.95, 0.12), tm, sx * 0.42, dy, dz + 1.93, 0, 0, 0, 1, 1, 1, P); }
   { const sh = new THREE.Shape(); sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(0, rh); sh.closePath(); const gg = new THREE.ShapeGeometry(sh); const uv = gg.attributes.uv, p = gg.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, p.getX(i) / 2.2, p.getY(i) / 2.2);
     for (const s of [-1, 1]) B.add(gg, wm, 0, h, s * d / 2 + s * 0.01, s > 0 ? 0 : Math.PI, 0, 0, 1, 1, 1, P);
     const rw = new THREE.CircleGeometry(0.42, 20); B.add(rw, GLASS, 0, h + rh * 0.42, d / 2 + 0.03, 0, 0, 0, 1, 1, 1, P); B.add(new THREE.TorusGeometry(0.44, 0.06, 6, 20), tm, 0, h + rh * 0.42, d / 2 + 0.04, 0, 0, 0, 1, 1, 1, P); }
@@ -101,7 +104,9 @@ export function house(B, x, z, ry, o = {}) {
   const Dq = new THREE.Matrix4().multiplyMatrices(P, M4(0, 0, d / 2, 0)); B.add(texMat('panel', door, { r: 0.5 }) && boxUV(1.1, 2.2, 0.08, 1.1), texMat('panel', door, { r: 0.5 }), 0, 1.1, 0.03, 0, 0, 0, 1, 1, 1, Dq);
   B.add(new THREE.BoxGeometry(1.4, 0.14, 0.14), tm, 0, 2.27, 0.06, 0, 0, 0, 1, 1, 1, Dq); for (const s of [-1, 1]) B.add(new THREE.BoxGeometry(0.12, 2.3, 0.14), tm, s * 0.62, 1.15, 0.06, 0, 0, 0, 1, 1, 1, Dq);
   B.add(new THREE.SphereGeometry(0.05, 8, 6), plain('#e8c040', { m: 0.9, r: 0.25 }), 0.4, 1.1, 0.1, 0, 0, 0, 1, 1, 1, Dq); B.add(boxUV(1.7, 0.2, 0.8, 1), texMat('brick', '#b0a8a0'), 0, 0.1, 0.45, 0, 0, 0, 1, 1, 1, Dq);
-  B.add(new THREE.BoxGeometry(1.8, 0.08, 0.8), rm, 0, 2.62, 0.38, 0, -0.35, 0, 1, 1, 1, Dq); for (const s of [-1, 1]) B.add(new THREE.BoxGeometry(0.05, 0.4, 0.05), plain('#2a2a30'), s * 0.75, 2.4, 0.7, 0, 0, 0, 1, 1, 1, Dq);
+  if (o.porch ?? seed % 3 === 1) { B.add(boxUV(3.4, 0.14, 1.9, 1), rm, 0, 2.75, 0.95, 0, -0.18, 0, 1, 1, 1, Dq); B.add(new THREE.BoxGeometry(3.5, 0.14, 0.1), tm, 0, 2.62, 1.9, 0, 0, 0, 1, 1, 1, Dq); for (const s of [-1, 1]) { B.add(new THREE.CylinderGeometry(0.1, 0.12, 2.6, 12), tm, s * 1.55, 1.3, 1.75, 0, 0, 0, 1, 1, 1, Dq); B.add(new THREE.BoxGeometry(0.3, 0.12, 0.3), tm, s * 1.55, 0.06, 1.75, 0, 0, 0, 1, 1, 1, Dq); }
+    B.add(boxUV(3.6, 0.22, 2.0, 1), texMat('planks', '#b88a5a'), 0, 0.11, 0.95, 0, 0, 0, 1, 1, 1, Dq); for (let k = 0; k < 9; k++) B.add(new THREE.BoxGeometry(0.05, 0.7, 0.05), tm, -1.55 + k * 0.39 * (k < 4 ? 1 : 1), 0.55, 1.88, 0, 0, 0, 1, 1, 1, Dq); }
+  else { B.add(new THREE.BoxGeometry(1.8, 0.08, 0.8), rm, 0, 2.62, 0.38, 0, -0.35, 0, 1, 1, 1, Dq); for (const s of [-1, 1]) B.add(new THREE.BoxGeometry(0.05, 0.4, 0.05), plain('#2a2a30'), s * 0.75, 2.4, 0.7, 0, 0, 0, 1, 1, 1, Dq); }
   return P;
 }
 
