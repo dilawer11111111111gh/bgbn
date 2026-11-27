@@ -49,6 +49,13 @@ export const TEX = {
   leaves: () => ptex('leaves', 256, 256, (g, W, H, h) => { g.fillStyle = h ? '#404040' : '#bcd8a8'; g.fillRect(0, 0, W, H); const r = rng(4); for (let i = 0; i < 700; i++) { const x = r() * W, y = r() * H, k = 0.7 + r() * 0.5; g.fillStyle = h ? `rgba(255,255,255,${0.3 + r() * 0.5})` : shade('#e8ffe0', k); g.beginPath(); g.ellipse(x, y, 7, 4, r() * 6, 0, 7); g.fill(); } }, { bump: 2 }),
   fabric: (a = '#e8302a', b = '#ffffff') => ptex('fabric' + a + b, 128, 128, (g, W, H, h) => { for (let i = 0; i < 4; i++) { g.fillStyle = h ? (i % 2 ? '#fff' : '#ccc') : (i % 2 ? b : a); g.fillRect(i * 32, 0, 32, H); } if (!h) { g.fillStyle = 'rgba(0,0,0,0.06)'; for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1); } }, { bump: 0.6 }),
 };
+// real photo textures (three.js example set, MIT): brick wall, hardwood floor, lush grass — geometry UVs are in metres (boxUV)
+const PH = {}; const TLP = new THREE.TextureLoader();
+export function photoMat(kind, o = {}) { const key = kind + JSON.stringify(o); if (PH[key]) return PH[key]; const ld = (f, srgb) => { const t = TLP.load('../../assets/photo/' + f); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.repeat.set(o.rep ?? 1, o.rep ?? 1); return t; };
+  const m = kind === 'brick' ? new THREE.MeshStandardMaterial({ map: ld('brick_diffuse.jpg', true), bumpMap: ld('brick_bump.jpg'), bumpScale: 2.2, roughnessMap: ld('brick_roughness.jpg'), color: o.tint ?? 0xffffff, roughness: 1 })
+    : kind === 'wood' ? new THREE.MeshStandardMaterial({ map: ld('hardwood2_diffuse.jpg', true), bumpMap: ld('hardwood2_bump.jpg'), bumpScale: 0.6, roughnessMap: ld('hardwood2_roughness.jpg'), color: o.tint ?? 0xffffff, roughness: 1 })
+    : new THREE.MeshStandardMaterial({ map: ld('grasslight-big.jpg', true), color: o.tint ?? 0xffffff, roughness: 0.95 });
+  return (PH[key] = m); }
 // material with textures + per-instance tint; uv scale handled by geometry (boxUV)
 const MATC = {};
 export function texMat(kind, color, o = {}) { const k = kind + color + JSON.stringify(o); if (MATC[k]) return MATC[k]; const t = TEX[kind](); return (MATC[k] = new THREE.MeshStandardMaterial({ map: t.map, normalMap: t.nrm, normalScale: new THREE.Vector2(o.ns ?? 1, o.ns ?? 1), color, roughness: o.r ?? 0.8, metalness: o.m ?? 0, side: o.side ?? THREE.FrontSide })); }
@@ -74,7 +81,7 @@ const M4 = (x, y, z, ry = 0) => new THREE.Matrix4().compose(V(x, y, z), new THRE
 // front faces +z (local). o: { w, d, h, wall, roof, kind:'siding'|'brick'|'plaster', shutter, door, floors, chimney, flowers, seed }
 export function house(B, x, z, ry, o = {}) {
   const { w = 8, d = 6.5, h = 3.6, wall = '#f4e2c0', roof = '#c8442a', kind = 'siding', shutter = '#2a6ab8', door = '#c8342a', chimney = true, flowers = true, seed = 1, trim = '#ffffff' } = o; const P = M4(x, 0, z, ry), r = rng(seed * 7 + 3);
-  const wm = texMat(kind, wall, { ns: kind === 'brick' ? 1.2 : 0.8 }), rm = texMat('tiles', roof, { r: 0.7, ns: 1.4 }), tm = plain(trim, { r: 0.5 }), sm = plain(shutter, { r: 0.55 });
+  const wm = kind === 'brick' ? photoMat('brick', { rep: 0.5 }) : texMat(kind, wall, { ns: 0.8 }), rm = texMat('tiles', roof, { r: 0.7, ns: 1.4 }), tm = plain(trim, { r: 0.5 }), sm = plain(shutter, { r: 0.55 });
   B.add(boxUV(w, h, d, kind === 'brick' ? 1.6 : 2.2), wm, 0, h / 2, 0, 0, 0, 0, 1, 1, 1, P);
   B.add(boxUV(w + 0.2, 0.35, d + 0.2, 1.2), texMat('brick', '#a89888'), 0, 0.17, 0, 0, 0, 0, 1, 1, 1, P);   // stone base
   for (const [yy, hh] of [[h - 0.08, 0.16]]) B.add(new THREE.BoxGeometry(w + 0.12, hh, d + 0.12), tm, 0, yy, 0, 0, 0, 0, 1, 1, 1, P);   // trim band

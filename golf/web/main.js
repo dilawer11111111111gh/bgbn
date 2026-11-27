@@ -13,7 +13,7 @@ import { sstep, clamp, lerp } from '../../web/motion.js';
 import { installActing, keys, faceK, makeLip, makeSky, dynamicCam, makeRenderer, makeAccents, withAccent } from '../../web/studio.js';
 import { WORDS } from './words.js';
 import { Dog2D } from '../../web/dog2d.js';
-import { golfCartHQ, Batch, house, forest, grass, flowers, scatter, fence, hedge, bench, lampPost, pot, terrain, terrainH, texMat, plain, boxUV, GLASS } from '../../web/world3d.js';
+import { golfCartHQ, photoMat, Batch, house, forest, grass, flowers, scatter, fence, hedge, bench, lampPost, pot, terrain, terrainH, texMat, plain, boxUV, GLASS } from '../../web/world3d.js';
 import { ENERGY } from './energy.js';
 import { MILO_O, GUS_O } from './cast.js';
 export const DURATION = 48.25;
@@ -66,9 +66,9 @@ function build() {
   // ---- fairway with mowing stripes, rough edge, tee box, green, bunkers, pond, cart path ----
   const stripe = canvasTex(64, 256, (q) => { q.fillStyle = '#72d84a'; q.fillRect(0, 0, 64, 128); q.fillStyle = '#5cc23a'; q.fillRect(0, 128, 64, 128); for (let i = 0; i < 900; i++) { q.fillStyle = `rgba(${Math.random() > 0.5 ? '255,255,255' : '0,40,0'},0.06)`; q.fillRect(Math.random() * 64, Math.random() * 256, 1, 2); } }); stripe.wrapS = stripe.wrapT = THREE.RepeatWrapping;
   { const sh = new THREE.Shape(); const W = 22, L = 360; sh.moveTo(-W, 6); sh.lineTo(W, 6); sh.lineTo(W + 6, -L / 2); sh.lineTo(W, -L); sh.quadraticCurveTo(0, -L - 14, -W, -L); sh.lineTo(-W - 6, -L / 2); sh.closePath();
-    const fg = new THREE.ShapeGeometry(sh, 12); { const uv = fg.attributes.uv, pp = fg.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, pp.getX(i) / 6, pp.getY(i) / 6); } const fw = mesh(fg, pbr('aerial_grass_rock', [1, 1], { tint: '#8eea52', rough: 1 }), 0, 0.03, 0, false); fw.rotation.x = -Math.PI / 2; fw.scale.set(1, -1, 1); scene.add(fw);
+    const fg = new THREE.ShapeGeometry(sh, 12); { const uv = fg.attributes.uv, pp = fg.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, pp.getX(i) / 6, pp.getY(i) / 6); } const fw = mesh(fg, photoMat('grass', { rep: 1, tint: 0xd8ffc0 }), 0, 0.03, 0, false); fw.rotation.x = -Math.PI / 2; fw.scale.set(1, -1, 1); scene.add(fw);
     const st = canvasTex(64, 256, (q) => { q.fillStyle = 'rgba(255,255,220,0.07)'; q.fillRect(0, 0, 64, 128); q.fillStyle = 'rgba(0,40,0,0.07)'; q.fillRect(0, 128, 64, 128); }); st.wrapS = st.wrapT = THREE.RepeatWrapping; st.repeat.set(1 / 40, 1 / 24); const ov = mesh(fg, new THREE.MeshStandardMaterial({ map: st, transparent: true, depthWrite: false, roughness: 1 }), 0, 0.035, 0, false); ov.rotation.x = -Math.PI / 2; ov.scale.set(1, -1, 1); scene.add(ov); }
-  { const tb = mesh(boxUV(8, 0.16, 6, 6), pbr('aerial_grass_rock', [1, 1], { tint: '#a0f064', rough: 1 }), 0, 0.07, -0.5); tb.receiveShadow = true; scene.add(tb); }
+  { const tb = mesh(boxUV(8, 0.16, 6, 6), photoMat('grass', { rep: 1, tint: 0xe8ffd8 }), 0, 0.07, -0.5); tb.receiveShadow = true; scene.add(tb); }
   for (const s of [-1, 1]) B.add(new THREE.SphereGeometry(0.13, 16, 10), plain('#2a5ad8', { r: 0.3 }), 1.6 * s, 0.22, -2.2);
   blob(6, -335, 16, 13, new THREE.MeshStandardMaterial({ color: 0x86ea5e, roughness: 0.9 }), 0.05, 3); blob(6, -335, 18, 15, new THREE.MeshStandardMaterial({ color: 0x6cd448, roughness: 0.9 }), 0.045, 3);
   scene.add(mesh(new THREE.CircleGeometry(0.3, 20), std(0x101010), 8, 0.065, -338, false).rotateX(-Math.PI / 2));
@@ -113,7 +113,7 @@ function build() {
     GB.flush(GSTAND); const b = banner('PUTTSBY OPEN', 9, 1.5, '#f6d84a', '#c8342a', 'bold 260px "DejaVu Sans", sans-serif'); b.position.set(-5.6, 6.3, 0); b.rotation.y = Math.PI / 2; GSTAND.add(b); }
   for (let i = 0; i < 8; i++) B.add(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 6), plain('#f4f4f4'), -4.6, 0.5, -7 + i * 2); B.add(new THREE.BoxGeometry(0.03, 0.03, 14), plain('#e8302a'), -4.6, 0.95, 0);
   // ---- practice green ----
-  blob(PRACT.x, PRACT.z, 8.3, 6.8, new THREE.MeshStandardMaterial({ color: 0x4fb83a, roughness: 0.9 }), 0.045, 11); blob(PRACT.x, PRACT.z, 7.5, 6, pbr('aerial_grass_rock', [1, 1], { tint: '#a8f070', rough: 0.9 }), 0.05, 11);
+  blob(PRACT.x, PRACT.z, 8.3, 6.8, new THREE.MeshStandardMaterial({ color: 0x4fb83a, roughness: 0.9 }), 0.045, 11); blob(PRACT.x, PRACT.z, 7.5, 6, photoMat('grass', { rep: 1, tint: 0xeaffe0 }), 0.05, 11);
   B.add(new THREE.CylinderGeometry(0.03, 0.03, 2.2, 6), plain('#ffffff'), PRACT.x + 3, 1.1, PRACT.z - 2); scene.add(mesh(new THREE.PlaneGeometry(0.7, 0.45), std(0xf2c63a, { side: THREE.DoubleSide }), PRACT.x + 3.35, 1.95, PRACT.z - 2));
   flowers(scatter(220, (r) => { const a = r() * 6.28; return [PRACT.x + Math.cos(a) * (9 + r() * 1.2), PRACT.z + Math.sin(a) * (7.6 + r()), 0.02]; }, 9));
   // ---- town of Puttsby: detailed houses, yards, fences, cobbled streets with sidewalks, lamps, square ----
@@ -153,7 +153,7 @@ function build() {
 }
 function buildShop() {
   SHOPG = new THREE.Group(); SHOPG.position.copy(SHOP); scene.add(SHOPG); const IB = new Batch();
-  const floor = mesh(new THREE.PlaneGeometry(9, 6), pbr('wood_planks_dirt', [4, 3], { tint: '#d89858' }), 0, 0.03, 0, false); floor.rotation.x = -Math.PI / 2; SHOPG.add(floor);
+  const floor = mesh(new THREE.PlaneGeometry(9, 6), photoMat('wood', { rep: 3 }), 0, 0.03, 0, false); floor.rotation.x = -Math.PI / 2; SHOPG.add(floor);
   const paper = texMat('wallpaper', '#d0503a', { r: 0.8 }), pan = texMat('panel', '#8a5230', { r: 0.6 }), white = plain('#fff8ee', { r: 0.5 });
   IB.add(boxUV(9, 2.3, 0.2, 1.4), paper, 0, 2.25, -3); IB.add(boxUV(9, 1.1, 0.24, 1.1), pan, 0, 0.55, -2.98); IB.add(new THREE.BoxGeometry(9, 0.12, 0.3), white, 0, 1.12, -2.92); IB.add(new THREE.BoxGeometry(9, 0.2, 0.32), white, 0, 3.32, -2.9); IB.add(new THREE.BoxGeometry(9, 0.1, 0.3), white, 0, 0.05, -2.86);
   for (const s of [-1, 1]) { IB.add(boxUV(0.2, 2.3, 6, 1.4), paper, s * 4.5, 2.25, 0); IB.add(boxUV(0.24, 1.1, 6, 1.1), pan, s * 4.48, 0.55, 0); IB.add(new THREE.BoxGeometry(0.3, 0.12, 6), white, s * 4.42, 1.12, 0); IB.add(new THREE.BoxGeometry(0.32, 0.2, 6), white, s * 4.4, 3.32, 0); }
@@ -203,7 +203,7 @@ function buildShop() {
   const bed = mesh(new THREE.TorusGeometry(0.45, 0.16, 12, 28), texMat('fabric', '#d8402a'), -3.0, 0.15, -0.8); bed.rotation.x = Math.PI / 2; SHOPG.add(bed); SHOPG.add(mesh(new THREE.CircleGeometry(0.45, 24), std(0xf4e0c0, { r: 1 }), -3.0, 0.08, -0.8).rotateX(-Math.PI / 2));
   IB.flush(SHOPG);
   // ---- exterior: brick front with door, display window, striped awning, sign, pots, bench; tiled roof; street lamp ----
-  SHOPFRONT = new THREE.Group(); SHOPG.add(SHOPFRONT); const FB = new Batch(), fw = texMat('brick', '#c86a4a', { ns: 1.2 }), trim = plain('#fff8ee', { r: 0.5 });
+  SHOPFRONT = new THREE.Group(); SHOPG.add(SHOPFRONT); const FB = new Batch(), fw = photoMat('brick', { rep: 0.55 }), trim = plain('#fff8ee', { r: 0.5 });
   FB.add(boxUV(3.6, 3.4, 0.24, 1.6), fw, -2.7, 1.7, 3); FB.add(boxUV(0.9, 3.4, 0.24, 1.6), fw, 4.05, 1.7, 3); FB.add(boxUV(1.8, 1.1, 0.24, 1.6), fw, 0, 2.85, 3); FB.add(boxUV(2.7, 1.0, 0.24, 1.6), fw, 2.25, 0.5, 3); FB.add(boxUV(2.7, 0.7, 0.24, 1.6), fw, 2.25, 3.05, 3);
   FB.add(boxUV(1.7, 2.3, 0.08, 1.1), texMat('panel', '#1f7a7a', { r: 0.5 }), 0, 1.15, 3.02); for (const s of [-1, 1]) FB.add(new THREE.BoxGeometry(0.14, 2.4, 0.2), trim, s * 0.9, 1.2, 3.1); FB.add(new THREE.BoxGeometry(2.0, 0.16, 0.2), trim, 0, 2.38, 3.1);
   FB.add(new THREE.BoxGeometry(2.9, 0.14, 0.3), trim, 2.25, 1.0, 3.15); FB.add(new THREE.BoxGeometry(2.9, 0.12, 0.2), trim, 2.25, 2.72, 3.1); for (const x of [0.9, 2.25, 3.6]) FB.add(new THREE.BoxGeometry(0.08, 1.7, 0.12), trim, x, 1.86, 3.1);
@@ -253,10 +253,10 @@ const ACC = makeAccents(WORDS, ENERGY); for (const P of [MILO, GUS]) { const u0 
 const DOG = new Dog2D({ scene, size: 0.95 }), DOG2 = new Dog2D({ scene, size: 0.85, coat: '#f6f4ee', belly: '#ffffff', spot: '#2a2a2a', ear: '#2a2a2a', collar: '#2a5ad8', seed: 2 });
 // golf-world people: dressed for golf on the torso, real hair shapes, hats only where the story needs them (none here)
 const HAIRC = ['#2a1c16', '#6a3a1e', '#c8642a', '#e8c86a', '#9a9a9a', '#3a2418', '#b8743a'];
-const folk = (k, o = {}) => new Flat2D({ body: k % 4 === 3 ? 'dress' : 'polo', coat: ['#3a8ad8', '#f2c63a', '#4ab84a', '#e8402a', '#9a6ad8', '#2a9a8a', '#f28a3a', '#ffffff'][k % 8], pattern: ['stripes', null, 'plaid', null, 'argyle'][k % 5], patCol: 'rgba(255,255,255,0.3)', collarCol: '#ffffff', sleeves: true,
-  hair: HAIRC[k % 7], hairStyle: ['swept', 'curly', 'bun', 'quiff', 'ponytail', 'bald', 'spiky', 'pigtails', 'messy'][k % 9], hat: null, glasses: k % 5 === 2 ? 'round' : null, mustache: k % 6 === 4, seed: 20 + k, size: k % 7 === 2 ? 1.45 : 1.85 + (k % 3) * 0.06, width: 0.95 + (k % 3) * 0.12, scene, res: 1.4, ...o });
+const folk = (k, o = {}) => new Flat2D({ body: ['polo', 'polo', 'vest', 'polo', 'coat'][k % 5], coat: ['#3a8ad8', '#f2c63a', '#4ab84a', '#e8402a', '#9a6ad8', '#2a9a8a', '#f28a3a', '#ffffff'][k % 8], pattern: ['stripes', null, 'plaid', null, 'argyle'][k % 5], patCol: 'rgba(255,255,255,0.3)', collarCol: '#ffffff', sleeves: true,
+  hair: HAIRC[k % 7], hairStyle: ['swept', 'curly', 'quiff', 'spiky', 'messy', 'side'][k % 6], hat: null, tie: k % 5 === 4 ? '#e0b03a' : null, glasses: k % 5 === 2 ? 'round' : null, mustache: k % 6 === 4, seed: 20 + k, size: 1.85 + (k % 3) * 0.06, width: 0.95 + (k % 3) * 0.12, scene, res: 1.4, ...o });
 const KEEP = folk(2, { coat: '#2a8a4a', pattern: null, logo: '#ffffff', hairStyle: 'swept', hair: '#3a2418', size: 1.9, res: 1.6 });
-const GOLFERS = [folk(0, { coat: '#ffffff', pattern: 'argyle', patCol: 'rgba(40,80,160,0.35)', patCol2: 'rgba(230,60,60,0.7)', hairStyle: 'bald', hair: '#9a9a9a', mustache: true, res: 1.6 }), folk(4, { body: 'dress', coat: '#f28ab8', pattern: 'stripes', hairStyle: 'ponytail', hair: '#e8c86a', res: 1.6 }), folk(1, { coat: '#3a8ad8', pattern: null, hairStyle: 'curly', hair: '#2a1c16', glasses: 'round', res: 1.6 })];
+const GOLFERS = [folk(0, { body: 'polo', coat: '#ffffff', pattern: 'argyle', patCol: 'rgba(40,80,160,0.35)', patCol2: 'rgba(230,60,60,0.7)', hairStyle: 'side', hair: '#6a3a1e', mustache: true, res: 1.6 }), folk(4, { body: 'polo', coat: '#f2c63a', pattern: 'stripes', hairStyle: 'quiff', hair: '#3a2418', res: 1.6 }), folk(1, { body: 'polo', coat: '#3a8ad8', pattern: null, hairStyle: 'curly', hair: '#2a1c16', glasses: 'round', res: 1.6 })];
 const CROWD = Array.from({ length: 14 }, (_, k) => folk(k + 3));
 const PEOPLE = [MILO, GUS, KEEP, ...GOLFERS, ...CROWD];
 const hide = (c) => { c.mesh.visible = false; c.mesh.rotation.z = 0; c.mesh.scale.setScalar(1); c.mesh.material.depthTest = true; c.mesh.renderOrder = 0; if (c.shadow) { c.shadow.visible = false; c.shadow.scale.set(1, 1, 1); } };
