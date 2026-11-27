@@ -187,7 +187,7 @@ export class Flat2D {
     this.outline(g, headPts, 7);
     if (o.nose && Math.abs(TUa) > 0.55) { const sg = Math.sign(TUa), k = (Math.abs(TUa) - 0.55) / 0.45, nx = sg * r * 1.0, ny = 22; g.fillStyle = o.skin; g.beginPath(); g.ellipse(nx, ny, 16 + 14 * k, 17, 0, 0, 7); g.fill(); g.strokeStyle = INK; g.lineWidth = 6; g.beginPath(); g.ellipse(nx, ny, 16 + 14 * k, 17, 0, sg > 0 ? -1.75 : Math.PI - 1.4, sg > 0 ? 1.4 : Math.PI + 1.75); g.stroke(); }
     if (o.hair && o.hairStyle === 'tufts') { g.save(); g.translate((p.turn || 0) * 14, 0); this.tufts(g, r); g.restore(); }
-    if (o.hair && ['pompadour', 'side', 'messy', 'pigtails', 'quiff', 'swept', 'curly', 'bun', 'ponytail', 'bald', 'spiky'].includes(o.hairStyle)) { g.save(); g.translate(-TUa * r * 0.14, 0); this.bigHair(g, r, TUa); g.restore(); }
+    if (o.hair && ['pompadour', 'side', 'messy', 'pigtails', 'quiff', 'swept', 'curly', 'bun', 'ponytail', 'bald', 'spiky'].includes(o.hairStyle)) { g.save(); g.translate(-TUa * r * 0.08, -Math.abs(TUa) * r * 0.04); this.bigHair(g, r, TUa); g.restore(); }
     g.save(); this.wpath(g, this.ell(0, 0, r * 1.07 - 3.5, r * 0.94 - 3.5, 64)); g.clip();
     { const tu = clamp(p.turn || 0, -1, 1); g.save(); const fk = r / 116 * 0.95; g.translate(tu * (52 + 26 * Math.max(0, Math.abs(tu) - 0.6) / 0.4) * fk, 16 * fk); g.scale((1 - 0.22 * Math.abs(tu)) * fk, fk); this._tu = tu; this.face(g, p.face || {}, 116); this._tu = 0; g.restore(); }   // facial features scale with the head
     g.restore();
@@ -349,7 +349,7 @@ export class Flat2D {
   bigHair(g, r, tu = 0) {
     const o = this.o, st = o.hairStyle; g.fillStyle = o.hair; g.strokeStyle = INK; g.lineWidth = 5;
     const fillStroke = () => { g.fill(); g.stroke(); }, shine = (a, b) => { g.save(); g.strokeStyle = 'rgba(255,240,220,0.32)'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.moveTo(a[0] * r, a[1] * r); g.quadraticCurveTo((a[0] + b[0]) / 2 * r, Math.min(a[1], b[1]) * r - 0.12 * r, b[0] * r, b[1] * r); g.stroke(); g.restore(); };
-    if (Math.abs(tu) > 0.55 && !['bald'].includes(st)) { const sg = -Math.sign(tu); g.beginPath(); g.ellipse(sg * r * 0.66, -r * 0.3, r * 0.38, r * 0.52, sg * 0.25, 0, 7); g.fill(); }   // back of the head in profile
+    if (Math.abs(tu) > 0.55 && !['bald', 'quiff', 'pompadour'].includes(st)) { const sg = -Math.sign(tu); g.beginPath(); g.ellipse(sg * r * 0.78, -r * 0.34, r * 0.28, r * 0.4, sg * 0.3, 0, 7); g.fill(); }   // back of the head in profile
     if (st === 'quiff') {   // slicked-back quiff: volume over the forehead, side part, hair down to the temples
       g.beginPath(); g.moveTo(-r * 1.05, -r * 0.02); g.bezierCurveTo(-r * 1.18, -r * 1.05, -r * 0.3, -r * 1.42, r * 0.35, -r * 1.36); g.bezierCurveTo(r * 0.95, -r * 1.32, r * 1.18, -r * 1.0, r * 1.02, -r * 0.72);
       g.bezierCurveTo(r * 1.12, -r * 0.5, r * 1.08, -r * 0.25, r * 1.04, -r * 0.08); g.bezierCurveTo(r * 0.85, -r * 0.55, r * 0.55, -r * 0.66, r * 0.15, -r * 0.6); g.bezierCurveTo(-r * 0.3, -r * 0.7, -r * 0.75, -r * 0.4, -r * 1.05, -r * 0.02); g.closePath(); fillStroke();
