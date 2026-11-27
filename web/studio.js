@@ -64,7 +64,7 @@ export function dynamicCam(CINE) {
   return (i, t) => { const S0 = CINE.shots[Math.max(0, Math.min(CINE.shots.length - 1, i))]; const own = S0.still || !!S0.sizeK;
     const SS = own ? S0 : { ...S0, size: Array.isArray(S0.size) ? S0.size[0] : S0.size, az: Array.isArray(S0.az) ? S0.az[0] : S0.az, el: Array.isArray(S0.el) ? S0.el[0] : S0.el, fov: Array.isArray(S0.fov) ? S0.fov[0] : S0.fov };
     const c = CINE._eval(SS, t); let pos = c.pos.clone(), look = c.look.clone(), fov = c.fov;
-    if (!own) { const u = clamp((t - S0.t0) / Math.max(0.1, S0.t1 - S0.t0), 0, 1), e = u * u * (3 - 2 * u); const z = 1 + ((S0.push ?? 1.3) - 1) * e; const [dx, dy] = S0.drift || [0.03, -0.02];
+    if (!own) { const u = clamp((t - S0.t0) / Math.max(0.1, S0.t1 - S0.t0), 0, 1), e = u * u * (3 - 2 * u); const z = (1 + ((S0.push ?? 1.3) - 1) * e) * (S0.zoomK ? zoomAt(S0.zoomK, t) : 1); const [dx, dy] = S0.drift || [0.03, -0.02];
       if (S0.rig === 'pov') fov = (2 * Math.atan(Math.tan((fov * Math.PI) / 360) / z) * 180) / Math.PI; else pos = look.clone().add(pos.clone().sub(look).multiplyScalar(1 / z));
       const fwd = look.clone().sub(pos), dist = fwd.length(); fwd.normalize(); const right = V().crossVectors(fwd, V(0, 1, 0)).normalize(), up = V().crossVectors(right, fwd);
       const hh = 2 * dist * Math.tan((fov * Math.PI) / 360), ww = hh * (9 / 16); look.addScaledVector(right, dx * ww * e).addScaledVector(up, dy * hh * e); }
@@ -86,3 +86,18 @@ export function makeRenderer({ CINE, camOf, setup, fx, look, composer, DURATION,
     renderWith(t, camOf(nb, t)); const sb = 1.04 - 0.04 * e; OG.globalAlpha = e; OG.drawImage(R.domElement, W * (1 - sb) / 2, H * (1 - sb) / 2, W * sb, H * sb); OG.globalAlpha = 1;
     return 'ok'; };
 }
+
+// VOICE-DRIVEN PERFORMANCE: every stressed word of the narration gives the on-screen character a springy accent
+// (head tilt, brow pop, little hop / squash, hat bounce, lean or glance) — directions alternate and vary, so nothing repeats robotically.
+export function makeAccents(WORDS, ENERGY, FPS = 30) {
+  const on = WORDS.map(([w, t], i) => { const k = Math.round(t * FPS); let e = 0; for (let j = k; j < k + 7 && j < ENERGY.length; j++) e = Math.max(e, ENERGY[j] || 0); return { t, e, i, w: w.replace(/[^a-z]/gi, '') }; });
+  const es = on.map((o) => o.e).sort((a, b) => a - b), thr = es[Math.floor(es.length * 0.3)]; const acc = on.filter((o) => o.e >= thr && o.w.length > 2);
+  return (t, amp = 1, seed = 0) => { const out = { tilt: 0, lean: 0, hop: 0, squash: 0, headLag: 0, hatOff: 0, brow: 0, turn: 0 };
+    for (const o of acc) { const u = t - o.t + 0.05; if (u < 0 || u > 0.75) continue; const s = Math.exp(-u * 6) * Math.sin(u * 16), k = 0.45 + 0.55 * (o.e - thr) / (1 - thr + 1e-6), d = (o.i + seed) % 2 ? 1 : -1, v = (o.i * 7 + seed) % 3;
+      out.tilt += d * 8 * s * k; out.hop += (v === 0 ? 12 : 5) * Math.max(0, s) * k; out.squash -= 0.04 * s * k; out.headLag += d * 7 * s * k; out.hatOff += 12 * Math.abs(s) * k; out.brow += 0.5 * Math.max(0, s) * k; out.lean += (v === 1 ? d * 6 : 0) * s * k; out.turn += (v === 2 ? d * 0.2 : 0) * s * k; }
+    for (const k in out) out[k] *= amp; return out; };
+}
+export function withAccent(pose, a) { const p = { ...pose }; for (const k of ['tilt', 'lean', 'hop', 'squash', 'headLag', 'hatOff']) p[k] = (p[k] || 0) + a[k]; if (a.turn) p.turn = (typeof p.turn === 'number' ? p.turn : 0) + a.turn;
+  if (a.brow && p.face) { const f = typeof p.face === 'string' ? { ...(FACES[p.face] || FACES.neutral) } : { ...p.face }; if ('browL' in f || 'browR' in f) { f.browL = (f.browL ?? 0) + a.brow; f.browR = (f.browR ?? 0) + a.brow; } else f.brow = (f.brow ?? 0) + a.brow; p.face = f; } return p; }
+// keyed crash-zooms: [[t, zoom, dur]] with a springy back-ease (zoom multiplies the shot's push)
+export const zoomAt = (K, t) => { let z = 1, prev = 1; for (const [t0, v, d = 0.13] of K) { if (t < t0) break; const u = Math.min(1, (t - t0) / d); z = prev + (v - prev) * EZ.back(u); prev = v; } return z; };

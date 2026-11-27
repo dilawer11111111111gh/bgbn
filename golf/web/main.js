@@ -10,9 +10,10 @@ import { Flat2D } from '../../web/flat2d.js';
 import { role, act } from '../../web/roles.js';
 import { loadMo, mo } from '../../web/mocap.js';
 import { sstep, clamp, lerp } from '../../web/motion.js';
-import { installActing, keys, faceK, makeLip, makeSky, dynamicCam, makeRenderer } from '../../web/studio.js';
+import { installActing, keys, faceK, makeLip, makeSky, dynamicCam, makeRenderer, makeAccents, withAccent } from '../../web/studio.js';
+import { WORDS } from './words.js';
 import { Dog2D } from '../../web/dog2d.js';
-import { Batch, house, forest, grass, flowers, scatter, fence, hedge, bench, lampPost, pot, terrain, terrainH, texMat, plain, boxUV, GLASS } from '../../web/world3d.js';
+import { golfCartHQ, Batch, house, forest, grass, flowers, scatter, fence, hedge, bench, lampPost, pot, terrain, terrainH, texMat, plain, boxUV, GLASS } from '../../web/world3d.js';
 import { ENERGY } from './energy.js';
 import { MILO_O, GUS_O } from './cast.js';
 export const DURATION = 48.25;
@@ -147,7 +148,7 @@ function build() {
   buildShop();
   // ---- PRO SHOP kiosk ----
   buildPro();
-  CART = golfCart(); scene.add(CART);
+  CART = golfCartHQ(); scene.add(CART);
 }
 function buildShop() {
   SHOPG = new THREE.Group(); SHOPG.position.copy(SHOP); scene.add(SHOPG); const IB = new Batch();
@@ -246,6 +247,8 @@ function golfCart() {   // open-sided cart: nobody gets swallowed by its panels
 // =================== CAST ===================
 installActing();
 const MILO = new Flat2D({ ...MILO_O, scene }), GUS = new Flat2D({ ...GUS_O, scene });
+// the narration drives the leads: every stressed word lands as a springy head / brow / body accent
+const ACC = makeAccents(WORDS, ENERGY); for (const P of [MILO, GUS]) { const u0 = P.update.bind(P); P.update = (pose, c) => u0(pose.noAcc ? pose : withAccent(pose, ACC(Flat2D.T || 0, pose.acc ?? 1, P === MILO ? 0 : 1)), c); }
 const DOG = new Dog2D({ scene, size: 0.95 }), DOG2 = new Dog2D({ scene, size: 0.85, coat: '#f6f4ee', belly: '#ffffff', spot: '#2a2a2a', ear: '#2a2a2a', collar: '#2a5ad8', seed: 2 });
 const KEEP = new Flat2D({ ...role('shopkeeper', 1), scene, res: 1.6 });
 const GOLFERS = [new Flat2D({ ...role('gentleman', 0), scene, res: 1.6 }), new Flat2D({ ...role('lady', 1), scene, res: 1.6 }), new Flat2D({ ...role('tourist', 2), scene, res: 1.6, hat: 'ball', hatCol: '#e8302a' })];
@@ -349,9 +352,9 @@ function setup(t, camPos) {
     const UP = { armR: [150, 12], armL: [28, -40], lean: 5, bend: -22, tilt: 6, hatOff: 18, squash: -0.04, headLag: -8 }, HIT = { armR: [66, 10], armL: [30, -40], lean: -9, bend: 24, tilt: -8, hatOff: -4, squash: 0.1, headLag: 10, hop: -6 }, SET = { armR: [70, 12], armL: [28, -40], lean: -5, bend: 14, tilt: -4, hatOff: 0, squash: 0, headLag: 4, hop: 0 };
     const F = faceK(t, [[0, { eyes: 'stare', mouth: 'psycho', brow: 0.2, look: [0.6, 0.6] }], [0.33, { eyes: 'squeeze', mouth: 'psycho', brow: -0.5 }], [0.5, { eyes: 'stare', mouth: 'psycho', brow: 0.3, look: [0.7, 0.7] }], [0.9, { eyes: 'squeeze', mouth: 'psycho', brow: -0.6 }], [1.05, { eyes: 'stare', mouth: 'psycho', brow: 0.35, look: [0, 0] }]]);
     const base = { e: 1, prop: 'hammer', propHand: 'R', propFront: true, face: F, noBlink: true, noIdle: true, hip: -8 };
-    H.update({ ...base, ...HIT }, camPos); const fa = H.toWorld(H.propPt(H.handR, 34, 115)), fb = H.toWorld(H.propPt(H.handR, -34, 115)); const face = fa.y < fb.y ? fa : fb;
+    H.update({ ...base, ...HIT, noAcc: true }, camPos); const fa = H.toWorld(H.propPt(H.handR, 34, 115)), fb = H.toWorld(H.propPt(H.handR, -34, 115)); const face = fa.y < fb.y ? fa : fb;
     const k = keys(t, [[0, UP], [0.25, { ...UP, armR: [168, 22], lean: 8, bend: -34, hatOff: 30 }, 0.15], [0.33, HIT, 0.07, 'in'], [0.42, SET, 0.2, 'back'], [0.66, { ...UP, armR: [166, 20] }, 0.18], [0.9, HIT, 0.07, 'in'], [1.0, SET, 0.2, 'back']]);
-    H.update({ ...base, ...k }, camPos);
+    H.update({ ...base, ...k, acc: 0.5 }, camPos);
     const toC = V().subVectors(camPos, p).setY(0).normalize(); const bc = face.clone().addScaledVector(toC, 0.06); bc.y = Math.max(0.72 + 0.065, face.y - 0.065); HOOKBALL.visible = true; HOOKBALL.position.copy(bc);
     HOOKBALL.scale.set(0.065 * (1 + 0.3 * Math.max(0, 1 - Math.abs(t - 0.42) * 8) + 0.3 * Math.max(0, 1 - Math.abs(t - 0.99) * 8)), 0.065 * (1 - 0.25 * Math.max(0, 1 - Math.abs(t - 0.42) * 8) - 0.25 * Math.max(0, 1 - Math.abs(t - 0.99) * 8)), 0.065);
     const ah = Math.max(0.02, bc.y - 0.065 - 0.72); ANVIL.visible = true; ANVIL.scale.set(1, ah, 1); ANVIL.position.set(bc.x, 0.72 + ah / 2, bc.z); }
@@ -375,7 +378,7 @@ function setup(t, camPos) {
   if (W(t, 12.22, 15.55)) {
     if (t < 13.72) { const walk = t < 12.54; const x = walk ? lerp(-0.6, 1.7, sstep(12.22, 12.54, t)) : 1.75; DOG.place(SL(x, 0, 0.08).x, 0, SL(0, 0, 0.08).z);
       const ch = walk ? 0 : Math.max(0, Math.sin((t - 12.54) * 21)); DOG.update({ t, walk: t * 14, amp: walk ? 26 : 0, wag: 16, chew: ch, tilt: walk ? 0 : 18 + 8 * ch, hop: walk ? 10 * Math.abs(Math.sin(t * 14)) : 0, squash: walk ? 0 : 0.06 * ch, eyes: walk ? 'open' : (ch > 0.5 ? 'closed' : 'happy'), ball: !walk && t > 12.7, flip: true, look: [1, 0.3] }, camPos); }
-    else { DOG.place(SL(1.2, 0, 0.2).x, 0, SL(0, 0, 0.2).z); const spit = t > 15.0; const ch = t < 14.66 ? Math.max(0, Math.sin((t - 13.72) * 18)) * 0.6 : t < 15.0 ? Math.max(0, Math.sin((t - 14.66) * 24)) : 0;
+    else { DOG.place(SL(1.2, 0, 0.2).x, 0.045, SL(0, 0, 0.2).z); const spit = t > 15.0; const ch = t < 14.66 ? Math.max(0, Math.sin((t - 13.72) * 18)) * 0.6 : t < 15.0 ? Math.max(0, Math.sin((t - 14.66) * 24)) : 0;
       DOG.update({ t, lie: 1, wag: 18, chew: spit ? 0.9 * Math.exp(-(t - 15.0) * 6) : ch, tilt: spit ? -10 : 10, eyes: t > 15.22 ? 'happy' : (ch > 0.4 ? 'closed' : 'open'), tongue: t > 15.22 ? 1 : 0, ball: !spit, flip: true, look: [0.6, 0.6] }, camPos); }
     if (t > 15.0) { END1.visible = true; const u = clamp((t - 15.0) / 0.25, 0, 1); END1.position.copy(SL(1.0 - 0.6 * u, 0, 0.4 + 0.9 * u)).add(V(0, 0.07 + 0.35 * Math.sin(u * Math.PI) * (t < 15.25 ? 1 : 0) + (t > 15.25 ? 0.12 * Math.abs(Math.sin((t - 15.25) * 14)) * Math.exp(-(t - 15.25) * 5) : 0), 0)); END1.rotation.z = -u * 6; } }
   // ---------------- 15.55 - 16.3 "Ruined." ----------------
@@ -384,14 +387,15 @@ function setup(t, camPos) {
     H.update({ e: 1, ...k, prop: 'lantern', face: faceK(t, [[15.55, { eyes: 'lid', lid: 0.55, mouth: 'line', brow: 0 }], [15.82, { eyes: 'tiny', mouth: 'scream', brow: 1.5 }], [16.0, { eyes: 'lid', lid: 0.5, lidTilt: 0.5, mouth: 'wobble', brow: 1.2, look: [0, 0.8] }]], 0.08), noBlink: true }, camPos); }
   // ---------------- 16.3 - 19.0 Gus laughs so hard he falls off his cart ----------------
   CART.visible = W(t, 16.3, 19.0) || W(t, 21.05, 22.62) || W(t, 27.55, 28.56);
-  if (W(t, 16.3, 19.0)) { const cx = lerp(-4.2, -1.2, sstep(16.3, 16.85, t)) + (t > 18.3 ? (t - 18.3) * 1.6 : 0); CART.position.copy(SL(cx, 0, 5.4)); CART.rotation.set(0, 0, 0); CART.rotation.z = t < 16.85 ? 0 : -0.04 * Math.sin(sstep(16.85, 17.1, t) * Math.PI);
-    CART.updateMatrixWorld(true); const seat = CART.localToWorld(V(-0.15, 0.34, 0.66));
-    if (t < 17.96) { G.place(seat.x, seat.y, seat.z); const lau = t > 16.98 ? Math.abs(Math.sin((t - 16.98) * 13)) : 0;
-      const k = t < 16.98 ? keys(t, [[16.3, { armL: [70, -30], armR: [70, -30], lean: 0, tilt: 0 }], [16.76, { armL: [70, -30], armR: [96, -40], lean: -6, tilt: -10, bend: -14, turn: 0.3 }, 0.16]]) : keys(t, [[16.98, { armL: [40, -120], armR: [40, -120], lean: -12, tilt: -14, bend: -26 }, 0.1, 'back'], [17.56, { armL: [150, -30], armR: [30, -110], lean: 14, tilt: 16, bend: 30 }, 0.12, 'back']]);
-      G.update({ e: 1, ...k, bob: -lau * 10, squash: lau * 0.05, headLag: -lau * 12, hatOff: lau * 16, tears: t > 17.56, face: t < 16.98 ? faceK(t, [[16.3, 'smug'], [16.76, { eyes: 'lid', lid: 0.3, mouth: 'grin', brow: -0.6, look: [-1, 0] }]]) : { eyes: 'squeeze', mouth: 'laugh', brow: 0.4 } }, camPos); }
-    else { const u = clamp((t - 17.96) / 0.24, 0, 1); const g0 = SL(-1.0, 0, 6.6); G.place(lerp(seat.x, g0.x, u), lerp(seat.y, 0, u) + Math.sin(u * Math.PI) * 0.6, lerp(seat.z, g0.z, u)); const lau = Math.abs(Math.sin((t - 17.96) * 13)); const kick = Math.sin(t * 16);
+  if (W(t, 16.3, 19.0)) { const cx = lerp(-4.2, -1.2, sstep(16.3, 16.85, t)) + (t > 18.3 ? (t - 18.3) * 1.6 : 0); CART.position.copy(SL(cx, 0, 5.6)); CART.rotation.set(0, 0, t < 16.85 ? 0 : -0.035 * Math.sin(sstep(16.85, 17.1, t) * Math.PI)); CART.updateMatrixWorld(true);
+    CART.userData.wheels.forEach((w) => (w.rotation.z = -cx / 0.245)); const seat = CART.localToWorld(V(-0.27, 0.22, 0.26));
+    if (t < 17.96) { G.place(seat.x, seat.y, seat.z); const lau = t > 16.98 ? Math.abs(Math.sin((t - 16.98) * 13)) : 0; const prof = t >= 16.76 && t < 17.5;
+      const k = keys(t, [[16.3, { armL: [70, -40], armR: [70, -40], lean: 0, tilt: 0, side: 0, turn: 0 }], [16.76, { armL: [40, -20], armR: [100, -60], lean: -8, tilt: -6, bend: -12, side: 1, turn: 1 }, 0.12, 'back'],
+        [16.98, { armL: [40, -120], armR: [40, -120], lean: -8, tilt: -18, bend: -14, side: 1, turn: 1, hop: 8 }, 0.1, 'back'], [17.5, { armL: [40, -120], armR: [96, -12], lean: 8, tilt: 12, bend: 18, side: 0, turn: 0 }, 0.12, 'back'], [17.7, { armL: [150, -30], armR: [96, -12], lean: 14, tilt: 18, bend: 30, side: 0, turn: 0 }, 0.12, 'back']]);
+      G.update({ e: 1, ...k, sit: 1, bob: -lau * 10, squash: lau * 0.05, headLag: (prof ? -8 : -10) * lau, hatOff: lau * 18, tears: t > 17.56, face: t < 16.98 ? faceK(t, [[16.3, 'smug'], [16.76, { eyes: 'lid', lid: 0.4, lidTilt: -0.3, mouth: 'psycho', brow: -0.9 }]]) : { eyes: 'squeeze', mouth: 'laugh', brow: 0.4 } }, camPos); }
+    else { const u = clamp((t - 17.96) / 0.26, 0, 1); const g0 = SL(-0.6, 0, 7.4); G.place(lerp(seat.x, g0.x, u), lerp(seat.y, 0.02, u) + Math.sin(u * Math.PI) * 0.7, lerp(seat.z, g0.z, u)); const lau = Math.abs(Math.sin((t - 17.96) * 13)); const kick = Math.sin(t * 16);
       G.update({ e: 1, armL: [60 + 40 * lau, -110], armR: [60 + 40 * lau, -110], legL: [-70 + 30 * kick, -80], legR: [-50 - 30 * kick, -70], bob: -lau * 8, tears: true, face: u < 1 && t < 18.2 ? { eyes: 'tiny', mouth: 'scream', brow: 1.3 } : { eyes: 'squeeze', mouth: 'laugh', brow: 0.5 }, hatOff: 40 }, camPos);
-      G.mesh.rotation.z = lerp(0, 1.45, u); G.mesh.position.y += 0.3 * u; if (G.shadow) G.shadow.scale.set(2.2, 1, 1); } }
+      G.mesh.rotation.z = lerp(0, 1.45, u); G.mesh.position.y += 0.34 * u; if (G.shadow) G.shadow.scale.set(2.2, 1, 1); } }
   // ---------------- 19.0 - 21.05 ...then buys every smooth ball left in town ----------------
   PROBOXES.forEach((b, i) => { b.visible = !(t >= 19.28 && t < 21.05 && t > 19.28 + i * 0.022 + 0.25) || t >= 21.05; b.position.copy(b.userData.home); });
   REGDRAWER.position.x = t >= 20.04 && t < 21.05 ? 0.28 * sstep(20.04, 20.1, t) : 0;
@@ -413,11 +417,16 @@ function setup(t, camPos) {
   // tournament crowd (grandstand) + Gus watching
   const TOUR = t >= 21.05 && t < 32.24;
   if (TOUR) CROWD.forEach((c, i) => { const tier = i % 4, row = Math.floor(i / 4); c.place(-9 - tier * 1.3 + 0.3, 0.5 + tier * 0.5, -5.2 + row * 3.0 + (tier % 2) * 1.4);
-    const cheer = t >= 26.4 && t < 28.6, gasp = t >= 22.86 && t < 23.9; c.update({ ...(cheer ? act(t + i * 0.13, [[0, 'cheer']]) : gasp ? act(t, [[0, 'shock']]) : act(t + i, [[0, 'idle']])), hop: cheer ? 14 * Math.abs(Math.sin(t * 9 + i)) : 0, face: cheer ? (i % 2 ? 'laugh' : 'awe') : gasp ? 'shock' : (i % 3 ? 'happy' : 'neutral') }, camPos); });
+    const dl = (i * 0.071) % 0.3, cheer = t >= 26.4 + dl && t < 28.6, gasp = t >= 22.86 + dl && t < 23.9, bonk = t >= 31.82 + dl, look = t >= 29.4 && t < 31.82;
+    const CH = ['cheer', 'wave', 'thumbsUp', 'laughPoint', 'clap', 'cheer', 'clap'][i % 7], GA = ['shock', 'facepalm', 'panic', 'shock', 'facepalm'][i % 5], ID = ['idle', 'crossArms', 'hips', 'think', 'idle', 'hips'][i % 6];
+    const clap = { armL: [34, -100 + 26 * Math.sin(t * 19 + i)], armR: [34, -100 + 26 * Math.sin(t * 19 + i)] };
+    const pose = cheer ? (CH === 'clap' ? clap : act(t + i * 0.13, [[0, CH]])) : gasp ? act(t, [[0, GA]]) : bonk ? (i % 3 ? act(t + i * 0.1, [[0, 'laughPoint']]) : act(t, [[0, 'facepalm']])) : look ? { armL: [20, 10], armR: i % 2 ? [150, -20] : [20, 10] } : act(t + i, [[0, ID]]);
+    c.update({ ...pose, hop: cheer ? (5 + (i % 3) * 6) * Math.abs(Math.sin(t * (7 + (i % 4)) + i)) : bonk ? 4 * Math.abs(Math.sin(t * 12 + i)) : 0, tilt: cheer ? 6 * Math.sin(t * 5 + i) : 0,
+      face: cheer ? ['laugh', 'awe', 'happy', 'grin', { eyes: 'happy', mouth: 'laugh' }][i % 5] : gasp ? ['shock', 'scared', 'panic', 'worried'][i % 4] : bonk ? (i % 3 ? 'laugh' : { eyes: 'squeeze', mouth: 'scream' }) : look ? { eyes: 'lid', lid: 0.1, look: [0, -1], mouth: 'smallO', brow: 0.6 } : ['happy', 'neutral', 'calm', 'smug', 'happy'][i % 5] }, camPos); });
   // ---------------- 23.88 - 25.5 "Does he know what he's doing? ... Not really." ----------------
   if (W(t, 23.88, 25.5)) { H.place(-0.35, 0.14, 0); TEEBALL.visible = TEEPEG.visible = true; TEEPEG.position.set(0.32, 0.175, 0.05); TEEBALL.position.set(0.32, 0.285, 0.05);
-    const k = keys(t, [[23.88, { armL: [-40, 40], lean: 4, tilt: 6 }], [24.24, { armL: [-40, 40], lean: 2, tilt: -4, bend: -6 }, 0.16], [24.96, { armL: [-40, 40], lean: 0, tilt: 10, bend: 8, hop: 0 }, 0.12], [25.08, { armL: [-30, 40], armR: [120, -130], lean: -4, tilt: 14, hop: 14, squash: 0.04 }, 0.12, 'back']]);
-    const F = t < 24.96 ? faceK(t, [[23.88, { eyes: 'lid', lid: 0.32, lidTilt: -0.25, squint: 0.15, mouth: 'flat', brow: -0.8 }], [24.24, { eyes: 'lid', lidL: 0.45, lidR: 0.1, mouth: 'smirk1', browL: -0.6, browR: 0.7, look: [0.2, 0] }]]) : { eyes: 'lid', lid: 0.35, look: [-0.9, -0.2], mouth: t < 25.45 ? lip(t) : 'wobble', lip: true, brow: 1.0 };
+    const k = keys(t, [[23.88, { armL: [-40, 40], lean: -6, tilt: -4, side: 1, turn: 1 }], [24.24, { armL: [-40, 40], lean: -10, tilt: -8, bend: -10, side: 1, turn: 1 }, 0.16], [24.52, { armL: [-40, 40], lean: -4, tilt: 4, side: 1, turn: 0.9 }, 0.14], [24.96, { armL: [-40, 40], lean: 0, tilt: 10, bend: 8, hop: 6, side: 0, turn: -0.15 }, 0.1, 'back'], [25.08, { armL: [-30, 40], armR: [120, -130], lean: -4, tilt: 14, hop: 14, squash: 0.04, side: 0, turn: -0.1 }, 0.12, 'back']]);
+    const F = t < 24.96 ? faceK(t, [[23.88, { eyes: 'lid', lid: 0.32, lidTilt: -0.25, squint: 0.15, mouth: 'flat', brow: -0.8 }], [24.24, { eyes: 'lid', lidL: 0.45, lidR: 0.1, mouth: 'smirk1', browL: -0.6, browR: 0.7, look: [1, 0] }], [24.52, { eyes: 'stare', mouth: 'psycho', brow: 0.3, look: [1, 0] }]]) : { eyes: 'lid', lid: 0.35, look: [-0.9, -0.2], mouth: t < 25.45 ? lip(t) : 'wobble', lip: true, brow: 1.0 };
     H.update({ e: 1, ...k, grip: t < 25.08 ? 'L' : undefined, propHand: 'L', prop: 'club', face: F, sweat: t > 25.08 ? (t - 25.08) * 3 : 0, noBlink: t > 24.9 }, camPos); }
   // ---------------- 25.5 - 26.34 THE SWING ----------------
   if (W(t, 25.5, 26.34)) { H.place(-0.35, 0.14, 0); TEEPEG.visible = true; TEEPEG.position.set(0.32, 0.175, 0.05);
@@ -451,13 +460,13 @@ function setup(t, camPos) {
   if (SCI(t)) sciSetup(t, camPos);
   // ---------------- 45.22 - 46.76 Gus tried polishing harder ----------------
   if (W(t, 45.22, 46.76)) { G.place(PRACT.x + 0.5, 0.05, PRACT.z + 1.0); const pol = Math.sin(t * (t > 45.64 ? 34 : 20));
-    G.update({ e: 1, armL: [60 + 10 * pol, -110 + 12 * pol], armR: [70, -118], lean: 8 + 3 * pol, tilt: 6 + 4 * pol, bend: 12 + 6 * pol, bob: 4 * Math.abs(pol), hatOff: 6 * Math.abs(pol), prop: 'rag', propHand: 'L', steam: t > 45.64 ? 1 : 0, sweat: t * 2, face: faceK(t, [[45.22, { eyes: 'lid', lid: 0.3, lidTilt: -0.4, mouth: 'flat', brow: -1.2, look: [0.4, 0.8] }], [45.64, { eyes: 'lid', lid: 0.25, lidTilt: -0.5, mouth: 'talk', brow: -1.5, look: [0.4, 0.8] }], [46.08, { eyes: 'squeeze', mouth: 'scream', brow: -1.2 }]]), noBlink: true }, camPos);
+    G.update({ e: 1, armL: [60 + 10 * pol, -110 + 12 * pol], armR: [70, -118], lean: 8 + 3 * pol, tilt: 6 + 4 * pol, bend: 12 + 6 * pol, side: t < 46.0 ? 1 : 0, turn: t < 46.0 ? -1 : 0, bob: 4 * Math.abs(pol), hatOff: 6 * Math.abs(pol), prop: 'rag', propHand: 'L', steam: t > 45.64 ? 1 : 0, sweat: t * 2, face: faceK(t, [[45.22, { eyes: 'lid', lid: 0.3, lidTilt: -0.4, mouth: 'flat', brow: -1.2, look: [0.4, 0.8] }], [45.64, { eyes: 'lid', lid: 0.25, lidTilt: -0.5, mouth: 'talk', brow: -1.5, look: [0.4, 0.8] }], [46.08, { eyes: 'squeeze', mouth: 'scream', brow: -1.2 }]]), noBlink: true }, camPos);
     GUSBALL.visible = true; GUSBALL.scale.setScalar(0.075 * 1.3); const hp = G.toWorld(G.propPt(G.handL, 0, 20)); GUSBALL.position.copy(hp).add(V().subVectors(camPos, hp).setY(0).normalize().multiplyScalar(0.12)); }
   // ---------------- 46.76 - 48.25 Milo just bought another dog ----------------
   if (t >= 46.76) { const p = hs(0.2, 0.2); H.place(p.x, 0, p.z);
     H.update({ e: 1, ...keys(t, [[46.76, { armL: [30, 10], armR: [150, -20], tilt: 0, lean: 0 }], [47.16, { armL: [130, -10], armR: [150, -20], tilt: -8, lean: -6, hop: 14, bend: -10 }, 0.12, 'back'], [47.68, { armL: [40, -110], armR: [40, -110], tilt: 10, lean: 6, bend: 12, hop: 0 }, 0.14, 'back']]), prop: 'trophy', face: faceK(t, [[46.76, { eyes: 'happy', mouth: 'bigsmile', brow: 0.5 }], [47.16, { eyes: 'stare', mouth: 'psycho', brow: 0.4 }], [47.68, { eyes: 'lid', lidL: 0.5, lidR: 0.06, squint: 0.2, mouth: 'grin', browL: -0.6, browR: 0.8, look: [0, 0] }]]), noBlink: true }, camPos);
-    DOG.place(SL(-0.15, 0, 1.0).x, 0, SL(0, 0, 1.0).z); const c1 = Math.max(0, Math.sin(t * 19)); DOG.update({ t, lie: 1, wag: 18, chew: c1, tilt: 14, eyes: c1 > 0.5 ? 'closed' : 'happy', ball: true }, camPos);
-    const inn = sstep(47.16, 47.5, t); DOG2.place(SL(lerp(2.4, 0.9, inn), 0, 1.05).x, 0, SL(0, 0, 1.05).z); const c2 = t > 47.68 ? Math.max(0, Math.sin(t * 21 + 1)) : 0;
+    DOG.place(SL(-0.3, 0, 1.0).x, 0.045, SL(0, 0, 1.0).z); const c1 = Math.max(0, Math.sin(t * 19)); DOG.update({ t, lie: 1, wag: 18, chew: c1, tilt: 14, eyes: c1 > 0.5 ? 'closed' : 'happy', ball: true }, camPos);
+    const inn = sstep(47.16, 47.5, t); DOG2.place(SL(lerp(2.4, 0.85, inn), 0, 1.05).x, inn > 0.6 ? 0.045 : 0, SL(0, 0, 1.05).z); const c2 = t > 47.68 ? Math.max(0, Math.sin(t * 21 + 1)) : 0;
     DOG2.update({ t, walk: t * 14, amp: t < 47.5 ? 26 : 0, hop: t < 47.5 ? 12 * Math.abs(Math.sin(t * 14)) : 0, lie: t > 47.6 ? 1 : 0, wag: 20, chew: c2, tilt: t > 47.68 ? 14 : 0, eyes: c2 > 0.5 ? 'closed' : 'happy', ball: t > 47.68, flip: false, tongue: t < 47.68 ? 1 : 0 }, camPos); }
 }
 // the airflow explainer
@@ -508,35 +517,36 @@ const mH = (dy = -0.3) => () => MILO.headWorld().add(V(0, dy, 0)), gH = (dy = -0
 const flowW = (t, X, Y) => L2(X, Y).applyQuaternion(FLOWQ).add(sciPos(t)); const sciC = (t) => flowW(t, -2.2, 0);
 function camera() {
   shot(0, 1.3, { rig: 'push', at: () => SL(-1.95, 1.2, -1.6), size: 2.4, az: 8, el: 14, fov: 34, push: 1.2, drift: [0.02, 0.0] });
-  shot(1.3, 3.06, { rig: 'push', at: mH(-0.3), size: 1.85, az: -10, el: 2, fov: 30, push: 1.3 });
+  shot(1.3, 3.06, { rig: 'push', at: mH(-0.3), size: 1.85, az: -10, el: 2, fov: 30, push: 1.15, zoomK: [[2.28, 1.3]] });
   shot(3.06, 4.72, { rig: 'pov', from: (t) => V(lerp(-30, -14, (t - 3.06) / 1.66), lerp(48, 40, (t - 3.06) / 1.66), lerp(238, 205, (t - 3.06) / 1.66)), at: (t) => V(-6, 4, lerp(120, 95, (t - 3.06) / 1.66)), fov: 46, push: 1.0, drift: [0, 0] });
   shot(4.72, 6.96, { rig: 'push', at: () => PRACT.clone().add(V(0, 1.15, 0.2)), size: 6.2, az: 6, el: 6, fov: 36, push: 1.25 });
   shot(6.96, 8.3, { rig: 'push', at: () => MIRRORB.position.clone().add(V(0, 0.02, 0)), size: 0.36, az: 20, el: 4, fov: 28, push: 1.35, drift: [0, 0] });
-  shot(8.3, 10.1, { rig: 'push', at: () => SL(0.65, 1.15, -1.4), size: 2.8, az: -10, el: 5, fov: 34, push: 1.25 });
+  shot(8.3, 10.1, { rig: 'push', at: () => SL(0.55, 1.25, -1.2), size: 2.8, az: -10, el: 5, fov: 34, push: 1.15, zoomK: [[9.22, 1.28]] });
   shot(10.1, 12.22, { rig: 'pov', from: (t) => { const a = sstep(10.1, 11.25, t), b = sstep(11.25, 11.95, t); return SL(9, 34, 46).lerp(SL(3, 3.4, 15), a).lerp(SL(-1.3, 1.85, 5.2), b); }, at: (t) => SL(0.4, 1.6, 3).lerp(SL(-1.6, 1.72, 3.1), sstep(11.25, 11.95, t)), fov: 40, push: 1.0, drift: [0, 0] });
   shot(12.22, 13.72, { rig: 'push', at: () => SL(1.95, 0.45, -0.2), size: 2.5, az: -8, el: 3, fov: 34, push: 1.3 });
   shot(13.72, 15.55, { rig: 'push', at: () => SL(1.3, 0.38, 0.5), size: 1.8, az: 18, el: 6, fov: 32, push: 1.25 });
-  shot(15.55, 16.3, { rig: 'push', at: mH(-0.2), size: 1.4, az: 6, el: -2, fov: 30, push: 1.3 });
-  shot(16.3, 16.92, { rig: 'pov', from: (t) => CART.position.clone().add(V(-2.5 + (t - 16.3) * 2, 6.5 - (t - 16.3) * 3, 7.5)), at: () => CART.position.clone().add(V(0.3, 0.9, 0.3)), fov: 44, push: 1.0, drift: [0, 0] });
-  shot(16.92, 19.0, { rig: 'push', at: () => SL(-1.7, 1.1, 5.8), size: 4.6, az: 4, el: 4, fov: 38, push: 1.2 });
-  shot(19.0, 21.05, { rig: 'push', at: () => PRO.clone().add(V(1.7, 1.35, 0.0)), size: 3.2, az: 92, el: 4, fov: 36, push: 1.25 });
+  shot(15.55, 16.3, { rig: 'push', at: mH(-0.2), size: 1.6, az: 6, el: -2, fov: 30, push: 1.1, zoomK: [[15.82, 1.55, 0.1]] });
+  shot(16.3, 16.76, { rig: 'pov', from: (t) => CART.position.clone().add(V(-2.5 + (t - 16.3) * 2, 6.5 - (t - 16.3) * 3, 7.5)), at: () => CART.position.clone().add(V(0.3, 0.9, 0.3)), fov: 44, push: 1.0, drift: [0, 0] });
+  shot(16.76, 17.5, { rig: 'push', at: gH(-0.2), size: 1.8, az: 10, el: 2, fov: 30, push: 1.08, zoomK: [[16.98, 1.18, 0.1]] });
+  shot(17.5, 19.0, { rig: 'push', at: (t) => SL(-1.25, 1.05, 6.2).lerp(SL(-1.2, 0.75, 7.6), sstep(17.96, 18.3, t)), size: 3.6, az: 40, el: 7, fov: 38, push: 1.1, zoomK: [[17.96, 0.8, 0.3]] });
+  shot(19.0, 21.05, { rig: 'push', at: () => PRO.clone().add(V(1.9, 1.45, -0.25)), size: 3.2, az: 92, el: 4, fov: 36, push: 1.1, zoomK: [[20.3, 1.4]] });
   shot(21.05, 22.62, { rig: 'pov', from: (t) => { const u = sstep(21.05, 22.4, t); return V(34, 26, 34).lerp(V(9.5, 3.2, 7.5), u); }, at: (t) => V(-8, 2, -6).lerp(MILO.headWorld().add(V(-0.5, -0.6, -0.4)), sstep(21.05, 22.2, t)), fov: 44, push: 1.0, drift: [0, 0] });
   shot(22.62, 23.88, { rig: 'push', at: () => V(0.0, 0.8, 0.1), size: 2.3, az: 84, el: 2, fov: 32, push: 1.25 });
-  shot(23.88, 25.5, { rig: 'push', at: mH(-0.35), size: 1.8, az: 82, el: 1, fov: 30, push: 1.3 });
+  shot(23.88, 25.5, { rig: 'push', at: mH(-0.35), size: 1.8, az: 82, el: 1, fov: 30, push: 1.12, zoomK: [[24.96, 1.35, 0.1]] });
   shot(25.5, 26.34, { rig: 'push', at: () => V(-0.3, 1.25, 0.1), size: 3.6, az: 90, el: 4, fov: 38, push: 1.15 });
   shot(26.34, 27.6, { rig: 'pov', from: (t) => V(26, 30, lerp(30, -40, (t - 26.34) / 1.26)), at: (t) => DRIVE(clamp((t - 25.92) / 1.68, 0, 1)).lerp(V(-4, 0, -200), 0.45), fov: 50, push: 1.0, drift: [0, 0] });
-  shot(27.6, 28.56, { rig: 'push', at: () => V(-5.2, 1.6, -0.6), size: 5.0, az: 78, el: 4, fov: 38, push: 1.3 });
+  shot(27.6, 28.56, { rig: 'push', at: () => V(-3.6, 1.55, -0.6), size: 4.4, az: 78, el: 4, fov: 38, push: 1.05, zoomK: [[27.8, 1.7, 0.12]] });
   shot(28.56, 29.55, { rig: 'push', at: () => V(-0.3, 1.25, 0.1), size: 3.4, az: 90, el: 4, fov: 38, push: 1.2 });
   shot(29.55, 30.52, { rig: 'pov', from: () => V(19, 1.2, 15), at: (t) => GUSUP(t).lerp(V(-1, 6, -1), 0.45), fov: 50, push: 1.0, drift: [0, 0] });
   shot(30.52, 31.25, { rig: 'pov', from: () => V(3.5, 1.2, 3.5), at: () => GUSUP(30.6).add(V(0, -1.5, 0)), fov: 30, push: 1.25, drift: [0, 0] });
-  shot(31.25, 32.24, { rig: 'push', at: () => GUS.headWorld().add(V(0, 0.8, 0)), size: 4.0, az: 80, el: -16, fov: 40, push: 1.3 });
+  shot(31.25, 32.24, { rig: 'push', at: () => GUS.headWorld().add(V(0, 0.8, 0)), size: 4.0, az: 80, el: -16, fov: 40, push: 1.1, zoomK: [[31.82, 1.4, 0.1]] });
   shot(32.24, 34.08, { rig: 'push', at: (t) => flowW(t, -1.4, 0).add(V(0, 0.4, 0)), size: 11.5, az: 90, el: 2, fov: 40, push: 1.2 });
   shot(34.08, 36.18, { rig: 'push', at: (t) => flowW(t, -2.2, 0).add(V(0, 0.4, 0)), size: 10, az: 96, el: 3, fov: 40, push: 1.25 });
   shot(36.18, 39.98, { rig: 'push', at: (t) => flowW(t, -1.5, 0).add(V(0, 0.8, 0)), size: 11.5, az: 88, el: 2, fov: 40, push: 1.1 });
   shot(39.98, 43.66, { rig: 'push', at: (t) => flowW(t, -1.5, 0).add(V(0, 0.8, 0)), size: 10.5, az: 92, el: 2, fov: 40, push: 1.2 });
   shot(43.66, 45.22, { rig: 'push', at: (t) => sciPos(t).add(V(0, 0.6, 0)), size: 10, az: 90, el: 3, fov: 42, push: 0.72, drift: [0, 0] });
-  shot(45.22, 46.76, { rig: 'push', at: gH(-0.25), size: 1.7, az: 10, el: 2, fov: 32, push: 1.35 });
-  shot(46.76, 48.4, { rig: 'push', at: () => SL(0.38, 0.85, 0.8), size: 3.2, az: 4, el: 4, fov: 34, push: 1.25 });
+  shot(45.22, 46.76, { rig: 'push', at: gH(-0.25), size: 1.8, az: 10, el: 2, fov: 32, push: 1.12, zoomK: [[46.08, 1.32, 0.1]] });
+  shot(46.76, 48.4, { rig: 'push', at: () => SL(0.25, 0.95, 0.75), size: 3.8, az: 4, el: 4, fov: 34, push: 1.1, zoomK: [[47.68, 1.32]] });
 }
 
 // =================== RENDER ===================

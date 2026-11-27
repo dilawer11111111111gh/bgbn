@@ -17,7 +17,7 @@ export class Dog2D {
   place(x, y, z) { this.pos.set(x, y, z); return this; }
   headWorld() { return this.pos.clone().add(new THREE.Vector3(0, this.o.size * 0.55, 0)); }
   update(p = {}, cam) {
-    this.draw(p); this.tex.needsUpdate = true; this.mesh.position.copy(this.pos); this.mesh.visible = true;
+    this.draw(p); this.tex.needsUpdate = true; this.mesh.position.copy(this.pos); this.mesh.position.y += 0.06 * (p.lie || 0); this.mesh.visible = true;
     if (cam) this.mesh.rotation.y = Math.atan2(cam.x - this.pos.x, cam.z - this.pos.z);
     this.shadow.position.set(this.pos.x, this.pos.y + 0.012, this.pos.z); this.shadow.visible = true;
   }
@@ -26,9 +26,9 @@ export class Dog2D {
     const g = this.g, o = this.o, S = o.res, T = p.t ?? 0; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, this.cv.width, this.cv.height); g.setTransform(S, 0, 0, S, 0, 0);
     g.lineJoin = 'round'; g.lineCap = 'round'; if (p.flip) { g.translate(512, 0); g.scale(-1, 1); }
     const lie = p.lie || 0, hop = p.hop || 0, sq = p.squash || 0, ph = p.walk || 0, amp = p.amp || 0;
-    const by = 318 + lie * 92 - hop; g.save(); g.translate(270, by); g.scale(1 + sq * 0.12, 1 - sq * 0.12); g.rotate(R(p.lean || 0)); g.translate(-270, -by);
+    const by = 318 + lie * 70 - hop; g.save(); g.translate(270, by); g.scale(1 + sq * 0.12, 1 - sq * 0.12); g.rotate(R(p.lean || 0)); g.translate(-270, -by);
     // legs (thin ink lines like the people) — back pair drawn first (darker), front pair over the body
-    const leg = (x, s, far) => { const a = R(amp * Math.sin(ph + s)); const L = lie ? 30 : 118; const kx = x + Math.sin(a) * L * 0.55, ky = by + 40 + Math.cos(a) * L * 0.5; const fx = lie ? x - 46 : x + Math.sin(a) * L, fy = lie ? by + 66 : Math.min(470 + (by - 318), by + 40 + Math.cos(a) * L);
+    const leg = (x, s, far) => { const a = R(amp * Math.sin(ph + s)); const L = lie ? 30 : 118; const kx = lie ? x - 20 : x + Math.sin(a) * L * 0.55, ky = lie ? by + 44 : by + 40 + Math.cos(a) * L * 0.5; const fx = lie ? x - 52 : x + Math.sin(a) * L, fy = lie ? by + 52 : Math.min(470 + (by - 318), by + 40 + Math.cos(a) * L);
       g.strokeStyle = far ? '#4a3020' : INK; g.lineWidth = 15; g.beginPath(); g.moveTo(x, by + 20); g.quadraticCurveTo(kx, ky, fx, fy); g.stroke(); g.fillStyle = far ? '#4a3020' : INK; g.beginPath(); g.ellipse(fx - 9, fy + 1, 17, 9, 0, 0, 7); g.fill(); };
     leg(206, Math.PI, true); leg(336, 0, true);
     // tail: curly, wagging
