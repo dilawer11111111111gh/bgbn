@@ -1,0 +1,17 @@
+{
+ "state": "DONE",
+ "tier": "good",
+ "from": 3032,
+ "to": 3169,
+ "total": 137,
+ "done": 137,
+ "seg": 60,
+ "eta_s": 0,
+ "spf": 2.3778539897396813,
+ "started": 1795745692049,
+ "updated": 1795745997078,
+ "error": null,
+ "pid": 3743,
+ "out": "/home/runner/work/bgbn/bgbn/suraahi/out/h0/part.mp4",
+ "cur": 3168
+}
