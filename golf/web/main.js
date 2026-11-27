@@ -66,8 +66,9 @@ function build() {
   // ---- fairway with mowing stripes, rough edge, tee box, green, bunkers, pond, cart path ----
   const stripe = canvasTex(64, 256, (q) => { q.fillStyle = '#72d84a'; q.fillRect(0, 0, 64, 128); q.fillStyle = '#5cc23a'; q.fillRect(0, 128, 64, 128); for (let i = 0; i < 900; i++) { q.fillStyle = `rgba(${Math.random() > 0.5 ? '255,255,255' : '0,40,0'},0.06)`; q.fillRect(Math.random() * 64, Math.random() * 256, 1, 2); } }); stripe.wrapS = stripe.wrapT = THREE.RepeatWrapping;
   { const sh = new THREE.Shape(); const W = 22, L = 360; sh.moveTo(-W, 6); sh.lineTo(W, 6); sh.lineTo(W + 6, -L / 2); sh.lineTo(W, -L); sh.quadraticCurveTo(0, -L - 14, -W, -L); sh.lineTo(-W - 6, -L / 2); sh.closePath();
-    const fg = new THREE.ShapeGeometry(sh, 12); const st = stripe.clone(); st.needsUpdate = true; st.repeat.set(1 / 40, 1 / 24); const fw = mesh(fg, new THREE.MeshStandardMaterial({ map: st, roughness: 0.95 }), 0, 0.03, 0, false); fw.rotation.x = -Math.PI / 2; fw.scale.set(1, -1, 1); scene.add(fw); }
-  { const st2 = stripe.clone(); st2.needsUpdate = true; st2.repeat.set(1, 1); const tb = mesh(boxUV(8, 0.16, 6, 2), new THREE.MeshStandardMaterial({ map: st2, roughness: 0.95, color: 0xe8ffe0 }), 0, 0.07, -0.5); tb.receiveShadow = true; scene.add(tb); }
+    const fg = new THREE.ShapeGeometry(sh, 12); { const uv = fg.attributes.uv, pp = fg.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, pp.getX(i) / 6, pp.getY(i) / 6); } const fw = mesh(fg, pbr('aerial_grass_rock', [1, 1], { tint: '#8eea52', rough: 1 }), 0, 0.03, 0, false); fw.rotation.x = -Math.PI / 2; fw.scale.set(1, -1, 1); scene.add(fw);
+    const st = canvasTex(64, 256, (q) => { q.fillStyle = 'rgba(255,255,220,0.07)'; q.fillRect(0, 0, 64, 128); q.fillStyle = 'rgba(0,40,0,0.07)'; q.fillRect(0, 128, 64, 128); }); st.wrapS = st.wrapT = THREE.RepeatWrapping; st.repeat.set(1 / 40, 1 / 24); const ov = mesh(fg, new THREE.MeshStandardMaterial({ map: st, transparent: true, depthWrite: false, roughness: 1 }), 0, 0.035, 0, false); ov.rotation.x = -Math.PI / 2; ov.scale.set(1, -1, 1); scene.add(ov); }
+  { const tb = mesh(boxUV(8, 0.16, 6, 6), pbr('aerial_grass_rock', [1, 1], { tint: '#a0f064', rough: 1 }), 0, 0.07, -0.5); tb.receiveShadow = true; scene.add(tb); }
   for (const s of [-1, 1]) B.add(new THREE.SphereGeometry(0.13, 16, 10), plain('#2a5ad8', { r: 0.3 }), 1.6 * s, 0.22, -2.2);
   blob(6, -335, 16, 13, new THREE.MeshStandardMaterial({ color: 0x86ea5e, roughness: 0.9 }), 0.05, 3); blob(6, -335, 18, 15, new THREE.MeshStandardMaterial({ color: 0x6cd448, roughness: 0.9 }), 0.045, 3);
   scene.add(mesh(new THREE.CircleGeometry(0.3, 20), std(0x101010), 8, 0.065, -338, false).rotateX(-Math.PI / 2));
@@ -77,8 +78,8 @@ function build() {
   const pond = water(46, 28, { color: 0x28b0d0 }); pond.position.set(-48, 0.06, -150); scene.add(pond); blob(-48, -150, 26, 17, texMat('cobble', '#c8b8a0', { r: 0.9 }), 0.04, 21);
   // cart path (light concrete ribbon) from the tee down the right side
   { const pts = [V(6, 0.05, 4), V(14, 0.05, -20), V(30, 0.05, -80), V(32, 0.05, -170), V(28, 0.05, -260), V(20, 0.05, -330)]; const c = new THREE.CatmullRomCurve3(pts), n = 160, pos = [], uv = [], idx = [];
-    for (let i = 0; i <= n; i++) { const p = c.getPointAt(i / n), tg = c.getTangentAt(i / n), sd = V(-tg.z, 0, tg.x).multiplyScalar(1.3); pos.push(p.x + sd.x, 0.05, p.z + sd.z, p.x - sd.x, 0.05, p.z - sd.z); uv.push(0, i * 0.6, 1, i * 0.6); if (i < n) idx.push(i * 2, i * 2 + 2, i * 2 + 1, i * 2 + 1, i * 2 + 2, i * 2 + 3); }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); const m = new THREE.Mesh(g, texMat('plaster', '#d8d4cc', { r: 0.9 })); m.material.side = THREE.DoubleSide; m.receiveShadow = true; scene.add(m); }
+    for (let i = 0; i <= n; i++) { const p = c.getPointAt(i / n), tg = c.getTangentAt(i / n), sd = V(-tg.z, 0, tg.x).multiplyScalar(1.3); pos.push(p.x + sd.x, 0.05, p.z + sd.z, p.x - sd.x, 0.05, p.z - sd.z); uv.push(0, i * 1.6, 2.2, i * 1.6); if (i < n) idx.push(i * 2, i * 2 + 2, i * 2 + 1, i * 2 + 1, i * 2 + 2, i * 2 + 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); const m = new THREE.Mesh(g, texMat('cobble', '#b8b0a4', { r: 0.9 })); m.material.side = THREE.DoubleSide; m.receiveShadow = true; scene.add(m); }
   // distance markers + old record flag
   const markCol = { 100: ['#f6d84a', '#2a1810'], 200: ['#ffffff', '#2a1810'], 300: ['#3a7ae8', '#ffffff'] };
   for (const z of [100, 200, 300]) { const g = new THREE.Group(); g.position.set(-14, 0, -z); g.rotation.y = Math.PI / 2 - 0.35; scene.add(g); g.add(mesh(new THREE.CylinderGeometry(0.14, 0.16, 6.4, 10), std(0xf4f4f4), 0, 3.2, 0));
@@ -112,7 +113,7 @@ function build() {
     GB.flush(GSTAND); const b = banner('PUTTSBY OPEN', 9, 1.5, '#f6d84a', '#c8342a', 'bold 260px "DejaVu Sans", sans-serif'); b.position.set(-5.6, 6.3, 0); b.rotation.y = Math.PI / 2; GSTAND.add(b); }
   for (let i = 0; i < 8; i++) B.add(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 6), plain('#f4f4f4'), -4.6, 0.5, -7 + i * 2); B.add(new THREE.BoxGeometry(0.03, 0.03, 14), plain('#e8302a'), -4.6, 0.95, 0);
   // ---- practice green ----
-  blob(PRACT.x, PRACT.z, 8.3, 6.8, new THREE.MeshStandardMaterial({ color: 0x4fb83a, roughness: 0.9 }), 0.045, 11); { const st3 = stripe.clone(); st3.needsUpdate = true; st3.repeat.set(0.18, 0.18); blob(PRACT.x, PRACT.z, 7.5, 6, new THREE.MeshStandardMaterial({ map: st3, color: 0xb4d8a0, roughness: 0.85 }), 0.05, 11); }
+  blob(PRACT.x, PRACT.z, 8.3, 6.8, new THREE.MeshStandardMaterial({ color: 0x4fb83a, roughness: 0.9 }), 0.045, 11); blob(PRACT.x, PRACT.z, 7.5, 6, pbr('aerial_grass_rock', [1, 1], { tint: '#a8f070', rough: 0.9 }), 0.05, 11);
   B.add(new THREE.CylinderGeometry(0.03, 0.03, 2.2, 6), plain('#ffffff'), PRACT.x + 3, 1.1, PRACT.z - 2); scene.add(mesh(new THREE.PlaneGeometry(0.7, 0.45), std(0xf2c63a, { side: THREE.DoubleSide }), PRACT.x + 3.35, 1.95, PRACT.z - 2));
   flowers(scatter(220, (r) => { const a = r() * 6.28; return [PRACT.x + Math.cos(a) * (9 + r() * 1.2), PRACT.z + Math.sin(a) * (7.6 + r()), 0.02]; }, 9));
   // ---- town of Puttsby: detailed houses, yards, fences, cobbled streets with sidewalks, lamps, square ----
@@ -554,7 +555,7 @@ function camera() {
 }
 
 // =================== RENDER ===================
-const composer = makeComposer({ sat: 1.4, con: 1.08, bloom: 0.18 });
+const composer = makeComposer({ sat: 1.34, con: 1.13, bloom: 0.1 });
 const SKY = makeSky();
 const look = (t, cpos) => { SKY.update(cpos, NIGHT(t), composer.grade); const tg = sun.target.position; const d = V(cpos.x - tg.x, 0, cpos.z - tg.z).normalize().applyAxisAngle(V(0, 1, 0), 0.75); sun.position.copy(tg).addScaledVector(d, 45).add(V(0, 60, 0)); };
 const camOf = dynamicCam(CINE);

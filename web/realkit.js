@@ -19,7 +19,7 @@ export const rng = (seed) => { let s = seed >>> 0 || 1; return () => { s ^= s <<
 
 export const R = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' }); window.__R = R;
 R.setSize(WD, HT); R.setPixelRatio(1); R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 0.85; R.outputColorSpace = THREE.SRGBColorSpace;
-R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFShadowMap; document.body.appendChild(R.domElement);
+R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; document.body.appendChild(R.domElement);
 export const scene = new THREE.Scene(); export const cam = new THREE.PerspectiveCamera(40, WD / HT, 0.05, 3000);
 export const sun = new THREE.DirectionalLight(0xffe8c8, 2.6); sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
 Object.assign(sun.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 220 }); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03; scene.add(sun, sun.target);
@@ -116,7 +116,7 @@ export class Burst {
 
 // ---------- post: bloom + saturated painted-game grade + vignette ----------
 export function makeComposer(o = {}) {
-  const composer = new EffectComposer(R); composer.addPass(new RenderPass(scene, cam));
+  const composer = new EffectComposer(R, new THREE.WebGLRenderTarget(WD, HT, { samples: o.msaa ?? 4, type: THREE.HalfFloatType })); composer.addPass(new RenderPass(scene, cam));
   composer.addPass(new UnrealBloomPass(new THREE.Vector2(WD, HT), o.bloom ?? 0.22, 0.5, 1.5)); composer.addPass(new OutputPass());
   const grade = new ShaderPass({ uniforms: { tDiffuse: { value: null }, uSat: { value: o.sat ?? 1.35 }, uCon: { value: o.con ?? 1.08 }, uFade: { value: 0 }, uFlash: { value: 0 }, uTint: { value: new THREE.Color(1.03, 1.0, 0.96) } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
     fragmentShader: 'uniform sampler2D tDiffuse; uniform float uSat; uniform float uCon; uniform float uFade; uniform float uFlash; uniform vec3 uTint; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); float l = dot(c.rgb, vec3(0.299,0.587,0.114)); c.rgb = mix(vec3(l), c.rgb, uSat); c.rgb = (c.rgb - 0.5) * uCon + 0.5; c.rgb *= uTint; vec2 q = vUv - 0.5; c.rgb *= mix(0.8, 1.0, smoothstep(0.75, 0.25, length(q * vec2(1.0, 0.8)))); c.rgb += uFlash; c.rgb = mix(c.rgb, vec3(0.0), uFade); gl_FragColor = c; }' });

@@ -49,12 +49,13 @@ export function makeSky() {
     for (let i = 0; i < 40; i++) { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, transparent: true, fog: false, depthWrite: false, toneMapped: false })); const a = cr() * Math.PI * 2; m.position.set(Math.cos(a) * 900, 120 + cr() * 380, Math.sin(a) * 900); const k = 60 + cr() * 90; m.scale.set(k * 2, k, 1); clouds.add(m); } }
   const stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(Array.from({ length: 900 }, (_, i) => { const r = rng(5 + Math.floor(i / 3)); const a = r() * 6.28, b = 0.15 + r() * 1.3; return [Math.cos(a) * Math.cos(b) * 1300, Math.sin(b) * 1300, Math.sin(a) * Math.cos(b) * 1300][i % 3]; }), 3)), new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, fog: false, toneMapped: false })); scene.add(stars);
   const moon = new THREE.Mesh(new THREE.CircleGeometry(9, 40), new THREE.MeshBasicMaterial({ color: 0xfff8e0, toneMapped: false, fog: false })); scene.add(moon);
-  const fogDay = new THREE.FogExp2(0xa8d8f4, 0.0008), fogNight = new THREE.FogExp2(0x0a1430, 0.012);
+  const fogDay = new THREE.FogExp2(0xc4daf0, 0.0006), fogNight = new THREE.FogExp2(0x0a1430, 0.012);
   return { update(cpos, n, grade) {
-    scene.fog = n ? fogNight : fogDay; scene.background = null; dome.position.copy(cpos); clouds.position.set(cpos.x, 0, cpos.z); stars.position.copy(cpos); stars.visible = n;
-    M.uniforms.top.value.setHex(n ? 0x0a1840 : 0x1d5fd6).convertSRGBToLinear(); M.uniforms.bot.value.setHex(n ? 0x2a4488 : 0x9fd2f4).convertSRGBToLinear(); clouds.children.forEach((c) => c.material.color.setHex(n ? 0x3a4a78 : 0xffffff).convertSRGBToLinear());
+    if (!this.hdr && scene.background && scene.background.isTexture) this.hdr = scene.background; const real = !n && this.hdr && !this.painted; dome.visible = !real; scene.background = real ? this.hdr : null; scene.backgroundIntensity = 1.05;
+    scene.fog = n ? fogNight : fogDay; dome.position.copy(cpos); clouds.position.set(cpos.x, 0, cpos.z); stars.position.copy(cpos); stars.visible = n;
+    M.uniforms.top.value.setHex(n ? 0x0a1840 : 0x1d5fd6).convertSRGBToLinear(); M.uniforms.bot.value.setHex(n ? 0x2a4488 : 0x9fd2f4).convertSRGBToLinear(); clouds.children.forEach((c) => c.material.color.setHex(n ? 0x3a4a78 : 0xffffff).convertSRGBToLinear()); clouds.visible = !real;
     scene.environmentIntensity = n ? 0.05 : 0.8; sun.color.set(n ? 0x7a98ff : 0xffe8c8); sun.intensity = n ? 0.35 : 2.6; hemi.intensity = n ? 0.12 : 0.4; hemi.color.set(n ? 0x3a5aa0 : 0xcfe4ff);
-    R.toneMappingExposure = n ? 0.95 : 0.85; moon.visible = n; if (n) { const d = V(-0.35, 0.42, -1).normalize(); moon.position.copy(cpos).addScaledVector(d, 300); moon.lookAt(cpos); }
+    R.toneMappingExposure = n ? 0.95 : 0.8; moon.visible = n; if (n) { const d = V(-0.35, 0.42, -1).normalize(); moon.position.copy(cpos).addScaledVector(d, 300); moon.lookAt(cpos); }
     if (grade) grade.uniforms.uTint.value.set(n ? 0.82 : 1.03, n ? 0.9 : 1.0, n ? 1.14 : 0.96); } };
 }
 
