@@ -1,6 +1,6 @@
 // NOIR 2 (Studio v9.2, 20 s): history + today in one story. 1947 (black & white, rain, gas lamps): a detective meets the
 // boss with a stolen diamond, the gang closes in, lightning, the boss escapes and the diamond falls into a drain.
-// 79 years later (neon-noir colour, rainy modern street): his grandson finds it, the new boss wants it, sirens — busted.
+// 79 years later (still black & white noir, rainy modern street): his grandson finds it, the new boss wants it, sirens — busted.
 // Every person comes from castgen (unique each seed), every actor uses perform() (hyper energy), every beat a camkit move.
 import * as THREE from 'three';
 import { scene, cam, V, sky, ready, makeComposer, mesh } from '../../web/realkit.js';
@@ -43,7 +43,7 @@ function build() {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 256; capCtx = c.getContext('2d'); capTex = new THREE.CanvasTexture(c); capTex.colorSpace = THREE.SRGBColorSpace;
   CAP = mesh(new THREE.PlaneGeometry(0.34, 0.085), new THREE.MeshBasicMaterial({ map: capTex, transparent: true, depthTest: false, toneMapped: false }), 0, -0.2, -1.0, false); CAP.renderOrder = 99; scene.add(cam); cam.add(CAP);
 }
-let capLast = ''; function caption(txt, old) { const key = txt + old; if (key === capLast) return; capLast = key; const g = capCtx; g.clearRect(0, 0, 1024, 256); if (txt) { let fs = 92; const font = old ? '"DejaVu Serif", serif' : '"DejaVu Sans"'; g.font = `bold ${fs}px ${font}`; while (g.measureText(txt).width > 960 && fs > 30) { fs -= 4; g.font = `bold ${fs}px ${font}`; } g.textAlign = 'center'; g.lineWidth = 16; g.strokeStyle = '#000'; g.fillStyle = old ? '#f2f0ea' : '#4af0ff'; g.strokeText(txt, 512, 150); g.fillText(txt, 512, 150); } capTex.needsUpdate = true; }
+let capLast = ''; function caption(txt, old) { const key = txt + old; if (key === capLast) return; capLast = key; const g = capCtx; g.clearRect(0, 0, 1024, 256); if (txt) { let fs = 92; const font = '"DejaVu Serif", serif'; g.font = `bold ${fs}px ${font}`; while (g.measureText(txt).width > 960 && fs > 30) { fs -= 4; g.font = `bold ${fs}px ${font}`; } g.textAlign = 'center'; g.lineWidth = 16; g.strokeStyle = '#000'; g.fillStyle = '#f2f0ea'; g.strokeText(txt, 512, 150); g.fillText(txt, 512, 150); } capTex.needsUpdate = true; }
 const CAPS = [[0, '1947. OLD TOWN.'], [1.2, `DETECTIVE ${oDET.name.toUpperCase()}`], [2.0, 'THE BOSS ARRIVED...'], [2.6, 'WITH A DEAL'], [3.8, 'THE STOLEN DIAMOND!'], [4.8, 'AND HIS GANG'], [6.0, ''], [6.6, 'HE GOT AWAY'], [7.4, 'CASE NEVER SOLVED'], [8.2, 'THE DIAMOND? LOST...'], [9.0, '79 YEARS LATER'], [10.2, `HIS GRANDSON, ${oKID.name.split(' ')[0].toUpperCase()}`], [11.0, "WAIT... WHAT'S THAT?"], [12.6, 'THE DIAMOND!'], [13.4, 'THE NEW BOSS WANTS IT'], [14.2, 'NOT TODAY.'], [15.0, 'SIRENS!'], [15.8, 'BUSTED!'], [16.6, 'CASE CLOSED!'], [17.6, '79 YEARS LATE.']];
 const TR = {
   DET: [[0, 'cool'], [2.0, 'cool', { gestures: ['tipHat', 'crossArms'] }], [3.2, 'menace'], [3.8, 'shock'], [4.8, 'scared'], [5.5, 'sneaky'], [6.0, 'shock'], [6.6, 'angry'], [7.4, 'cry']],
@@ -99,6 +99,6 @@ function camera() {
   K.drone(17.6, 20, V(7.5, 0, -24), [3, 3, 8], [-20, 50, 40], { lookY: 1.2 });
 }
 const composer = makeComposer({ sat: 0, con: 1.3, bloom: 0.3 }); const SKY = makeSky();
-const look = (t, cpos) => { applyNoir(composer, SKY, cpos, t < JUMP ? 'bw' : 'neon'); composer.grade.uniforms.uFlash.value = 0.55 * lightning(t, [6.0, 6.35]); };
+const look = (t, cpos) => { applyNoir(composer, SKY, cpos, 'bw'); /* noir = black & white in EVERY era (user rule) */ composer.grade.uniforms.uFlash.value = 0.55 * lightning(t, [6.0, 6.35]); };
 makeRenderer({ CINE, camOf: dynamicCam(CINE), setup, fx, look, composer, DURATION, impacts: [4.32, 6.0, 11.82, 15.82] });
 (async () => { await sky('kloofendal_48d_partly_cloudy_puresky', { env: 0.25 }); build(); camera(); await ready(); window.ready = true; })();

@@ -1,7 +1,8 @@
 // noirkit.js (Studio v9.2): NOIR for any era. Rain, wet reflective streets, lamp pools, lightning, a 3D gem, a 1940s sedan,
 // the old-town street (cobbles, brick/plaster houses, gas lamps) and looks:
-//   NOIR.bw    — 1920s–50s black & white (history)        NOIR.neon — neon-noir colour for TODAY (blue night + magenta/cyan neon)
-// Today's street = realCity({ night: true }) from city2.js + rain + NOIR.neon.
+//   NOIR.bw — black & white, for EVERY era (history AND today). User rule: noir stays black & white the whole video.
+//   (NOIR.sepia / NOIR.neon exist only if the user explicitly asks for a coloured noir.)
+// Today's street = realCity({ night: true }) from city2.js + rain + NOIR.bw.
 //   import { NOIR, applyNoir, rain, oldNoirStreet, sedan40s, gem, lightning } from '../../web/noirkit.js';
 import * as THREE from 'three';
 import { scene, V, mesh, std, sun, hemi } from './realkit.js';
@@ -14,7 +15,7 @@ export const NOIR = {
 };
 // call every frame from look(): switches the whole grade (B&W ↔ colour) instantly — so one video can jump from 1947 to today
 export function applyNoir(composer, SKY, cpos, look) { const L = typeof look === 'string' ? NOIR[look] : look; const u = composer.grade.uniforms; u.uSat.value = L.sat; u.uCon.value = L.con; u.uTint.value.setRGB(...L.tint);
-  sun.color.setHex(L.sun[0]); sun.intensity = L.sun[1]; hemi.intensity = L.hemi; if (SKY) SKY.update(cpos, true, composer.grade); u.uSat.value = L.sat; u.uCon.value = L.con; }
+  sun.color.setHex(L.sun[0]); sun.intensity = L.sun[1]; hemi.intensity = L.hemi; if (SKY) SKY.update(cpos, true, composer.grade); u.uSat.value = L.sat; u.uCon.value = L.con; u.uTint.value.setRGB(...L.tint); }   // re-apply after the sky (it sets a blue night tint)
 // rain streaks in a box that follows the camera (+ splashes are implied by wet reflections). speed 1 = normal, 0.1 = slow-mo
 export function rain(n = 2600, o = {}) { const pos = new Float32Array(n * 6), g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const R = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: o.color ?? 0xdde8ff, transparent: true, opacity: o.opacity ?? 0.34, toneMapped: false })); R.frustumCulled = false; scene.add(R);
