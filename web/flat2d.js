@@ -206,7 +206,12 @@ export class Flat2D {
   steam(g, hx, hy, r, k) { const T = Flat2D.T || 0; g.save(); g.strokeStyle = INK; g.lineWidth = 4; for (const s of [-1, 1]) for (let i = 0; i < 2; i++) { const ph = (T * 1.6 + i * 0.5 + (s > 0 ? 0.25 : 0)) % 1; const x = hx + s * (r * 0.78 + ph * 50), y = hy - r * 0.7 - ph * 110, rr = (22 + ph * 26) * k; g.globalAlpha = 1 - ph * 0.7; g.fillStyle = '#fbfbfb'; for (const [dx, dy, f] of [[0, 0, 1], [rr * 0.7, -rr * 0.3, 0.75], [-rr * 0.6, -rr * 0.2, 0.7]]) { g.beginPath(); g.arc(x + dx, y + dy, rr * f, 0, 7); g.fill(); g.stroke(); } } g.globalAlpha = 1; g.restore(); }
   // props held in the hand, aligned with the forearm
   prop(g, kind, hd, spin = 0) { g.save(); g.translate(hd[0], hd[1]); g.rotate(-R((hd.ang || 0) + spin)); g.scale(1.45, 1.45); g.strokeStyle = INK; g.lineWidth = 4; const box = (x, y, w, h, c) => { g.fillStyle = c; g.beginPath(); g.roundRect(x, y, w, h, 4); g.fill(); g.stroke(); };
-        if (kind === 'pistol') { const steel = '#2c2c30', st2 = '#18181a';
+        if (kind === 'spear') { box(-5, -300, 10, 420, '#8a5a32'); g.fillStyle = '#c8ccd4'; g.beginPath(); g.moveTo(0, -360); g.lineTo(14, -300); g.lineTo(0, -290); g.lineTo(-14, -300); g.closePath(); g.fill(); g.stroke(); }
+        else if (kind === 'sword') { box(-6, -6, 12, 30, '#5a3a20'); box(-26, 20, 52, 10, '#d8b040'); g.fillStyle = '#dde2ea'; g.beginPath(); g.moveTo(-9, 30); g.lineTo(9, 30); g.lineTo(7, 170); g.lineTo(0, 190); g.lineTo(-7, 170); g.closePath(); g.fill(); g.stroke(); g.fillStyle = 'rgba(255,255,255,0.6)'; g.fillRect(-2, 36, 3, 130); }
+        else if (kind === 'shield') { g.fillStyle = '#8a2a2a'; g.beginPath(); g.arc(0, 20, 78, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#d8b040'; g.beginPath(); g.arc(0, 20, 64, 0, 7); g.lineWidth = 6; g.strokeStyle = '#d8b040'; g.stroke(); g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.arc(0, 20, 18, 0, 7); g.fill(); g.stroke(); }
+        else if (kind === 'bow') { g.strokeStyle = '#6a4220'; g.lineWidth = 10; g.beginPath(); g.arc(-40, 0, 130, -0.95, 0.95); g.stroke(); g.strokeStyle = '#eee'; g.lineWidth = 2; g.beginPath(); g.moveTo(-40 + 130 * Math.cos(-0.95), 130 * Math.sin(-0.95)); g.lineTo(-40 + 130 * Math.cos(0.95), 130 * Math.sin(0.95)); g.stroke(); g.strokeStyle = INK; g.lineWidth = 4; }
+        else if (kind === 'torch') { box(-6, -10, 12, 120, '#6a4220'); g.fillStyle = '#ffb030'; g.beginPath(); g.moveTo(-16, -10); g.quadraticCurveTo(0, -70, 16, -10); g.closePath(); g.fill(); g.fillStyle = '#fff2a0'; g.beginPath(); g.moveTo(-7, -10); g.quadraticCurveTo(0, -40, 7, -10); g.closePath(); g.fill(); }
+        else if (kind === 'pistol') { const steel = '#2c2c30', st2 = '#18181a';
       g.fillStyle = '#5a4434'; g.beginPath(); g.moveTo(-8, -10); g.lineTo(10, -16); g.lineTo(40, -6); g.lineTo(36, 14); g.lineTo(2, 16); g.closePath(); g.fill(); g.stroke(); g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 2; for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(12 + k * 6, -10); g.lineTo(10 + k * 6, 10); g.stroke(); } g.strokeStyle = INK; g.lineWidth = 4;
       g.fillStyle = st2; g.beginPath(); g.roundRect(-8, -6, 14, 74, 3); g.fill(); g.stroke();
       g.beginPath(); g.arc(14, 22, 11, -0.2, Math.PI * 1.1); g.stroke();
@@ -468,7 +473,18 @@ export class Flat2D {
   hat(g, r, off) {
     const o = this.o; if (!o.hat) return; g.save(); g.translate(0, -off); const hk = r / 116; g.scale(hk, hk); r = 116; g.strokeStyle = INK; g.lineWidth = 4.5; g.fillStyle = o.hatCol;   // hats scale with the (bigger) head
     const hl = (x, y, w, h) => { g.fillStyle = 'rgba(255,255,255,0.12)'; g.fillRect(x, y, w, h); g.fillStyle = o.hatCol; };
-    if (o.hat === 'top') {
+    if (o.hat === 'crown') {   // gold crown with five points and jewels
+      const gold = o.hatCol || '#f2c63a'; g.fillStyle = gold; g.beginPath(); g.moveTo(-r * 0.78, -r * 0.62); for (let i = 0; i <= 8; i++) { const x = -r * 0.78 + (i / 8) * r * 1.56, up = i % 2 === 0; g.lineTo(x, up ? -r * 1.32 : -r * 1.0); } g.lineTo(r * 0.78, -r * 0.62); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(-r * 0.7, -r * 0.78, r * 1.4, 10); g.fillStyle = shade(gold, 0.75); g.fillRect(-r * 0.78, -r * 0.7, r * 1.56, 16); g.strokeRect(-r * 0.78, -r * 0.7, r * 1.56, 16);
+      for (const [x, c] of [[-0.5, '#d8283a'], [0, '#2a8ad8'], [0.5, '#2ab86a']]) { g.fillStyle = c; g.beginPath(); g.arc(x * r, -r * 0.92, 11, 0, 7); g.fill(); g.stroke(); } for (let i = 0; i <= 4; i++) { g.fillStyle = '#fff6d0'; g.beginPath(); g.arc(-r * 0.78 + (i / 4) * r * 1.56, -r * 1.33, 7, 0, 7); g.fill(); g.stroke(); }
+    } else if (o.hat === 'helm') {   // round steel soldier helmet with nose guard and a crest stripe
+      const st = o.hatCol || '#9aa0a8'; g.fillStyle = st; g.beginPath(); g.moveTo(-r * 1.02, -r * 0.42); g.bezierCurveTo(-r * 1.1, -r * 1.42, r * 1.1, -r * 1.42, r * 1.02, -r * 0.42); g.closePath(); g.fill(); g.stroke(); g.fillStyle = 'rgba(255,255,255,0.3)'; g.beginPath(); g.ellipse(-r * 0.4, -r * 0.98, r * 0.22, r * 0.1, -0.5, 0, 7); g.fill();
+      g.fillStyle = shade(st, 0.7); g.fillRect(-r * 1.04, -r * 0.5, r * 2.08, 16); g.strokeRect(-r * 1.04, -r * 0.5, r * 2.08, 16); g.fillRect(-8, -r * 0.5, 16, r * 0.5); g.strokeRect(-8, -r * 0.5, 16, r * 0.5);
+      if (o.band) { g.fillStyle = o.band; g.beginPath(); g.moveTo(-10, -r * 1.2); g.quadraticCurveTo(0, -r * 1.5, 10, -r * 1.2); g.lineTo(10, -r * 0.55); g.lineTo(-10, -r * 0.55); g.closePath(); g.fill(); g.stroke(); }
+    } else if (o.hat === 'turban') {   // royal turban with a jewel and feather
+      const tc = o.hatCol || '#f4f0e6'; g.fillStyle = tc; g.beginPath(); g.ellipse(0, -r * 0.88, r * 1.02, r * 0.5, 0, 0, 7); g.fill(); g.stroke(); g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 4; for (let k = -2; k <= 2; k++) { g.beginPath(); g.moveTo(-r * 0.95, -r * 0.8 + k * 12); g.quadraticCurveTo(0, -r * 1.2 + k * 14, r * 0.95, -r * 0.9 + k * 12); g.stroke(); } g.strokeStyle = INK; g.lineWidth = 4.5;
+      g.fillStyle = o.band || '#d8283a'; g.beginPath(); g.arc(0, -r * 1.0, 16, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#f4f4f4'; g.beginPath(); g.moveTo(0, -r * 1.05); g.quadraticCurveTo(30, -r * 1.6, 8, -r * 1.75); g.quadraticCurveTo(0, -r * 1.4, 0, -r * 1.05); g.fill(); g.stroke();
+    } else if (o.hat === 'top') {
       g.beginPath(); g.moveTo(-50, -r * 0.78); g.lineTo(-56, -r - 104); g.lineTo(56, -r - 104); g.lineTo(50, -r * 0.78); g.closePath(); g.fill(); g.stroke(); hl(-46, -r - 96, 16, 80);
       g.fillStyle = o.band; g.fillRect(-52, -r * 0.78 - 26, 104, 18); g.strokeRect(-52, -r * 0.78 - 26, 104, 18);
       g.fillStyle = o.hatCol; g.beginPath(); g.ellipse(0, -r * 0.78, 84, 13, 0, 0, 7); g.fill(); g.stroke();
