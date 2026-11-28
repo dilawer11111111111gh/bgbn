@@ -71,3 +71,45 @@ export function greenField(o = {}) { const flat = (x, z) => (Math.abs(x) < (o.fl
   const tents = []; for (let i = 0; i < (o.tents ?? 14); i++) { const sd = i % 2 ? 1 : -1, x = sd * (30 + (i % 4) * 9), z = (o.tentZ ?? 150) + (i % 3) * 8; const t = mesh(new THREE.ConeGeometry(3.2, 4.4, 10), STRIPES(i % 2 ? ['#e8282a', '#ffffff'] : ['#1a4a9a', '#ffc23a'], 10, [2, 1]), x, 2.2, z); scene.add(t); tents.push(t); }
   return { tents };
 }
+
+// ================= MODERN CITY KIT (today) =================
+// glass towers with window grids, street with lanes + zebra, shops with awnings + neon signs, traffic lights, planters,
+// and high-end rounded cars that drive (call city.update(t)). o: { z0, len, night }
+export function modernCar(color = '#e8282a', o = {}) { const G = new THREE.Group(); const paint = mat({ color, metalness: 0.5, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.05 });
+  const sh = new THREE.Shape(); sh.moveTo(-2.25, 0.3); sh.quadraticCurveTo(-2.35, 0.75, -2.0, 0.82); sh.quadraticCurveTo(-1.3, 0.9, -0.95, 1.38); sh.quadraticCurveTo(-0.3, 1.62, 0.55, 1.55); sh.quadraticCurveTo(1.15, 1.45, 1.45, 0.98); sh.quadraticCurveTo(2.2, 0.9, 2.3, 0.6); sh.lineTo(2.3, 0.3); sh.closePath();
+  const body = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 1.55, bevelEnabled: true, bevelSize: 0.14, bevelThickness: 0.16, bevelSegments: 5, curveSegments: 20 }), paint); body.position.z = -0.775; G.add(body);
+  const glass = mat({ color: 0x223040, metalness: 0.3, roughness: 0.04, transparent: true, opacity: 0.8, clearcoat: 1 }); const gs = new THREE.Shape(); gs.moveTo(-0.85, 0.98); gs.quadraticCurveTo(-0.25, 1.5, 0.5, 1.46); gs.quadraticCurveTo(1.0, 1.38, 1.28, 1.0); gs.closePath();
+  for (const z of [-0.94, 0.94]) { const w = new THREE.Mesh(new THREE.ShapeGeometry(gs, 12), glass); w.position.z = z; w.position.y = 0.02; G.add(w); } const ws = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.6), glass); ws.position.set(1.3, 1.18, 0); ws.rotation.set(0, Math.PI / 2, 0.85); G.add(ws);
+  const chrome = mat({ color: 0xffffff, metalness: 1, roughness: 0.08 }), rub = mat({ color: 0x141414, roughness: 0.8 }); for (const [x, z] of [[-1.45, 0.82], [1.45, 0.82], [-1.45, -0.82], [1.45, -0.82]]) { const ty = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.13, 12, 24), rub); ty.position.set(x, 0.42, z); G.add(ty); const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.2, 18), chrome); rim.rotation.x = Math.PI / 2; rim.position.set(x, 0.42, z); G.add(rim); }
+  for (const z of [-0.55, 0.55]) { const hl = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8), new THREE.MeshBasicMaterial({ color: 0xfff6dc, toneMapped: false })); hl.scale.set(0.5, 0.8, 1.4); hl.position.set(2.32, 0.68, z); G.add(hl); const tl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.38), new THREE.MeshBasicMaterial({ color: 0xff2030, toneMapped: false })); tl.position.set(-2.33, 0.72, z); G.add(tl); }
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.06, 1.88), chrome); strip.position.y = 0.5; G.add(strip); G.traverse((m) => (m.castShadow = true)); G.scale.setScalar(o.scale ?? 1); scene.add(G); return G; }
+const windowTex = (base, lit, rep) => ctex(256, 512, (g, W, H) => { g.fillStyle = base; g.fillRect(0, 0, W, H); for (let y = 8; y < H; y += 32) for (let x = 8; x < W; x += 32) { const on = Math.sin(x * 12.9 + y * 7.1) > 0.2; g.fillStyle = on ? lit : 'rgba(20,40,60,0.85)'; g.fillRect(x, y, 22, 24); g.fillStyle = 'rgba(255,255,255,0.25)'; g.fillRect(x, y, 22, 4); } }, rep);
+const neon = (txt, col) => { const t = ctex(512, 160, (g, W, H) => { g.fillStyle = '#141018'; g.fillRect(0, 0, W, H); g.font = 'bold 96px "DejaVu Sans"'; g.textAlign = 'center'; g.shadowColor = col; g.shadowBlur = 30; g.fillStyle = col; g.fillText(txt, W / 2, 118); g.fillStyle = '#ffffff'; g.shadowBlur = 0; g.globalAlpha = 0.6; g.fillText(txt, W / 2, 118); }); return new THREE.MeshBasicMaterial({ map: t, toneMapped: false }); };
+export function modernCity(o = {}) { const z0 = o.z0 ?? 0, L = o.len ?? 200; const B = new Batch();
+  const asphalt = mat({ map: ctex(256, 256, (g, W) => { g.fillStyle = '#2a2c30'; g.fillRect(0, 0, W, W); for (let i = 0; i < 1600; i++) { g.fillStyle = `rgba(${Math.random() > 0.5 ? '255,255,255' : '0,0,0'},0.05)`; g.fillRect(Math.random() * W, Math.random() * W, 2, 2); } g.fillStyle = '#f2f2e8'; g.fillRect(W / 2 - 3, 20, 6, 90); g.fillRect(W / 2 - 3, 148, 6, 90); }, [1, L / 12]), roughness: 0.55, clearcoat: 0.3 });
+  const road = mesh(new THREE.PlaneGeometry(14, L), asphalt, 0, 0.02, z0 - L / 2, false); road.rotation.x = -Math.PI / 2; road.receiveShadow = true; scene.add(road);
+  const walk = pbr('sandstone_cracks', [2, L / 4], { metal: 0, rough: 0.9, tint: '#d8d0c8' }); for (const sd of [-1, 1]) { const w = mesh(new THREE.BoxGeometry(6, 0.25, L), walk, sd * 10, 0.12, z0 - L / 2); w.receiveShadow = true; scene.add(w); }
+  for (let k = 0; k < 8; k++) B.add(new THREE.BoxGeometry(0.9, 0.03, 4), mat({ color: 0xf6f6f0 }), -6 + k * 1.7, 0.04, z0 - 30);
+  const pal = o.palette || ['#18a8b8', '#ff7a5a', '#f4c84a', '#5a8ae8', '#e86ab0', '#7ad89a'];
+  const towers = []; for (let i = 0; i < Math.floor(L / 16); i++) for (const sd of [-1, 1]) { const h = 20 + ((i * 37 + (sd > 0 ? 11 : 0)) % 7) * 10, w = 11 + (i % 3) * 2, d = 12, x = sd * (13 + w / 2), z = z0 - 8 - i * 16; const col = pal[(i + (sd > 0 ? 2 : 0)) % pal.length];
+    const glassM = mat({ map: windowTex(col, o.night ? '#ffd88a' : '#a8e0ff', [w / 6, h / 10]), metalness: 0.35, roughness: 0.12, clearcoat: 1, emissive: o.night ? 0x332200 : 0x000000 });
+    const T = mesh(new THREE.BoxGeometry(w, h, d), glassM, x, h / 2, z); T.castShadow = true; T.receiveShadow = true; scene.add(T); towers.push(T); B.add(rbox(w + 0.6, 1.0, d + 0.6, 0.3), mat({ color: 0x2a3440, roughness: 0.5, metalness: 0.4 }), x, h + 0.5, z); if (i % 2) B.add(new THREE.CylinderGeometry(1.2, 1.2, 3, 16), mat({ color: 0x9aa4ae, metalness: 0.6, roughness: 0.3 }), x, h + 2.5, z);
+    // shop front: coloured awning + neon sign + glass door
+    const aw = mesh(new THREE.BoxGeometry(0.2, 0.9, w - 2), STRIPES(['#e8282a', '#fff0c8', '#1a8ad8', '#fff0c8', '#2ab86a', '#ffd84a'].slice((i % 3) * 2, (i % 3) * 2 + 2), 10, [1, 1]), x - sd * (w / 2 + 0.9), 4.2, z); aw.rotation.z = sd * 0.5; scene.add(aw);
+    const sign = mesh(new THREE.PlaneGeometry(5, 1.5), neon(['CAFE', 'PIZZA', 'SHOP', 'BOOKS', 'GYM', 'MUSIC', 'TECH', 'BAKERY'][(i * 2 + (sd > 0)) % 8], ['#ff4ad8', '#4af0ff', '#ffd84a', '#7aff6a'][i % 4]), x - sd * (w / 2 + 0.06), 6.6, z); sign.rotation.y = -sd * Math.PI / 2; scene.add(sign); }
+  // street furniture: lamps, traffic lights, planters with trees
+  const metal = mat({ color: 0x3a3e44, metalness: 0.7, roughness: 0.35 }); const T = [];
+  for (let k = 0; k < Math.floor(L / 12); k++) for (const sd of [-1, 1]) { const z = z0 - 4 - k * 12; B.add(new THREE.CylinderGeometry(0.1, 0.14, 6, 10), metal, sd * 7.6, 3, z); B.add(new THREE.BoxGeometry(1.6, 0.12, 0.3), metal, sd * 6.9, 6, z); const bulb = mesh(new THREE.BoxGeometry(0.7, 0.1, 0.3), new THREE.MeshBasicMaterial({ color: 0xfff2d0, toneMapped: false }), sd * 6.5, 5.92, z, false); scene.add(bulb);
+    B.add(rbox(1.6, 0.8, 1.6, 0.2), mat({ color: 0xd8d0c4, roughness: 0.6 }), sd * 9.5, 0.65, z - 6); T.push([sd * 9.5, z - 6, 0.9, k % 2, k + (sd > 0 ? 30 : 0), 1.0]); }
+  forest(T, ['round', 'blossom']);
+  for (const sd of [-1, 1]) { const z = z0 - 27; B.add(new THREE.CylinderGeometry(0.12, 0.12, 5, 10), metal, sd * 7.4, 2.5, z); B.add(rbox(0.5, 1.5, 0.5, 0.1), metal, sd * 7.4, 5.2, z); [0xff2a2a, 0xffc020, 0x2aff6a].forEach((c, i) => { const l = mesh(new THREE.SphereGeometry(0.15, 12, 8), new THREE.MeshBasicMaterial({ color: c, toneMapped: false, transparent: true, opacity: i === 2 ? 1 : 0.25 }), sd * 7.4 + 0.27 * -sd, 5.65 - i * 0.45, z, false); scene.add(l); }); }
+  B.flush();
+  // traffic
+  const cols = ['#e8282a', '#1a6ad8', '#f2c63a', '#9aa8bc', '#2ab86a', '#ff7a2a', '#8a3ab0', '#18b8c8'], cars = [];
+  for (let i = 0; i < (o.cars ?? 10); i++) { const c = modernCar(cols[i % cols.length]); const lane = i % 2 ? 1 : -1; c.userData = { lane, z0: z0 - 10 - (i * 23) % L, v: 8 + (i % 4) * 2 }; c.rotation.y = lane > 0 ? Math.PI / 2 : -Math.PI / 2; cars.push(c); }
+  return { towers, cars, update: (t) => { const S = o.stop, q = { '-1': [], '1': [] };
+    for (const c of cars) { const u = c.userData; let z = u.z0 + u.lane * u.v * t; z = z0 - (((z0 - z) % L) + L) % L; c.position.set(u.lane * 3.4, 0, z); c.rotation.y = u.lane > 0 ? -Math.PI / 2 : Math.PI / 2;
+      if (S && t > S.t0 && t < S.t1) { const d = (z - S.z) * u.lane + 4; if (d >= 0 && d <= u.v * (t - S.t0)) q[u.lane].push([d, c]); } }
+    // red light: cars that reached the stop line during the window queue up behind it (first to arrive in front)
+    for (const ln of [-1, 1]) q[ln].sort((a, b) => b[0] - a[0]).forEach(([, c], k) => { c.position.z = S.z - ln * (4 + k * 5.6); }); } };
+}
