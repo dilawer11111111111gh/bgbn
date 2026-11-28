@@ -132,7 +132,7 @@ export class Flat2D {
         const c0 = qc([hx, hipY - 10], knee, foot), legPath = () => { g.beginPath(); g.moveTo(hx, hipY - 10); g.quadraticCurveTo(c0[0], c0[1], foot[0], foot[1]); };
         if (o.socks) { legPath(); g.strokeStyle = INK; g.lineWidth = 27; g.stroke(); legPath(); g.strokeStyle = o.socks; g.lineWidth = 19; g.stroke(); if (o.socks2) { g.save(); legPath(); g.strokeStyle = o.socks2; g.lineWidth = 15; g.setLineDash([12, 14]); g.stroke(); g.restore(); } }
         else { legPath(); g.strokeStyle = INK; g.lineWidth = 20; g.stroke(); }
-        if (o.pants) { const P = o.pants, upto = P.len === 'long' ? 0.9 : P.len === 'shorts' ? 0.32 : 0.6, wdt = P.len === 'knickers' ? 44 : 38; const q = (u) => [(1 - u) * (1 - u) * hx + 2 * (1 - u) * u * c0[0] + u * u * foot[0], (1 - u) * (1 - u) * (hipY - 10) + 2 * (1 - u) * u * c0[1] + u * u * foot[1]];
+        if (o.pants) { const P = o.pants, upto = P.len === 'long' ? 0.9 : P.len === 'ankle' ? 0.8 : P.len === 'shorts' ? 0.32 : 0.6, wdt = P.len === 'knickers' ? 44 : 38; const q = (u) => [(1 - u) * (1 - u) * hx + 2 * (1 - u) * u * c0[0] + u * u * foot[0], (1 - u) * (1 - u) * (hipY - 10) + 2 * (1 - u) * u * c0[1] + u * u * foot[1]];
           const pts = []; for (let k = 0; k <= 10; k++) pts.push(q(upto * k / 10)); const seg = () => { g.beginPath(); g.moveTo(hx, hipY - 26); pts.forEach(([x, y]) => g.lineTo(x, y)); };
           g.lineCap = 'round'; seg(); g.strokeStyle = INK; g.lineWidth = wdt + 9; g.stroke(); seg(); g.strokeStyle = P.col; g.lineWidth = wdt; g.stroke(); if (P.check) { g.save(); seg(); g.strokeStyle = P.check; g.lineWidth = wdt * 0.5; g.setLineDash([10, 12]); g.stroke(); g.restore(); }
           seg(); g.strokeStyle = 'rgba(255,255,255,0.18)'; g.lineWidth = wdt * 0.25; g.stroke(); const e = pts[10]; if (P.len === 'knickers') { g.fillStyle = P.cuff || P.col; g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.ellipse(e[0], e[1] + 4, wdt * 0.55, 9, 0, 0, 7); g.fill(); g.stroke(); } }
@@ -171,7 +171,7 @@ export class Flat2D {
         for (let y = 0; y < H; y += 3) { const k = Math.max(0, Math.min(1, (y1 - y) / Math.max(1, y1 - y0))); const dx = bx * k * k; g.drawImage(this.tc, 0, y, this.cw, 3, dx, y, this.cw, 3); } g.restore(); } } drawArms(); }
     if (p.whoosh) { const [w0, w1, wa] = p.whoosh; const sx = 256 + 44 * (o.width || 1) * 1.5, sy = top + 30; g.save(); g.lineCap = 'round';
       for (let k = 0; k < 3; k++) { const rr = 190 + k * 34; g.strokeStyle = `rgba(255,255,255,${(wa ?? 0.8) * (0.9 - k * 0.22)})`; g.lineWidth = 10 - k * 2; g.beginPath(); g.arc(sx, sy, rr, R(90 - w0), R(90 - w1), w1 < w0 ? false : true); g.stroke(); } g.restore(); }
-    if (p.prop) { const hd = (p.propHand === 'L' ? this.handL : this.handR) || this.handR; if (hd) this.prop(g, p.prop, hd); }
+    if (p.prop) { const hd = (p.propHand === 'L' ? this.handL : this.handR) || this.handR; if (hd) this.prop(g, p.prop, hd, p.propSpin || 0); }
     // ---- head ----
     const r = 116 * (o.head ?? 1.12), hx = 256 + (p.headX || 0) + B + (p.headLag || 0), hy = 400 - r + 26 + bob + sq * 22 + Math.abs(B) * 0.08;   // big head like the reference; bottom sits on the collar
     const fsA = (p.fs || 0) * (p.fk ?? 0.5); this._fs = fsA;
@@ -196,7 +196,7 @@ export class Flat2D {
     g.save(); g.translate((p.turn || 0) * 12, 0); this.hat(g, r, p.hatOff || 0); g.restore();
     g.restore();
     if (p.steam) this.steam(g, hx, hy, r, p.steam);
-    if (p.prop && !HH && (p.propFront || (p.armR && p.armR[0] > 115 && !p.propBack))) { drawArms(); { const hd = (p.propHand === 'L' ? this.handL : this.handR) || this.handR; if (hd) this.prop(g, p.prop, hd); } }   // raised arms + held prop go IN FRONT of the head
+    if (p.prop && !HH && (p.propFront || (p.armR && p.armR[0] > 115 && !p.propBack))) { drawArms(); { const hd = (p.propHand === 'L' ? this.handL : this.handR) || this.handR; if (hd) this.prop(g, p.prop, hd, p.propSpin || 0); } }   // raised arms + held prop go IN FRONT of the head
     if (headHand) { g.fillStyle = '#3a2620'; g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.arc(headHand[0], headHand[1], 16, 0, 7); g.fill(); g.stroke(); }
     g.restore();
     if (p.mark) { g.save(); g.translate(256 + 140, 120 + bob); g.rotate(R(12)); g.font = 'bold 130px serif'; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = INK; g.fillStyle = '#e4332a'; g.strokeText(p.mark, 0, 0); g.fillText(p.mark, 0, 0); g.restore(); }
@@ -205,8 +205,14 @@ export class Flat2D {
   speedLines(g, k) { const T = Flat2D.T || 0; g.save(); g.strokeStyle = 'rgba(40,30,25,0.55)'; g.lineCap = 'round'; for (let i = 0; i < 7; i++) { const y = 300 + i * 80 + Math.sin(i * 3.1) * 20, ph = ((T * 3 + i * 0.37) % 1); g.lineWidth = 5; g.beginPath(); g.moveTo(330 + ph * 40, y); g.lineTo(330 + ph * 40 + 70 * k + 40, y); g.stroke(); } g.restore(); }
   steam(g, hx, hy, r, k) { const T = Flat2D.T || 0; g.save(); g.strokeStyle = INK; g.lineWidth = 4; for (const s of [-1, 1]) for (let i = 0; i < 2; i++) { const ph = (T * 1.6 + i * 0.5 + (s > 0 ? 0.25 : 0)) % 1; const x = hx + s * (r * 0.78 + ph * 50), y = hy - r * 0.7 - ph * 110, rr = (22 + ph * 26) * k; g.globalAlpha = 1 - ph * 0.7; g.fillStyle = '#fbfbfb'; for (const [dx, dy, f] of [[0, 0, 1], [rr * 0.7, -rr * 0.3, 0.75], [-rr * 0.6, -rr * 0.2, 0.7]]) { g.beginPath(); g.arc(x + dx, y + dy, rr * f, 0, 7); g.fill(); g.stroke(); } } g.globalAlpha = 1; g.restore(); }
   // props held in the hand, aligned with the forearm
-  prop(g, kind, hd) { g.save(); g.translate(hd[0], hd[1]); g.rotate(-R(hd.ang || 0)); g.scale(1.45, 1.45); g.strokeStyle = INK; g.lineWidth = 4; const box = (x, y, w, h, c) => { g.fillStyle = c; g.beginPath(); g.roundRect(x, y, w, h, 4); g.fill(); g.stroke(); };
-    if (kind === 'hammer') { box(-6, -10, 12, 120, '#a8743e'); box(-34, 98, 68, 34, '#5a5a62'); }
+  prop(g, kind, hd, spin = 0) { g.save(); g.translate(hd[0], hd[1]); g.rotate(-R((hd.ang || 0) + spin)); g.scale(1.45, 1.45); g.strokeStyle = INK; g.lineWidth = 4; const box = (x, y, w, h, c) => { g.fillStyle = c; g.beginPath(); g.roundRect(x, y, w, h, 4); g.fill(); g.stroke(); };
+        if (kind === 'pistol') { const steel = '#2c2c30', st2 = '#18181a';
+      g.fillStyle = '#5a4434'; g.beginPath(); g.moveTo(-8, -10); g.lineTo(10, -16); g.lineTo(40, -6); g.lineTo(36, 14); g.lineTo(2, 16); g.closePath(); g.fill(); g.stroke(); g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 2; for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(12 + k * 6, -10); g.lineTo(10 + k * 6, 10); g.stroke(); } g.strokeStyle = INK; g.lineWidth = 4;
+      g.fillStyle = st2; g.beginPath(); g.roundRect(-8, -6, 14, 74, 3); g.fill(); g.stroke();
+      g.beginPath(); g.arc(14, 22, 11, -0.2, Math.PI * 1.1); g.stroke();
+      g.fillStyle = steel; g.beginPath(); g.roundRect(-24, -16, 20, 104, 4); g.fill(); g.stroke(); g.fillStyle = 'rgba(255,255,255,0.4)'; g.fillRect(-20, -10, 4, 92); g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 2; for (let k = 0; k < 5; k++) { g.beginPath(); g.moveTo(-23, -8 + k * 5); g.lineTo(-6, -8 + k * 5); g.stroke(); } g.strokeStyle = INK; g.lineWidth = 4;
+      g.fillStyle = st2; g.fillRect(-26, -22, 8, 10); g.beginPath(); g.arc(-14, 88, 5, 0, 7); g.fillStyle = '#050505'; g.fill(); g.fillStyle = steel; g.fillRect(-28, 78, 6, 8); }
+    else if (kind === 'hammer') { box(-6, -10, 12, 120, '#a8743e'); box(-34, 98, 68, 34, '#5a5a62'); }
     else if (kind === 'paddle') { box(-6, -120, 12, 230, '#c8904a'); g.fillStyle = '#c8904a'; g.beginPath(); g.ellipse(0, 130, 24, 56, 0, 0, 7); g.fill(); g.stroke(); }
     else if (kind === 'megaphone') { g.fillStyle = '#e8402a'; g.beginPath(); g.moveTo(-12, 0); g.lineTo(12, 0); g.lineTo(44, 90); g.lineTo(-44, 90); g.closePath(); g.fill(); g.stroke(); box(-8, -20, 16, 24, '#3a3a3a'); }
     else if (kind === 'flag') { box(-4, -160, 8, 200, '#8a5a32'); g.fillStyle = '#e8402a'; g.beginPath(); g.moveTo(4, -160); g.lineTo(96, -136); g.lineTo(4, -108); g.closePath(); g.fill(); g.stroke(); }
@@ -466,6 +472,11 @@ export class Flat2D {
       g.beginPath(); g.moveTo(-50, -r * 0.78); g.lineTo(-56, -r - 104); g.lineTo(56, -r - 104); g.lineTo(50, -r * 0.78); g.closePath(); g.fill(); g.stroke(); hl(-46, -r - 96, 16, 80);
       g.fillStyle = o.band; g.fillRect(-52, -r * 0.78 - 26, 104, 18); g.strokeRect(-52, -r * 0.78 - 26, 104, 18);
       g.fillStyle = o.hatCol; g.beginPath(); g.ellipse(0, -r * 0.78, 84, 13, 0, 0, 7); g.fill(); g.stroke();
+    } else if (o.hat === 'fedora') {   // pinched crown, band, wide curved brim
+      g.beginPath(); g.moveTo(-60, -r * 0.8); g.bezierCurveTo(-70, -r - 46, -36, -r - 74, 0, -r - 50); g.bezierCurveTo(36, -r - 74, 70, -r - 46, 60, -r * 0.8); g.closePath(); g.fill(); g.stroke(); hl(-44, -r - 40, 12, 40);
+      g.beginPath(); g.moveTo(-14, -r - 56); g.quadraticCurveTo(0, -r - 30, 14, -r - 56); g.stroke();
+      g.fillStyle = o.band; g.fillRect(-61, -r * 0.8 - 22, 122, 18); g.strokeRect(-61, -r * 0.8 - 22, 122, 18);
+      g.fillStyle = o.hatCol; g.beginPath(); g.moveTo(-122, -r * 0.8 + 6); g.quadraticCurveTo(-100, -r * 0.8 - 22, 0, -r * 0.8 - 16); g.quadraticCurveTo(100, -r * 0.8 - 22, 122, -r * 0.8 + 6); g.quadraticCurveTo(60, -r * 0.8 + 14, 0, -r * 0.8 + 10); g.quadraticCurveTo(-60, -r * 0.8 + 14, -122, -r * 0.8 + 6); g.closePath(); g.fill(); g.stroke();
     } else if (o.hat === 'bowler' || o.hat === 'derby') {
       g.beginPath(); g.moveTo(-58, -r * 0.8); g.bezierCurveTo(-62, -r - 78, 62, -r - 78, 58, -r * 0.8); g.closePath(); g.fill(); g.stroke(); hl(-40, -r - 30, 14, 40);
       g.fillStyle = o.band; g.fillRect(-58, -r * 0.8 - 18, 116, 14); g.strokeRect(-58, -r * 0.8 - 18, 116, 14);
