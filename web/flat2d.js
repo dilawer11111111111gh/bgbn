@@ -180,7 +180,7 @@ export class Flat2D {
     const fsA = (p.fs || 0) * (p.fk ?? 0.5); this._fs = fsA;
     g.save(); g.translate(hx, hy); g.rotate(R(p.tilt || 0)); g.scale((1 + sq * 0.12) * (1 - 0.08 * fsA), (1 - sq * 0.1) * (1 + 0.12 * fsA));
     const TUa = clamp(p.turn || 0, -1, 1); if (!o.noEars) for (const s of [-1, 1]) { if (Math.abs(TUa) > 0.5 && Math.sign(TUa) === s) continue; const ex = s * r * (1.04 - (Math.abs(TUa) > 0.5 ? 0.5 * (Math.abs(TUa) - 0.5) : 0)) + TUa * 12, ey = 16; g.fillStyle = o.skin; g.strokeStyle = INK; g.lineWidth = 6; g.beginPath(); g.ellipse(ex, ey, 17, 25, s * 0.25, 0, 7); g.fill(); g.stroke(); g.lineWidth = 3.5; g.beginPath(); g.arc(ex + s * 2, ey, 9, s > 0 ? -1.1 : Math.PI - 1.1, s > 0 ? 1.1 : Math.PI + 1.1); g.stroke(); }
-    const headPts = this.ell(0, 0, r * 1.07, r * 0.94, 64);   // slightly wide oval head (reference)
+    const HS = { oval: [1.07, 0.94], round: [1.0, 1.0], long: [0.93, 1.07], wide: [1.16, 0.88], egg: [1.02, 1.02] }[o.headShape || 'oval'] || [1.07, 0.94]; const headPts = this.ell(0, 0, r * HS[0], r * HS[1], 64);   // slightly wide oval head (reference)
     this.wpath(g, headPts); g.fillStyle = o.skin; g.fill();
     g.save(); this.wpath(g, headPts); g.clip();
     if (p.tint) { const [tc, tk] = Array.isArray(p.tint) ? p.tint : [p.tint, 0.7]; g.globalAlpha = tk; g.fillStyle = tc; g.fillRect(-r * 2, -r * 2, r * 4, r * 4); g.globalAlpha = 1; }
@@ -440,13 +440,13 @@ export class Flat2D {
     }
   }
   face(g, f, r) {
-    const lx = (f.look?.[0] || 0) * 8, ly = (f.look?.[1] || 0) * 6, ey = -4, ex = 42;
+    const lx = (f.look?.[0] || 0) * 8, ly = (f.look?.[1] || 0) * 6, ey = -4 + (this.o.eyeY || 0), ex = 42 * (this.o.eyeGap || 1);
     const eyes = f.eyes || 'calm', mouth = f.mouth || 'smile', brow = f.brow ?? 0;
     { const hp = ['grin', 'laugh', 'psycho', 'bigsmile', 'talk', 'smile'].includes(mouth) || ['happy', 'squeeze'].includes(eyes); const a = (hp ? 0.4 : 0.2); for (const s of [-1, 1]) { const gr = g.createRadialGradient(s * 66, 36, 2, s * 66, 36, 30); gr.addColorStop(0, `rgba(255,110,110,${a})`); gr.addColorStop(1, 'rgba(255,110,110,0)'); g.fillStyle = gr; g.beginPath(); g.arc(s * 66, 36, 30, 0, 7); g.fill(); } }
     
     const TU = this._tu || 0;
     for (const s of [-1, 1]) {
-      const near = Math.sign(TU) === s ? 1 : Math.sign(TU) === -s ? -1 : 0, ek = (1 + near * Math.abs(TU) * 0.36) * (1 + 0.26 * Math.abs(this._fs || 0)); if (near < 0 && Math.abs(TU) > 0.85) continue;   // true profile: one eye   // perspective: the eye on the turned side is nearer
+      const near = Math.sign(TU) === s ? 1 : Math.sign(TU) === -s ? -1 : 0, ek = (1 + near * Math.abs(TU) * 0.36) * (1 + 0.26 * Math.abs(this._fs || 0)) * (this.o.eyeScale || 1); if (near < 0 && Math.abs(TU) > 0.85) continue;   // true profile: one eye   // perspective: the eye on the turned side is nearer
       g.save(); g.translate(0, -7 * (this._fs || 0)); g.translate(s * ex, ey); g.scale(ek, ek); g.translate(-s * ex, -ey);
       const x = s * ex; g.strokeStyle = INK; g.fillStyle = '#1e1410';
       if (eyes === 'lid') {   // EXPRESSIVE EYE: pupil (look), upper lid (coverage + tilt), lower lid (squint), per-side values
@@ -481,9 +481,19 @@ export class Flat2D {
       else if (!brow) { const by = ey - (eyes === 'wide' ? 46 : 36); g.lineWidth = 8.5; g.beginPath(); g.moveTo(x - s * 13, by + 3); g.quadraticCurveTo(x, by - 6, x + s * 15, by + 2); g.stroke(); }
       else if (brow) { const by = ey - (eyes === 'wide' || eyes === 'tiny' ? 48 : 30) - Math.max(0, brow) * 8; g.lineWidth = 8.5; g.beginPath(); g.moveTo(x - s * 15, by + (brow < 0 ? -brow * 9 : -brow * 3)); g.lineTo(x + s * 15, by + (brow < 0 ? brow * 3 : brow * 5)); g.stroke(); }
     g.restore(); }
-    if (this.o.beard) { g.fillStyle = this.o.beard; g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(-r * 0.72, r * 0.38); g.quadraticCurveTo(-r * 0.62, r * 1.12, 0, r * 1.16); g.quadraticCurveTo(r * 0.62, r * 1.12, r * 0.72, r * 0.38); g.quadraticCurveTo(r * 0.4, r * 0.86, 0, r * 0.84); g.quadraticCurveTo(-r * 0.4, r * 0.86, -r * 0.72, r * 0.38); g.closePath(); g.fill(); g.stroke(); }
+    if (this.o.beard && this.o.beardStyle === 'goatee') { g.fillStyle = this.o.beard; g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(-r * 0.2, r * 0.66); g.quadraticCurveTo(0, r * 1.12, r * 0.2, r * 0.66); g.quadraticCurveTo(0, r * 0.76, -r * 0.2, r * 0.66); g.fill(); g.stroke(); }
+    else if (this.o.beard && this.o.beardStyle === 'stubble') { g.fillStyle = this.o.beard; g.globalAlpha = 0.5; const rr = (k) => (Math.sin(k * 91.7 + this.o.seed) * 0.5 + 0.5); for (let k = 0; k < 140; k++) { const a = Math.PI * (0.12 + 0.76 * rr(k)), d = r * (0.6 + 0.32 * rr(k + 50)); g.fillRect(Math.cos(a) * d * 1.05, Math.sin(a) * d, 3, 3); } g.globalAlpha = 1; }
+    else if (this.o.beard) { g.fillStyle = this.o.beard; g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(-r * 0.72, r * 0.38); g.quadraticCurveTo(-r * 0.62, r * 1.12, 0, r * 1.16); g.quadraticCurveTo(r * 0.62, r * 1.12, r * 0.72, r * 0.38); g.quadraticCurveTo(r * 0.4, r * 0.86, 0, r * 0.84); g.quadraticCurveTo(-r * 0.4, r * 0.86, -r * 0.72, r * 0.38); g.closePath(); g.fill(); g.stroke(); }
     if (this.o.glasses) { g.strokeStyle = INK; g.lineWidth = 4.5; g.fillStyle = 'rgba(200,230,255,0.25)'; for (const s of [-1, 1]) { g.beginPath(); if (this.o.glasses === 'square') g.rect(s * 40 - 22, -18, 44, 34); else g.arc(s * 40, -2, 24, 0, 7); g.fill(); g.stroke(); } g.beginPath(); g.moveTo(-16, -6); g.quadraticCurveTo(0, -14, 16, -6); g.stroke(); }
-    if (this.o.mustache) { g.fillStyle = this.o.hair || '#4a2f20'; g.strokeStyle = INK; g.lineWidth = 2.5; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 15, 40, 18, 7, s * 0.25, 0, 7); g.fill(); g.stroke(); } }
+    if (this.o.mustache) { const ms = this.o.mustache; g.fillStyle = this.o.mustacheCol || this.o.hair || '#4a2f20'; g.strokeStyle = INK; g.lineWidth = 2.5;
+      if (ms === 'handlebar') for (const s of [-1, 1]) { g.beginPath(); g.moveTo(0, 36); g.quadraticCurveTo(s * 26, 30, s * 40, 44); g.quadraticCurveTo(s * 46, 30, s * 36, 30); g.quadraticCurveTo(s * 40, 40, s * 30, 38); g.quadraticCurveTo(s * 14, 44, 0, 44); g.closePath(); g.fill(); g.stroke(); }
+      else if (ms === 'pencil') { g.lineWidth = 5; g.strokeStyle = this.o.mustacheCol || this.o.hair || '#2a1a10'; g.beginPath(); g.moveTo(-22, 41); g.quadraticCurveTo(0, 36, 22, 41); g.stroke(); }
+      else if (ms === 'walrus') { g.beginPath(); g.moveTo(-30, 52); g.quadraticCurveTo(-30, 30, 0, 32); g.quadraticCurveTo(30, 30, 30, 52); g.quadraticCurveTo(15, 44, 0, 46); g.quadraticCurveTo(-15, 44, -30, 52); g.fill(); g.stroke(); }
+      else if (ms === 'chevron') { g.beginPath(); g.moveTo(-26, 46); g.lineTo(-20, 34); g.lineTo(20, 34); g.lineTo(26, 46); g.quadraticCurveTo(0, 40, -26, 46); g.fill(); g.stroke(); }
+      else for (const s of [-1, 1]) { g.beginPath(); g.ellipse(s * 15, 40, 18, 7, s * 0.25, 0, 7); g.fill(); g.stroke(); } }
+    if (this.o.freckles) { g.fillStyle = 'rgba(150,80,40,0.55)'; for (const s of [-1, 1]) for (let k = 0; k < 6; k++) { g.beginPath(); g.arc(s * (52 + (k % 3) * 10), 24 + Math.floor(k / 3) * 9, 2.6, 0, 7); g.fill(); } }
+    if (this.o.scar) { g.strokeStyle = 'rgba(150,40,40,0.8)'; g.lineWidth = 3; g.beginPath(); g.moveTo(40, -40); g.lineTo(62, 2); g.stroke(); for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(44 + k * 5, -30 + k * 9); g.lineTo(54 + k * 5, -34 + k * 9); g.stroke(); } }
+    if (this.o.noseF && Math.abs(this._tu || 0) <= 0.55) { g.strokeStyle = INK; g.lineWidth = 3.5; g.beginPath(); const nf = this.o.noseF; if (nf === 'button') { g.arc(0, 22, 8, 0.2, Math.PI - 0.2); } else if (nf === 'long') { g.moveTo(-2, 0); g.quadraticCurveTo(10, 22, -6, 28); } else if (nf === 'round') { g.fillStyle = 'rgba(230,120,110,0.5)'; g.arc(0, 18, 11, 0, 7); g.fill(); } else { g.moveTo(-6, 24); g.quadraticCurveTo(0, 30, 6, 24); } g.stroke(); }
     g.translate((this._tu || 0) * 14, 0);
     g.strokeStyle = INK; g.fillStyle = '#5a1e1a'; g.lineWidth = 3.5; const my = 52; const mk = ['laugh', 'scream', 'talk', 'psycho', 'grin'].includes(mouth) ? 1 + 0.08 * Math.sin((Flat2D.T || 0) * 17 + this.o.seed) : 1; g.save(); g.translate(0, my); g.scale(1 + (mk - 1) * 0.4, mk); g.translate(0, -my);
     if (mouth === 'smile') { g.beginPath(); g.arc(0, my - 12, 10, Math.PI * 0.2, Math.PI * 0.8); g.stroke(); }

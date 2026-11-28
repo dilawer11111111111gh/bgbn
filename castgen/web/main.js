@@ -1,0 +1,10 @@
+import * as THREE from 'three';
+import { Flat2D } from '../../web/flat2d.js';
+import { makeCharacter } from '../../web/castgen.js';
+const cv = document.getElementById('c'), g = cv.getContext('2d'); const grp = new THREE.Group();
+const eras = [['medieval', ['king', 'knight', 'villager', 'worker', 'baron', 'archer', 'villager', 'monk']], ['noir', ['detective', 'boss', 'gangster', 'cop', 'bartender', 'newsboy', 'gangster', 'citizen']], ['today', ['office', 'student', 'worker', 'chef', 'police', 'athlete', 'gamer', 'citizen']], ['royal', ['king', 'minister', 'guard', 'courtier', 'servant', 'courtier', 'guard', 'minister']], ['western', ['sheriff', 'outlaw', 'farmer', 'townsman', 'outlaw', 'sheriff', 'farmer', 'townsman']]];
+const faces = [{ eyes: 'lid', lid: 0.2, mouth: 'smile' }, { eyes: 'lid', lid: 0.4, mouth: 'smirk1', browL: 0.7, browR: -0.5 }, { eyes: 'happy', mouth: 'laugh' }, { eyes: 'lid', lid: 0.3, lidTilt: -0.4, mouth: 'talk', brow: -1.3 }, { eyes: 'wide', mouth: 'o', brow: 1.2 }];
+eras.forEach(([era, roles], ri) => roles.forEach((role, i) => { const o = makeCharacter({ era, role, seed: 40 + ri * 17 + i * 5 }); const F = new Flat2D({ ...o, size: o.size, res: 0.9, headroom: 300, scene: grp });
+  Flat2D.T = 0.5; F.update({ noBlink: true, noIdle: true, e: 0, face: faces[(i + ri) % faces.length], armL: [16, -32], armR: i % 2 ? [60, -110] : [16, -32], prop: o.prop, propHand: 'R' });
+  const w = 270, h = w * F.ch / F.cw; g.drawImage(F.cv, i * 280, 40 + ri * 370 - 30, w, h); g.fillStyle = '#1a1410'; g.font = 'bold 17px "DejaVu Sans"'; g.textAlign = 'center'; g.fillText(`${era}: ${role}`, i * 280 + 135, 28 + ri * 370); g.font = '15px "DejaVu Sans"'; g.fillText(o.name, i * 280 + 135, 46 + ri * 370); }));
+window.renderFrame = () => {}; window.ready = true;

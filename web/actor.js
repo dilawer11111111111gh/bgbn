@@ -54,6 +54,13 @@ export const MOODS = {
   determined: { faces: ['determined', 'focused', 'angry'], gestures: ['fists', 'fistPump', 'pointAhead'], neck: [0, 4], tilt: 4, hop: 4, lean: 6 },
   confused: { faces: ['confused', 'doubt', 'dizzy'], gestures: ['shrug', 'scratchHead', 'shrug'], neck: [0, 10], tilt: 14, hop: 0 },
   phone: { faces: ['neutral', 'happy', 'doubt', 'shock'], gestures: ['phoneEar'], neck: [0, 4], tilt: 8, hop: 0, talk: true },
+  // v9.2 extra moods
+  cool: { faces: ['cool', 'smug', 'wink', 'sideeye'], gestures: ['tipHat', 'leanBack', 'hips', 'crossArms', 'pointCool'], neck: [0, 4], tilt: 6, hop: 0 },
+  menace: { faces: ['plotting', 'evil', 'focused', 'fume'], gestures: ['fingerTent', 'rubHands', 'stabPoint', 'crossArms'], neck: [-6, 2], tilt: 5, hop: 0, lean: 8 },
+  sneaky: { faces: ['sideeye', 'suspicious', 'plotting', 'nervous'], gestures: ['crouch', 'tiptoe', 'crouch'], neck: [-4, 6], tilt: 10, hop: 0 },
+  victory: { faces: ['joy', 'eager', 'beam', 'proud'], gestures: ['fistPump', 'cheer', 'jumpJack', 'thumbsUp'], neck: [6, 18], tilt: 12, hop: 30 },
+  cry: { faces: ['sob', 'sad', 'pout'], gestures: ['slump', 'headHand', 'cheeks'], neck: [-12, -2], tilt: 10, hop: 0 },
+  run: { faces: ['determined', 'scared', 'focused', 'panic'], gestures: ['runA', 'runB'], neck: [0, 6], tilt: 6, hop: 12, lean: 14 },
 };
 
 // ---- gestures (armL/armR = [shoulder°, elbow°]; + extra body) ----
@@ -100,6 +107,8 @@ export const GESTURES = {
   shrug: { armL: [60, -110], armR: [60, -110], tilt: 10 },
   pointAhead: { armL: [16, -32], armR: [96, -2], lean: 8 },
   phoneEar: { armL: [16, -32], armR: [125, -160], tilt: 10 },
+  tipHat: { armL: [16, -32], armR: [165, -155], tilt: -6 }, crouch: { armL: [70, -110], armR: [70, -110], kneel: 0.3, lean: 10 }, tiptoe: { armL: [40, -140], armR: [40, -140], hop: 10, lean: 8 },
+  aimGun: { armL: [70, -60], armR: [92, -4], lean: 4 }, runA: { armL: [60, -100], armR: [-30, -60], lean: 16 }, runB: { armL: [-30, -60], armR: [60, -100], lean: 16 },
 };
 
 // beat grid inside one segment: lengths between 0.2 and 0.2 + 0.15 s (deterministic)
@@ -122,7 +131,7 @@ const NUMK = ['tilt', 'turn', 'neck', 'headX', 'lean', 'hop', 'hip', 'squash', '
 // perform(t, track, seed) → pose for Flat2D.update (includes face; add your own props / walk on top)
 export function perform(t, track, seed = 1) {
   let i = 0; while (i < track.length - 1 && t >= track[i + 1][0]) i++; const [t0, mood, opts = {}] = track[i]; const M = MOODS[mood] || MOODS.talk;
-  const rate = opts.rate || 0.26, E = opts.energy ?? 1; const [k, s, d] = beatAt(t, t0, rate, seed + i * 31);
+  const rate = opts.rate || 0.22, E = opts.energy ?? 1.3; const [k, s, d] = beatAt(t, t0, rate, seed + i * 31);
   const [P1, F1] = beatPose(M, opts, k, seed + i * 31, E);
   let P0; if (k > 0) P0 = beatPose(M, opts, k - 1, seed + i * 31, E)[0];
   else if (i > 0) { const [pt0, pm, po = {}] = track[i - 1]; const pk = beatAt(t0 - 1e-4, pt0, po.rate || 0.26, seed + (i - 1) * 31)[0]; P0 = beatPose(MOODS[pm] || MOODS.talk, po, pk, seed + (i - 1) * 31, po.energy ?? 1)[0]; }
@@ -135,5 +144,13 @@ export function perform(t, track, seed = 1) {
   if (mood === 'laugh') { out.tilt += 7 * Math.sin(t * 24); out.bob = -6 * Math.abs(Math.sin(t * 12)); }
   if (mood === 'angry' || mood === 'shock') out.headX += 3 * Math.sin(t * 40) * (mood === 'shock' ? 1 : 0.6);   // tremble
   if (opts.talk || M.talk) F1.mouth = ['talk', 'smallO', 'o', 'talk', 'grin'][Math.floor(t * 9 + seed) % 5];
-  return { ...out, ...(opts.pose || {}), face: F1, noBlink: false };
+  // v9.2 HYPER layer: a "take" on every mood change (squash → stretch pop, hop, speed lines, a ! or ? mark),
+  // continuous head life between beats, and mood FX (anger steam, fear sweat, tears, laugh shake)
+  const since = t - t0, take = since < 0.22 ? Math.sin(since / 0.22 * Math.PI) : 0, FX = {};
+  if (take > 0 && i > 0) { out.squash += (since < 0.08 ? 0.22 : -0.12) * E; out.hop += 18 * take * E; out.neck += (mood === 'shock' ? 30 : 10) * take; FX.lines = take;
+    const mk = { shock: '!', excited: '!', victory: '!', confused: '?', think: '?', angry: '#', scared: '!' }[mood]; if (mk) FX.mark = mk; }
+  out.tilt += Math.sin(t * 6.3 + seed) * 2.2 * E; out.headX += Math.sin(t * 4.7 + seed * 2) * 3 * E;
+  if (mood === 'angry' || mood === 'menace') FX.steam = mood === 'angry' ? 1 : 0; if (mood === 'scared' || mood === 'sneaky') FX.sweat = t; if (mood === 'cry') FX.tears = true; if (mood === 'run') FX.lines = 1;
+  if (mood === 'laugh' || mood === 'victory') out.tilt += 5 * Math.sin(t * 26);
+  return { ...out, ...FX, ...(opts.pose || {}), face: F1, noBlink: false };
 }
