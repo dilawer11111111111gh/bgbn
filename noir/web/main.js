@@ -57,72 +57,83 @@ const muzzle = (C, spin = 0) => { const h = C.handR; if (!h) return C.pos.clone(
 // swagger walk in profile: slow, shoulders rolling, leaning back, head sway, one hand in the pocket
 function swag(t, per = 1.05, amp = 1) { const ph = (t / per) * Math.PI * 2, s = Math.sin(ph), c = Math.cos(ph);
   return { legL: [24 * s * amp, Math.max(0, -c) * 34 * amp], legR: [-24 * s * amp, Math.max(0, c) * 34 * amp], armL: [16, -32], armR: [22 - 18 * s, 14 + 10 * s], bob: -9 * Math.abs(s), lean: -6, tilt: 5 * s, hip: 10 * s, sway: 3 * s, headLag: 4 * c }; }
-let BULLET; { BULLET = new THREE.Group(); BULLET.add(mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.05, 12), new THREE.MeshPhysicalMaterial({ color: 0xd8c070, metalness: 1, roughness: 0.25 }), 0, 0, 0, false)); const tr = mesh(new THREE.CylinderGeometry(0.004, 0.02, 0.9, 10), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, toneMapped: false }), 0, -0.48, 0, false); BULLET.add(tr); BULLET.scale.setScalar(2.2); BULLET.visible = false; scene.add(BULLET); }
-const P_BOSS = (t) => V(0, 0, lerp(-1.5, -7.2, clamp(t / 3.6, 0, 1))), RIV = V(0.6, 0, -14.5), HATP = V(0.6, 1.98, -14.5);
-const T_SPIN = [6.4, 7.4], T_SHOT1 = 8.3, T_HIT = 10.0, RIV_SHOTS = [12.6, 13.0], BOSS2 = [14.3, 14.75];
-window.SFX = { boss: [T_SHOT1, ...BOSS2], rival: RIV_SHOTS, thunder: [3.9], steps: [0.5, 1.05, 1.6, 2.15, 2.7, 3.25, 18.6, 19.15, 19.7], draw: [5.6, 7.45, 16.9], spin: T_SPIN[0], hat: T_HIT, title: 18.6, run: 15.0, bulletTime: 8.35 };
-let B_FROM = null;
+let BULLET, BLIGHT, MAG; { BULLET = new THREE.Group(); BULLET.add(mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.05, 12), new THREE.MeshBasicMaterial({ color: 0xfff2c0, toneMapped: false }), 0, 0, 0, false));
+  const tr = mesh(new THREE.CylinderGeometry(0.004, 0.022, 1.6, 10), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, toneMapped: false, blending: THREE.AdditiveBlending, depthWrite: false }), 0, -0.82, 0, false); BULLET.add(tr);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: PT.spark, color: 0xfff6dc, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })); glow.scale.set(0.035, 0.035, 0.035); BULLET.add(glow);
+  BULLET.scale.setScalar(2.6); BULLET.visible = false; scene.add(BULLET); BLIGHT = new THREE.PointLight(0xfff0c8, 0, 3, 1.5); scene.add(BLIGHT);
+  MAG = mesh(new THREE.BoxGeometry(0.03, 0.11, 0.02), new THREE.MeshStandardMaterial({ color: 0x2a2a2e, metalness: 0.8, roughness: 0.3 }), 0, 0, 0, false); MAG.visible = false; scene.add(MAG); }
+const STOP = -7.2, P_BOSS = (t) => V(0, 0, lerp(-9.6, STOP, clamp(t / 2.0, 0, 1))), RIV = V(0.6, 0, -14.8), HATP = V(0.6, 1.98, -14.8);
+const T_MAG = 5.55, T_RACK = 6.15, T_SPIN = [6.3, 6.95], T_SHOT1 = 8.2, T_HIT = 9.9, RIV_SHOTS = [12.3, 12.75], BOSS2 = [13.9, 14.35];
+window.SFX = { boss: [T_SHOT1, ...BOSS2], rival: RIV_SHOTS, thunder: [1.5], steps: [0.2, 0.75, 1.3, 1.85], draw: [4.0, 4.75, T_MAG, T_RACK, 17.0], spin: T_SPIN[0], hat: T_HIT, title: 18.6, run: 14.7, bulletTime: 8.45 };
+const AIMT = { armR: [92, -4], armL: [16, -32] };
 // =================== ACTING (per shot) ===================
-function setup(t, camPos) { Flat2D.T = t; Flat2D.E = 0; Flat2D.ON = 0; for (const c of PEOPLE) hide(c); HAT3D.visible = false; BULLET.visible = false; FLASHL.intensity = 0; FLASHES.forEach((f) => (f.visible = false)); TRACERS.forEach((x) => (x.visible = false)); for (const b of Object.values(BURSTS)) b.update(t, -99, V(), 0, false);
-  const lightning = (t0) => (t > t0 && t < t0 + 0.32 ? (t < t0 + 0.05 || (t > t0 + 0.13 && t < t0 + 0.19) ? 6 : 1.2) : 0); THUNDER.intensity = lightning(3.9);
-  CRATES.visible = t > 10.6; const B = BOSS, Rv = RIVAL; RIVAL.o.hat = t >= T_HIT ? null : 'fedora';
-  const bp = P_BOSS(t); B.place(bp.x, 0, bp.z);
-  const AIMT = { armR: [92, -4], armL: [16, -32] };
-  // 0 - 3.6 swagger walk (profile), low tracking camera
-  if (t < 3.6) B.update({ e: 0.5, ...swag(t), side: 1, turn: 1, face: { eyes: 'lid', lid: 0.45, mouth: 'smirk1', brow: -0.6, look: [0.6, 0] }, noBlink: true, noIdle: true }, camPos);
-  // 3.6 - 5.0 stops, turns to camera, close-up stare + lightning
-  else if (t < 5.0) B.update({ e: 1, ...keys(t, [[3.6, { armL: [16, -32], armR: [16, -32], tilt: 0, lean: -4 }], [4.4, { armL: [16, -32], armR: [16, -32], tilt: -7, lean: -2 }, 0.3]]), face: faceK(t, [[3.6, { eyes: 'lid', lid: 0.35, mouth: 'line', brow: -0.8, look: [0, 0] }], [4.35, { eyes: 'lid', lid: 0.45, mouth: 'smirk1', brow: -0.9, look: [1, 0.1] }]]), noBlink: true, noIdle: true }, camPos);
-  // 5.0 - 6.4 rival under the lamp, profile, draws and aims
-  else if (t < 6.4) { Rv.place(RIV.x, 0, RIV.z); Rv.update({ e: 1, ...keys(t, [[5.0, { armR: [16, -32], armL: [16, -32], lean: 0 }], [5.55, { armR: [150, -20], armL: [40, -110], lean: -6, hop: 6 }, 0.12, 'back'], [5.95, { ...AIMT, armL: [40, -110], lean: 4 }, 0.16, 'back']]), prop: t > 5.5 ? 'pistol' : null, propFront: true, side: 1, turn: -1, face: faceK(t, [[5.0, 'smug'], [5.55, { eyes: 'lid', lid: 0.3, mouth: 'psycho', brow: -0.9, look: [-1, 0] }]]) }, camPos); }
-  // 6.4 - 8.6 the boss spins the pistol on his finger, catches it, tilts it gangster-style and fires
-  else if (t < 8.6) { const spinU = sstep(T_SPIN[0], T_SPIN[1], t), spin = spinU < 1 ? spinU * 1080 : 0, tiltG = sstep(7.5, 7.75, t) * 90;
-    const k = keys(t, [[6.4, { armR: [60, -60], armL: [16, -32], lean: -4, tilt: -4 }], [7.45, { armR: [70, -50], armL: [16, -32], lean: -2, tilt: 2 }, 0.1, 'back'], [7.7, { ...AIMT, lean: -8, tilt: -10 }, 0.14, 'back'], [T_SHOT1, { ...AIMT, lean: -12, tilt: -12, hop: 3 }, 0.05], [T_SHOT1 + 0.08, { ...AIMT, lean: -6, tilt: -8 }, 0.18, 'back']]);
-    const sp = spin + tiltG; B.update({ e: 1, ...k, prop: 'pistol', propFront: true, propSpin: sp, side: 1, turn: 1, face: faceK(t, [[6.4, { eyes: 'lid', lid: 0.45, mouth: 'smirk1', brow: -0.5, look: [0.3, -0.6] }], [7.5, { eyes: 'lid', lid: 0.55, mouth: 'smirk1', browL: 0.6, browR: -0.8, look: [1, 0] }]]), noBlink: true, noIdle: true }, camPos);
-    const m = muzzle(B, sp); if (t > 7.7) { B_FROM = m.clone(); fire(0, t, T_SHOT1, m, m.clone().add(V(0, 0.02, -0.4))); smoke(831).update(t, T_SHOT1, m); } }
-  // 8.6 - 10.6 bullet time: the camera rides with the bullet; it hits the rival's hat
-  else if (t < 10.6) { Rv.place(RIV.x, 0, RIV.z); const from = V(0.25, 1.62, -7.0), u = clamp((t - 8.6) / (T_HIT - 8.6), 0, 1); BULLET.visible = t < T_HIT + 0.05; BULLET.position.copy(from.clone().lerp(HATP.clone().add(V(0, 0.08, 0.15)), u)); BULLET.quaternion.setFromUnitVectors(V(0, 1, 0), HATP.clone().sub(from).normalize()); BULLET.rotateY(t * 30);
-    Rv.update({ e: 1, ...AIMT, armL: [40, -110], prop: 'pistol', propFront: true, side: 1, turn: -1, face: t < T_HIT ? { eyes: 'lid', lid: 0.3, mouth: 'psycho', brow: -0.9, look: [-1, 0] } : { eyes: 'tiny', mouth: 'smallO', brow: 1.4 }, noBlink: true }, camPos);
-    if (t > T_HIT) { const v = t - T_HIT; HAT3D.visible = true; HAT3D.position.set(HATP.x, HATP.y + v * 1.6 - 1.2 * v * v, HATP.z - v * 0.6); HAT3D.rotation.set(v * 3, v * 2, v * 4); } spark(1000).update(t, T_HIT, HATP); }
-  // 10.6 - 12.2 slow-mo: hat spins in the air, the rival's face drops
-  else if (t < 12.2) { Rv.place(RIV.x, 0, RIV.z); const v = t - T_HIT; HAT3D.visible = true; HAT3D.position.set(HATP.x, HATP.y + v * 1.6 - 1.2 * v * v, HATP.z - v * 0.6); HAT3D.rotation.set(v * 3, v * 2, v * 4);
-    Rv.update({ e: 1, ...keys(t, [[10.6, { ...AIMT, armL: [40, -110] }], [11.2, { armR: [150, 30], armL: [150, 30], hop: 10, lean: -6 }, 0.12, 'back']]), prop: 'pistol', propFront: true, side: 1, turn: -1, face: faceK(t, [[10.6, { eyes: 'tiny', mouth: 'smallO', brow: 1.4, look: [0, -1] }], [11.2, { eyes: 'wide', mouth: 'scream', brow: 1.5 }]]), sweat: true, noBlink: true }, camPos); }
-  // 12.2 - 13.6 the rival panics and fires wildly; sparks hit the wall behind the calm boss
-  else if (t < 13.6) { const k = t < 12.9 ? 0 : 1; if (k === 0) { Rv.place(RIV.x, 0, RIV.z); Rv.update({ e: 1, ...AIMT, armL: [40, -110], lean: 6, tilt: 6 * Math.sin(t * 30), prop: 'pistol', propFront: true, side: 1, turn: -1, face: { eyes: 'wide', mouth: 'grimace', brow: 1.2 }, sweat: true }, camPos); const m = muzzle(Rv); fire(2, t, RIV_SHOTS[0], m, m.clone().add(V(0, 0, 0.5))); }
-    else { B.update({ e: 1, armL: [16, -32], armR: [16, -32], prop: 'pistol', propFront: true, face: { eyes: 'lid', lid: 0.55, mouth: 'smirk1', brow: -0.4, look: [0.4, 0] }, noBlink: true, noIdle: true }, camPos); fire(1, t, RIV_SHOTS[1], V(1.5, 1.6, -9), bp.clone().add(V(-1.2, 1.4, 0.6))); spark(1300).update(t, RIV_SHOTS[1] + 0.1, bp.clone().add(V(-1.4, 1.6, 0.4))); } }
-  // 13.6 - 15.6 two gangster shots knock the gun out of the rival's hand; he runs
-  else if (t < 15.6) { if (t < 14.9) { const k = keys(t, [[13.6, { ...AIMT, lean: -4 }], [BOSS2[0], { ...AIMT, lean: -10, tilt: -8 }, 0.05], [BOSS2[0] + 0.08, { ...AIMT, lean: -4 }, 0.15, 'back'], [BOSS2[1], { ...AIMT, lean: -10, tilt: -8 }, 0.05], [BOSS2[1] + 0.08, { ...AIMT, lean: -4 }, 0.15, 'back']]);
-      B.update({ e: 1, ...k, prop: 'pistol', propFront: true, propSpin: 90, side: 1, turn: 1, face: { eyes: 'lid', lid: 0.35, mouth: 'grin', brow: -1.0, look: [1, 0] }, noBlink: true, noIdle: true }, camPos); const m = muzzle(B, 90); for (const h of BOSS2) { fire(0, t, h, m, m.clone().add(V(0, 0, -0.4))); smoke(h * 10).update(t, h, m); shell(h * 10).update(t, h, m); } }
-    else { const run = sstep(15.0, 15.6, t); Rv.place(RIV.x, 0, RIV.z - run * 4); Rv.update({ e: 1, ...(run > 0 ? swag(t * 2.2, 1, 1.6) : { armR: [150, 30], armL: [150, 30] }), lean: run > 0 ? 10 : 0, side: 1, turn: 1, face: { eyes: 'tiny', mouth: 'scream', brow: 1.4 }, tears: true }, camPos); spark(1490).update(t, 14.9, V(RIV.x - 0.3, 1.3, RIV.z + 0.3)); } }
-  // 15.6 - 18.2 blows the smoke, spins the gun into the holster, tips the hat
-  else if (t < 18.2) { const k = keys(t, [[15.6, { armR: [150, -120], armL: [16, -32], tilt: -4 }], [16.6, { armR: [60, -60], armL: [16, -32], tilt: 0 }, 0.2], [17.2, { armR: [16, -32], armL: [16, -32] }, 0.2], [17.5, { armR: [160, -150], armL: [16, -32], tilt: -8, hop: 4 }, 0.16, 'back'], [17.9, { armR: [16, -32], armL: [16, -32], tilt: 0 }, 0.2]]);
-    const spin = t > 16.6 && t < 17.2 ? sstep(16.6, 17.15, t) * 720 : 0; B.update({ e: 1, ...k, prop: t < 17.2 ? 'pistol' : null, propFront: true, propSpin: spin, face: faceK(t, [[15.6, { eyes: 'lid', lid: 0.5, mouth: 'smallO', brow: -0.4, look: [0.6, -0.6] }], [16.4, { eyes: 'lid', lid: 0.55, lidL: 0.1, mouth: 'smirk1', browL: 0.7, browR: -0.6 }], [17.5, { eyes: 'closed', mouth: 'smirk1', brow: 0.2 }]]), noBlink: true, noIdle: true }, camPos);
-    if (t < 16.6) smoke(1560).update(t, 15.6, () => muzzle(B), 0.5); }
-  // 18.2 - 20 swaggers away into the rain
-  else { const z = lerp(-7.2, -10.5, (t - 18.2) / 1.8); B.place(0, 0, z); B.update({ e: 0.5, ...swag(t), side: 1, turn: 1, face: { eyes: 'lid', lid: 0.5, mouth: 'smirk1', brow: -0.5, look: [0.6, 0] }, noBlink: true, noIdle: true }, camPos); }
+function setup(t, camPos) { Flat2D.T = t; Flat2D.E = 0; Flat2D.ON = 0; for (const c of PEOPLE) hide(c); HAT3D.visible = false; BULLET.visible = false; MAG.visible = false; BLIGHT.intensity = 0; FLASHL.intensity = 0; FLASHES.forEach((f) => (f.visible = false)); TRACERS.forEach((x) => (x.visible = false)); for (const b of Object.values(BURSTS)) b.update(t, -99, V(), 0, false);
+  const lightning = (t0) => (t > t0 && t < t0 + 0.32 ? (t < t0 + 0.05 || (t > t0 + 0.13 && t < t0 + 0.19) ? 6 : 1.2) : 0); THUNDER.intensity = lightning(1.5);
+  CRATES.visible = false; const B = BOSS, Rv = RIVAL; RIVAL.o.hat = t >= T_HIT ? null : 'fedora'; const bp = P_BOSS(t); B.place(bp.x, 0, bp.z); Rv.place(RIV.x, 0, RIV.z);
+  const rivIdle = (face) => Rv.update({ e: 0.8, ...AIMT, armL: [40, -110], prop: 'pistol', propFront: true, side: 1, turn: -1, face, noBlink: true }, camPos);
+  // 0 - 2.0 hero walk toward a camera at his feet (front view)
+  if (t < 2.0) B.update({ e: 0.6, ...mo('17_06f', t, { t0: 0, from: 0.4, amp: 1.1, root: 0 }), armL: [16, -32], lean: -4, face: faceK(t, [[0, { eyes: 'lid', lid: 0.5, mouth: 'smirk1', brow: -0.7, look: [0, -0.4] }], [1.5, { eyes: 'lid', lid: 0.35, mouth: 'line', brow: -0.9, look: [0, -0.5] }]]), noBlink: true, noIdle: true }, camPos);
+  // 2.0 - 3.3 close-up stare; eyes slide back over his shoulder
+  else if (t < 3.3) B.update({ e: 1, armL: [16, -32], armR: [16, -32], ...keys(t, [[2.0, { tilt: 0 }], [2.7, { tilt: -7 }, 0.3]]), face: faceK(t, [[2.0, { eyes: 'lid', lid: 0.35, mouth: 'line', brow: -0.8, look: [0, 0] }], [2.65, { eyes: 'lid', lid: 0.45, mouth: 'smirk1', brow: -0.9, look: [-1, 0.1] }]]), noBlink: true, noIdle: true }, camPos);
+  // 3.3 - 4.6 the rival steps out under the far lamp and draws (boss's back in the foreground)
+  else if (t < 4.6) { B.update({ e: 0.5, armL: [16, -32], armR: [16, -32], face: 'deadpan', noIdle: true }, camPos);
+    Rv.update({ e: 1, ...keys(t, [[3.3, { armR: [16, -32], armL: [16, -32] }], [3.9, { armR: [150, -20], armL: [40, -110], lean: -6, hop: 6 }, 0.12, 'back'], [4.25, { ...AIMT, armL: [40, -110], lean: 4 }, 0.16, 'back']]), prop: t > 3.85 ? 'pistol' : null, propFront: true, side: 1, turn: -1, face: faceK(t, [[3.3, 'smug'], [3.9, { eyes: 'lid', lid: 0.3, mouth: 'psycho', brow: -0.9, look: [-1, 0] }]]) }, camPos); }
+  // 4.6 - 7.0 loads the gun: pistol out, magazine in (click), racks the slide (click), spins it
+  else if (t < 7.0) { const spin = t > T_SPIN[0] && t < T_SPIN[1] ? sstep(T_SPIN[0], T_SPIN[1], t) * 1080 : 0;
+    const k = keys(t, [[4.6, { armR: [16, -32], armL: [16, -32] }], [4.75, { armR: [70, -60], armL: [16, -32], tilt: 3 }, 0.14, 'back'], [5.1, { armR: [70, -60], armL: [40, 40], tilt: 4 }, 0.16], [T_MAG, { armR: [70, -60], armL: [62, -30], tilt: -3, hop: 3 }, 0.1, 'in'], [5.8, { armR: [70, -60], armL: [62, -62], tilt: 0 }, 0.12],
+      [T_RACK, { armR: [70, -60], armL: [40, -20], tilt: -5, hop: 4 }, 0.08, 'in'], [6.3, { armR: [80, -40], armL: [16, -32], tilt: 2 }, 0.14, 'back']]);
+    B.update({ e: 1, ...k, prop: 'pistol', propFront: true, propSpin: spin, face: faceK(t, [[4.6, { eyes: 'lid', lid: 0.45, mouth: 'line', brow: -0.7, look: [0.4, 0.5] }], [T_MAG, { eyes: 'lid', lid: 0.5, mouth: 'smirk1', brow: -0.8, look: [0.4, 0.5] }], [T_SPIN[0], { eyes: 'lid', lid: 0.55, mouth: 'smirk1', browL: 0.6, browR: -0.8, look: [0, 0] }]]), noBlink: true, noIdle: true }, camPos);
+    if (t > 5.05 && t < T_MAG + 0.05 && B.handL) { MAG.visible = true; MAG.position.copy(B.toWorld(B.handL)).add(V(0, 0.04, 0.03)); MAG.rotation.set(0, 0, 0.2); } }
+  // 7.0 - 8.45 TWO-SHOT over the boss's shoulder: aims level at the rival in the distance, fires
+  else if (t < 8.45) { const k = keys(t, [[7.0, { ...AIMT, lean: -4 }], [T_SHOT1, { ...AIMT, lean: -10, tilt: -6, hop: 2 }, 0.05], [T_SHOT1 + 0.08, { ...AIMT, lean: -4 }, 0.16, 'back']]);
+    B.update({ e: 1, ...k, prop: 'pistol', propFront: true, side: 1, turn: 1, face: { eyes: 'lid', lid: 0.4, mouth: 'smirk1', brow: -1.0, look: [1, 0] }, noBlink: true, noIdle: true }, camPos); rivIdle({ eyes: 'lid', lid: 0.3, mouth: 'psycho', brow: -0.9, look: [-1, 0] });
+    const m = muzzle(B); fire(0, t, T_SHOT1, m, m.clone().add(V(0, 0, -0.5))); smoke(821).update(t, T_SHOT1, m); }
+  // 8.45 - T_HIT bullet time: camera behind the glowing bullet, the rival grows ahead, the bullet hits his hat
+  else if (t < T_HIT + 0.12) { const from = V(0.2, 1.62, STOP - 0.6), to = HATP.clone().add(V(0, 0.06, 0.12)), u = clamp((t - 8.45) / (T_HIT - 8.45), 0, 1); BULLET.visible = t < T_HIT; BULLET.position.copy(from.clone().lerp(to, u)); BULLET.quaternion.setFromUnitVectors(V(0, 1, 0), to.clone().sub(from).normalize()); BLIGHT.position.copy(BULLET.position); BLIGHT.intensity = 1.2;
+    rivIdle(t < T_HIT ? { eyes: 'wide', mouth: 'smallO', brow: 1.0, look: [-1, 0] } : { eyes: 'tiny', mouth: 'scream', brow: 1.5 }); if (t > T_HIT) { HAT3D.visible = true; HAT3D.position.copy(HATP); } spark(990).update(t, T_HIT, HATP); }
+  // T_HIT - 12.0 slow-mo: the hat spins away, the rival's face drops
+  else if (t < 12.0) { const v = t - T_HIT; HAT3D.visible = true; HAT3D.position.set(HATP.x, HATP.y + v * 1.5 - 1.1 * v * v, HATP.z - v * 0.5); HAT3D.rotation.set(v * 3, v * 2, v * 4);
+    Rv.update({ e: 1, ...keys(t, [[T_HIT, { ...AIMT, armL: [40, -110] }], [10.9, { armR: [150, 30], armL: [150, 30], hop: 10, lean: -6 }, 0.12, 'back']]), prop: 'pistol', propFront: true, side: 1, turn: -1, face: faceK(t, [[T_HIT, { eyes: 'tiny', mouth: 'smallO', brow: 1.4, look: [0, -1] }], [10.9, { eyes: 'wide', mouth: 'scream', brow: 1.5 }]]), sweat: true, noBlink: true }, camPos); }
+  // 12.0 - 13.4 REVERSE TWO-SHOT over the rival: he fires wildly, the boss stands calm in the distance
+  else if (t < 13.4) { Rv.update({ e: 1, ...AIMT, armL: [40, -110], lean: 6, tilt: 6 * Math.sin(t * 30), prop: 'pistol', propFront: true, side: 1, turn: -1, face: { eyes: 'wide', mouth: 'grimace', brow: 1.2 }, sweat: true }, camPos);
+    B.update({ e: 0.6, armL: [16, -32], armR: [16, -32], prop: 'pistol', propFront: true, side: 1, turn: 1, face: { eyes: 'lid', lid: 0.55, mouth: 'smirk1', brow: -0.4 }, noBlink: true, noIdle: true }, camPos);
+    const m = muzzle(Rv); RIV_SHOTS.forEach((h, i) => fire(2, t, h, m, bp.clone().add(V(-1.3 + i * 2.4, 1.2 + i * 0.6, 0.8)))); RIV_SHOTS.forEach((h, i) => spark(1200 + i).update(t, h + 0.1, bp.clone().add(V(-1.3 + i * 2.4, 1.2 + i * 0.6, 0.8)))); }
+  // 13.4 - 14.6 two level shots knock the gun out of the rival's hand
+  else if (t < 14.6) { const k = keys(t, [[13.4, { ...AIMT, lean: -4 }], [BOSS2[0], { ...AIMT, lean: -10, tilt: -6 }, 0.05], [BOSS2[0] + 0.08, { ...AIMT, lean: -4 }, 0.15, 'back'], [BOSS2[1], { ...AIMT, lean: -10, tilt: -6 }, 0.05], [BOSS2[1] + 0.08, { ...AIMT, lean: -4 }, 0.15, 'back']]);
+    B.update({ e: 1, ...k, prop: 'pistol', propFront: true, side: 1, turn: 1, face: { eyes: 'lid', lid: 0.35, mouth: 'grin', brow: -1.0, look: [1, 0] }, noBlink: true, noIdle: true }, camPos); const m = muzzle(B); for (const h of BOSS2) { fire(0, t, h, m, m.clone().add(V(0, 0, -0.5))); smoke(h * 10).update(t, h, m); shell(h * 10).update(t, h, m); } }
+  // 14.6 - 15.6 gun flies out of his hand; he runs
+  else if (t < 15.6) { const run = sstep(14.8, 15.6, t); Rv.place(RIV.x, 0, RIV.z - run * 4); Rv.update({ e: 1, ...(run > 0 ? swag(t * 2.2, 1, 1.6) : { armR: [150, 30], armL: [150, 30] }), lean: run > 0 ? 10 : 0, side: 1, turn: 1, face: { eyes: 'tiny', mouth: 'scream', brow: 1.4 }, tears: true }, camPos); spark(1460).update(t, 14.6, V(RIV.x - 0.3, 1.3, RIV.z + 0.3)); }
+  // 15.6 - 18.2 smoke, spin into the holster, tip the hat (front close-up)
+  else if (t < 18.2) { const k = keys(t, [[15.6, { armR: [150, -120], armL: [16, -32], tilt: -4 }], [16.5, { armR: [60, -60], armL: [16, -32], tilt: 0 }, 0.2], [17.0, { armR: [16, -32], armL: [16, -32] }, 0.2], [17.4, { armR: [160, -150], armL: [16, -32], tilt: -8, hop: 4 }, 0.16, 'back'], [17.85, { armR: [16, -32], armL: [16, -32], tilt: 0 }, 0.2]]);
+    const spin = t > 16.5 && t < 17.0 ? sstep(16.5, 16.95, t) * 720 : 0; B.update({ e: 1, ...k, prop: t < 17.0 ? 'pistol' : null, propFront: true, propSpin: spin, face: faceK(t, [[15.6, { eyes: 'lid', lid: 0.5, mouth: 'smallO', brow: -0.4, look: [0.6, -0.6] }], [16.3, { eyes: 'lid', lid: 0.55, lidL: 0.1, mouth: 'smirk1', browL: 0.7, browR: -0.6 }], [17.4, { eyes: 'closed', mouth: 'smirk1', brow: 0.2 }]]), noBlink: true, noIdle: true }, camPos);
+    if (t < 16.5) smoke(1560).update(t, 15.6, () => muzzle(B), 0.5); }
+  // 18.2 - 20 swaggers away (low angle, profile)
+  else { const z = lerp(STOP, -10.5, (t - 18.2) / 1.8); B.place(0, 0, z); B.update({ e: 0.5, ...swag(t), side: 1, turn: 1, face: { eyes: 'lid', lid: 0.5, mouth: 'smirk1', brow: -0.5, look: [0.6, 0] }, noBlink: true, noIdle: true }, camPos); }
   TITLE.visible = t > 18.5; TITLE.material.opacity = sstep(18.5, 19.0, t) * (1 - sstep(19.75, 20, t));
 }
-function fx(t) { const P = RAIN.geometry.attributes.position.array, S = RAIN.userData.seed, c = cam.position; const slow = t > 8.6 && t < 12.2 ? 0.12 : 1; const tt = t < 8.6 ? t : t < 12.2 ? 8.6 + (t - 8.6) * 0.12 : t - 3.6 * 0.88; for (let i = 0; i < S.length; i++) { const [a, b, h] = S[i]; const x = c.x + (a - 0.5) * 16, z = c.z - 1 - b * 14, y = c.y + 6 - ((tt * 9 + h * 12) % 12); P[i * 6] = x; P[i * 6 + 1] = y; P[i * 6 + 2] = z; P[i * 6 + 3] = x + 0.03; P[i * 6 + 4] = y - 0.45 * slow - 0.03; P[i * 6 + 5] = z; } RAIN.geometry.attributes.position.needsUpdate = true; }
+function fx(t) { const P = RAIN.geometry.attributes.position.array, S = RAIN.userData.seed, c = cam.position; const slow = t > 8.45 && t < 12.0 ? 0.12 : 1; const tt = t < 8.45 ? t : t < 12.0 ? 8.45 + (t - 8.45) * 0.12 : t - 3.55 * 0.88; for (let i = 0; i < S.length; i++) { const [a, b, h] = S[i]; const x = c.x + (a - 0.5) * 16, z = c.z - 1 - b * 14, y = c.y + 6 - ((tt * 9 + h * 12) % 12); P[i * 6] = x; P[i * 6 + 1] = y; P[i * 6 + 2] = z; P[i * 6 + 3] = x + 0.03; P[i * 6 + 4] = y - 0.45 * slow - 0.03; P[i * 6 + 5] = z; } RAIN.geometry.attributes.position.needsUpdate = true; }
 // =================== CAMERA ===================
 const CINE = new Cine(); const shot = (a, b, s) => CINE.shot(a, b, s);
 const bH = (dy = 0) => () => BOSS.headWorld().add(V(0, dy, 0)), rH = (dy = 0) => () => RIVAL.headWorld().add(V(0, dy, 0));
 function camera() {
-  shot(0, 3.6, { rig: 'pov', from: (t) => P_BOSS(t).add(V(3.4, 0.55, 0.6)), at: (t) => P_BOSS(t).add(V(0, 1.15, -0.4)), fov: 36, push: 1.0, drift: [0, 0] });
-  shot(3.6, 5.0, { rig: 'push', at: bH(0.05), size: 1.25, az: 10, el: 0, fov: 30, push: 1.15, zoomK: [[4.35, 1.18, 0.1]] });
-  shot(5.0, 6.4, { rig: 'push', at: () => RIV.clone().add(V(0, 1.3, 0)), size: 2.6, az: 75, el: -4, fov: 32, push: 1.2, zoomK: [[5.55, 1.3, 0.1]] });
-  shot(6.4, 8.6, { rig: 'push', at: () => P_BOSS(6.4).add(V(0.25, 1.35, -0.2)), size: 1.9, az: 70, el: -6, fov: 32, push: 1.12, zoomK: [[7.5, 1.2, 0.12], [T_SHOT1, 1.35, 0.05]] });
-  shot(8.6, T_HIT + 0.1, { rig: 'pov', from: () => BULLET.position.clone().add(V(0.16, 0.05, 0.3)), at: () => BULLET.position.clone().add(V(-0.02, 0, -0.35)), fov: 44, push: 1.0, drift: [0, 0] });
-  shot(T_HIT + 0.1, 12.2, { rig: 'push', at: () => RIV.clone().add(V(0, 1.75, 0)), size: 2.6, az: 80, el: 4, fov: 32, push: 1.15 });
-  shot(12.2, 12.9, { rig: 'push', at: () => RIV.clone().add(V(0, 1.3, 0)), size: 2.4, az: 75, el: -4, fov: 32, push: 1.1 });
-  shot(12.9, 13.6, { rig: 'push', at: bH(-0.1), size: 1.4, az: 12, el: 0, fov: 30, push: 1.12 });
-  shot(13.6, 14.9, { rig: 'push', at: () => P_BOSS(14).add(V(0.25, 1.35, -0.2)), size: 2.0, az: 65, el: -8, fov: 32, push: 1.15, zoomK: [[BOSS2[0], 1.15, 0.05], [BOSS2[1], 1.3, 0.05]] });
-  shot(14.9, 15.6, { rig: 'push', at: (t) => RIV.clone().add(V(0, 1.2, -sstep(15.0, 15.6, t) * 3)), size: 3.0, az: 80, el: 2, fov: 34, push: 1.05 });
-  shot(15.6, 18.2, { rig: 'push', at: bH(-0.15), size: 1.4, az: -12, el: 2, fov: 30, push: 1.12 });
-  shot(18.2, 20, { rig: 'pov', from: (t) => V(3.6, 0.6, lerp(-7.2, -10.5, (t - 18.2) / 1.8) + 1.2), at: (t) => V(0, 1.2, lerp(-7.2, -10.5, (t - 18.2) / 1.8) - 0.4), fov: 38, push: 1.0, drift: [0, 0] });
+  shot(0, 2.0, { rig: 'pov', from: (t) => V(0.3, 0.14, lerp(-6.0, -5.7, t / 2)), at: (t) => P_BOSS(t).add(V(0, 1.55, 0)), fov: 50, push: 1.0, drift: [0, 0] });
+  shot(2.0, 3.3, { rig: 'push', at: bH(0.05), size: 1.2, az: 6, el: -4, fov: 30, push: 1.15, zoomK: [[2.65, 1.18, 0.1]] });
+  shot(3.3, 4.6, { rig: 'pov', from: () => V(0.9, 1.5, STOP + 1.6), at: () => RIV.clone().add(V(-0.2, 1.3, 0)), fov: 30, push: 1.0, drift: [0, 0], zoomK: [[3.9, 1.4, 0.12]] });
+  shot(4.6, 7.0, { rig: 'push', at: () => P_BOSS(5).add(V(0.15, 1.3, 0)), size: 1.5, az: 4, el: -6, fov: 30, push: 1.12, zoomK: [[T_MAG, 1.12, 0.06], [T_RACK, 1.25, 0.06]] });
+  shot(7.0, 8.45, { rig: 'pov', from: () => V(0.32, 1.72, STOP + 1.5), at: () => V(0.45, 1.3, -12.5), fov: 50, push: 1.0, drift: [0, 0], zoomK: [[T_SHOT1, 1.12, 0.05]] });
+  shot(8.45, T_HIT + 0.12, { rig: 'pov', from: () => BULLET.position.clone().add(V(0.06, 0.07, 0.55)), at: () => HATP.clone().add(V(0, -0.15, 0)), fov: 40, push: 1.0, drift: [0, 0] });
+  shot(T_HIT + 0.12, 12.0, { rig: 'push', at: () => RIV.clone().add(V(0, 1.7, 0)), size: 2.6, az: 80, el: 4, fov: 32, push: 1.15 });
+  shot(12.0, 13.4, { rig: 'pov', from: () => V(0.95, 1.65, RIV.z - 1.5), at: () => V(0.0, 1.3, STOP), fov: 50, push: 1.0, drift: [0, 0] });
+  shot(13.4, 14.6, { rig: 'push', at: () => P_BOSS(14).add(V(0.3, 1.25, -0.3)), size: 2.0, az: 62, el: -14, fov: 32, push: 1.15, zoomK: [[BOSS2[0], 1.15, 0.05], [BOSS2[1], 1.3, 0.05]] });
+  shot(14.6, 15.6, { rig: 'push', at: (t) => RIV.clone().add(V(0, 1.2, -sstep(14.8, 15.6, t) * 3)), size: 3.0, az: 80, el: 2, fov: 34, push: 1.05 });
+  shot(15.6, 18.2, { rig: 'push', at: bH(-0.15), size: 1.4, az: -12, el: -6, fov: 30, push: 1.12 });
+  shot(18.2, 20, { rig: 'pov', from: (t) => V(2.6, 0.25, lerp(STOP, -10.5, (t - 18.2) / 1.8) + 1.4), at: (t) => V(0, 1.4, lerp(STOP, -10.5, (t - 18.2) / 1.8) - 0.6), fov: 42, push: 1.0, drift: [0, 0] });
 }
+
 // =================== RENDER ===================
 const composer = makeComposer({ sat: 0.0, con: 1.32, bloom: 0.3 }); const SKY = makeSky();
 const look = (t, cpos) => { SKY.update(cpos, true, composer.grade); hemi.intensity = 0.25; hemi.color.setHex(0xc8c8c8); sun.intensity = 0.35; sun.color.setHex(0xd8d8d8); const tg = sun.target.position; sun.position.copy(tg).add(V(-12, 30, 14)); };
 const camOf = dynamicCam(CINE);
-makeRenderer({ CINE, camOf, setup, fx, look, composer, DURATION, impacts: [T_SHOT1, ...BOSS2, ...RIV_SHOTS, T_HIT], flash: (t) => (t > 3.9 && t < 3.96 ? 0.35 : 0) });
+makeRenderer({ CINE, camOf, setup, fx, look, composer, DURATION, impacts: [T_SHOT1, ...BOSS2, ...RIV_SHOTS, T_HIT], flash: (t) => (t > 1.5 && t < 1.56 ? 0.35 : 0) });
 (async () => { await loadMo(['17_03', '17_06f'], './mocap'); await sky('kloofendal_48d_partly_cloudy_puresky', { env: 0.25 }); build(); camera(); await ready(); window.ready = true; })();
 
