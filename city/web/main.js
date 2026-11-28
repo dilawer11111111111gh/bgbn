@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { scene, cam, sun, hemi, V, sky, ready, makeComposer } from '../../web/realkit.js';
 import { Cine } from '../../web/cine.js';
 import { Flat2D } from '../../web/flat2d.js';
-import { mo } from '../../web/mocap.js';
+import { loadMo, mo } from '../../web/mocap.js';
 import { sstep, clamp, lerp } from '../../web/motion.js';
 import { installActing, keys, faceK, makeSky, dynamicCam, makeRenderer } from '../../web/studio.js';
 import { makeAtlas, Crowd, blob, grid, mulberry } from '../../web/crowd.js';
@@ -33,4 +33,4 @@ const composer = makeComposer({ sat: 1.32, con: 1.12, bloom: 0.1 }); const SKY =
 const look = (t, cpos) => { SKY.update(cpos, false, composer.grade); sun.color.setHex(0xffe0b8); sun.intensity = 2.6; hemi.intensity = 0.55; const tg = sun.target.position; sun.position.copy(tg).add(V(-40, 55, 30)); };
 const camOf = dynamicCam(CINE);
 makeRenderer({ CINE, camOf, setup, fx, look, composer, DURATION, impacts: [7.6] });
-(async () => { await sky('kloofendal_48d_partly_cloudy_puresky', { env: 0.9 }); build(); camera(); await ready(); window.ready = true; })();
+(async () => { await loadMo(['17_06f'], './mocap'); await sky('kloofendal_48d_partly_cloudy_puresky', { env: 0.9 }); build(); camera(); await ready(); window.ready = true; })();
