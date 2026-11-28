@@ -6,7 +6,7 @@ import { Cine } from '../../web/cine.js';
 import { Flat2D } from '../../web/flat2d.js';
 import { sstep, clamp, lerp } from '../../web/motion.js';
 import { installActing, keys, faceK, makeSky, dynamicCam, makeRenderer } from '../../web/studio.js';
-import { Batch, texMat, plain, boxUV, terrain } from '../../web/world3d.js';
+import { Batch, texMat, plain, boxUV, terrain, photoMat } from '../../web/world3d.js';
 import { makeAtlas, Crowd, grid, blob, mulberry, Volley } from '../../web/crowd.js';
 import { royalPalace, mughalGarden, greenField, rbox, mat, GOLD, TILE } from '../../web/eras.js';
 export const DURATION = 15;
@@ -14,10 +14,11 @@ installActing();
 // =================== WORLD: palace (z -60), courtyard, city wall + gate (z 0), battlefield (z 0..160) ===================
 const flags = []; let TITLE, CAP, capCtx, capTex, DUST = [];
 let PAL, GARD;
-function cityWall(B) { const stone = mat({ color: 0xd8904a, roughness: 0.6 }), trim = mat({ color: 0xfbf3e4, roughness: 0.35, clearcoat: 0.5 }), roof = TILE('#18a8b8', '#f6f0e0', '#1a4a9a', [3, 1]);
-  for (const s of [-1, 1]) { B.add(rbox(70, 12, 4, 0.4), stone, s * 41, 6, 0); B.add(new THREE.BoxGeometry(70.2, 1, 4.3), trim, s * 41, 11.6, 0); for (let i = 0; i < 26; i++) B.add(rbox(1.4, 1.6, 4.2, 0.2), i % 2 ? stone : trim, s * (8 + i * 2.7), 12.8, 0); }
-  for (const s of [-1, 1]) { B.add(new THREE.CylinderGeometry(4.4, 5, 20, 24), stone, s * 8, 10, 0); B.add(new THREE.CylinderGeometry(4.7, 4.7, 1.4, 24, 1, true), roof, s * 8, 18, 0); B.add(new THREE.SphereGeometry(4.6, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), GOLD(), s * 8, 20, 0); }
-  B.add(rbox(12, 4, 4.4, 0.3), stone, 0, 14, 0); B.add(new THREE.BoxGeometry(11, 3, 0.1), roof, 0, 14, 2.25); for (const s of [-1, 1]) B.add(rbox(4, 10, 70, 0.4), stone, s * 40, 5, -36); }
+function cityWall(B) { const brick = photoMat('brick', { rep: 1 }), stone = pbr('red_sandstone_wall', [1, 1], { metal: 0, rough: 1 }), roof = TILE('#18a8b8', '#e8b870', '#1a4a9a', [3, 1]);
+  // massive old fort walls: 18 m high, 7 m thick, real bricks, sandstone cap and merlons
+  for (const s of [-1, 1]) { B.add(boxUV(70, 18, 7, 2.2), brick, s * 42, 9, 0); B.add(boxUV(70.4, 1.4, 7.4, 2), stone, s * 42, 18.4, 0); for (let i = 0; i < 26; i++) B.add(boxUV(1.6, 2.2, 1.2, 2), stone, s * (9 + i * 2.7), 20.2, 2.9); }
+  for (const s of [-1, 1]) { B.add(new THREE.CylinderGeometry(6, 6.8, 28, 28), brick, s * 9, 14, 0); B.add(new THREE.CylinderGeometry(6.4, 6.4, 1.6, 28, 1, true), roof, s * 9, 26, 0); B.add(new THREE.SphereGeometry(6.2, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), GOLD(), s * 9, 28, 0); }
+  B.add(boxUV(12, 6, 7.4, 2.2), brick, 0, 19, 0); B.add(new THREE.BoxGeometry(11, 3, 0.1), roof, 0, 19, 3.75); for (const s of [-1, 1]) B.add(boxUV(7, 18, 70, 2.2), brick, s * 42, 9, -36); }
 function battlefield() { greenField({ tentZ: 150 }); }
 function flag(x, y, z, col, s = 1) { const pole = mesh(new THREE.CylinderGeometry(0.06 * s, 0.06 * s, 6 * s, 8), std(0x5a3a20), x, y + 3 * s, z); scene.add(pole); const g = new THREE.PlaneGeometry(2.4 * s, 1.4 * s, 12, 1); g.translate(1.2 * s, 0, 0); const f = mesh(g, std(col, { side: THREE.DoubleSide, r: 0.7 }), x, y + 5.3 * s, z); scene.add(f); f.userData.p0 = g.attributes.position.array.slice(); flags.push(f); }
 function build() { PAL = royalPalace({ z: -58 }); GARD = mughalGarden({ z1: -50, z2: -4, w: 56 }); const B = new Batch(); cityWall(B); B.flush(); battlefield();
@@ -62,14 +63,14 @@ function setup(t, camPos) { Flat2D.T = t; Flat2D.E = 0; Flat2D.ON = 0; hideAll()
   COURT.update(t, camPos, { mode: bow ? 2 : cheer ? 1 : 0, bob: cheer ? 1 : 0.2, visible: t < 3.7 });
   ARMY.mesh.position.set(0, 0, ARMY_Z(t)); ARMY.update(t, camPos, { mode: t > 9.4 ? 1 : t > 4.6 ? 0 : 0, march: t > 3.6 ? 1 : 0, bob: t > 3.6 ? 0.6 : 0, clashT: T.clash + 0.2, visible: t > 3.5 });
   ENEMY.mesh.position.set(0, 0, ENEMY_Z(t)); ENEMY.update(t, camPos, { mode: t > 8.4 && t < 9.4 ? 2 : 1, march: 1, bob: 1.0, clashT: T.rain + 0.4, visible: t > 5.0 });
-  ARCHERS.mesh.position.set(0, 13.6, -1.2); ARCHERS.update(t, camPos, { mode: t > 6.2 && t < 7.0 ? 1 : t >= 7.0 ? 2 : 0, visible: t > 6.0 && t < 9.6 });
+  ARCHERS.mesh.position.set(0, 19.1, 0.2); ARCHERS.update(t, camPos, { mode: t > 6.2 && t < 7.0 ? 1 : t >= 7.0 ? 2 : 0, visible: t > 6.0 && t < 9.6 });
   VOLLEY.update(t, { x: 0, z: 0, rx: 30, rz: 2 }, { x: 0, z: ENEMY_Z(t), rx: 28, rz: 18 }, T.volley, 1.6, 34, t > T.volley && t < 10.5);
   for (const [i, d] of DUST.entries()) d.update(t, T.clash + i * 0.12, V((i - 2.5) * 9, 0.5, 78 + (i % 2) * 4));
   // hero performances
   if (t < 3.6) { KING.place(PAL.throne.x, PAL.throne.y - 0.45, PAL.throne.z); KING.update({ e: 1, sit: t < 1.4 ? 1 : 0, ...keys(t, [[0, { armL: [40, -110], armR: [40, -110], tilt: 0, lean: 0 }], [1.6, { armR: [150, -40], armL: [40, -110], lean: -8, tilt: -8, hop: 10 }, 0.08, 'back'], [2.1, { armR: [92, -4], armL: [40, -110], lean: 6, tilt: 6, squash: 0.06 }, 0.1, 'in'], [2.5, { armR: [92, -4], armL: [40, -110], lean: 0, tilt: 0 }, 0.2]]),
       face: faceK(t, [[0, { eyes: 'lid', lid: 0.45, mouth: 'smirk1', brow: -0.6 }], [1.6, { eyes: 'stare', mouth: 'scream', brow: -1.1 }], [2.5, { eyes: 'lid', lid: 0.3, mouth: 'psycho', brow: -1.0 }]], 0.06), noBlink: true }, camPos); }
   if (t > 4.4 && t < 5.4) { GEN.place(0.2, 0, ARMY_Z(t) + 25); GEN.update({ e: 1, ...keys(t, [[4.4, { armR: [60, -40], armL: [16, -32], lean: 0 }], [4.7, { armR: [160, 10], armL: [70, -60], lean: -10, tilt: -8, hop: 12 }, 0.08, 'back']]), prop: 'sword', propHand: 'R', propFront: true, face: faceK(t, [[4.4, { eyes: 'lid', lid: 0.3, mouth: 'line', brow: -0.9 }], [4.7, { eyes: 'stare', mouth: 'scream', brow: -1.2 }]], 0.05), noBlink: true }, camPos); }
-  if (t > 6.2 && t < 7.0) { ARCH.place(22, 13.6, 1.6); ARCH.update({ e: 1, ...keys(t, [[6.2, archerF[0]], [6.5, { ...archerF[1] }, 0.25], [6.95, { ...archerF[2] }, 0.05]]), prop: 'bow', propHand: 'L', propFront: true, face: faceK(t, [[6.2, archerF[0].face], [6.5, { eyes: 'squeeze', mouth: 'line', brow: -1 }], [6.95, { eyes: 'stare', mouth: 'smallO', brow: 0.2 }]], 0.05), noBlink: true }, camPos); }
+  if (t > 6.2 && t < 7.0) { ARCH.place(21.15, 19.1, 1.6); ARCH.update({ e: 1, ...keys(t, [[6.2, archerF[0]], [6.5, { ...archerF[1] }, 0.25], [6.95, { ...archerF[2] }, 0.05]]), prop: 'bow', propHand: 'L', propFront: true, face: faceK(t, [[6.2, archerF[0].face], [6.5, { eyes: 'squeeze', mouth: 'line', brow: -1 }], [6.95, { eyes: 'stare', mouth: 'smallO', brow: 0.2 }]], 0.05), noBlink: true }, camPos); }
   if (t > 11.0 && t < 11.8) { KING.place(PAL.throne.x, PAL.throne.y - 0.45, PAL.throne.z); KING.update({ e: 1, ...keys(t, [[11.0, { armL: [40, -110], armR: [40, -110] }], [11.35, { armL: [150, 40], armR: [150, 40], hop: 14, lean: -6 }, 0.08, 'back']]), face: faceK(t, [[11.0, { eyes: 'tiny', mouth: 'smallO', brow: 1.4 }], [11.35, { eyes: 'stare', mouth: 'scream', brow: -1.2 }]], 0.05), noBlink: true }, camPos); }
   if (t > 11.8 && t < 12.8) { GEN.place(0.2, 0, 72); GEN.update({ e: 1, ...keys(t, [[11.8, { armR: [160, 10], armL: [70, -60], lean: -8 }], [12.15, { armR: [40, 60], armL: [70, -60], lean: 12, tilt: 10, hop: 6, squash: 0.08 }, 0.07, 'in'], [12.5, { armR: [150, 20], armL: [150, 20], lean: -6, hop: 10 }, 0.12, 'back']]), prop: 'sword', propHand: 'R', propFront: true, face: { eyes: 'stare', mouth: 'scream', brow: -1.2 }, noBlink: true }, camPos); }
 }
@@ -86,7 +87,7 @@ function camera() {
   shot(3.6, 4.4, { rig: 'pov', from: (t) => V(4, 0.4, ARMY_Z(t) + 26), at: (t) => V(0, 2.6, ARMY_Z(t) + 8), fov: 46, push: 1.0, drift: [0, 0] });
   shot(4.4, 5.2, { rig: 'push', at: gH(-0.2), size: 1.9, az: 15, el: -14, fov: 32, push: 1.25, zoomK: [[4.7, 1.3, 0.06]] });
   shot(5.2, 6.2, { rig: 'pov', from: (t) => V(lerp(-30, -10, (t - 5.2)), 3, 112), at: (t) => V(0, 2, ENEMY_Z(t)), fov: 40, push: 1.0, drift: [0, 0] });
-  shot(6.2, 7.0, { rig: 'push', at: () => V(22, 15.2, 1.6), size: 2.4, az: 20, el: 6, fov: 34, push: 1.15 });
+  shot(6.2, 7.0, { rig: 'push', at: () => V(21.15, 20.6, 1.6), size: 2.8, az: 10, el: 22, fov: 34, push: 1.15 });
   shot(7.0, 8.4, { rig: 'pov', from: (t) => V(7, 2.5, 46 + (t - 7) * 6), at: (t) => V(0, 22, lerp(18, 70, (t - 7) / 1.4)), fov: 60, push: 1.0, drift: [0, 0] });
   shot(8.4, 9.6, { rig: 'pov', from: (t) => V(14, 4, ENEMY_Z(t) - 18), at: (t) => V(0, 1.8, ENEMY_Z(t)), fov: 44, push: 1.0, drift: [0, 0] });
   shot(9.6, 11.0, { rig: 'pov', from: (t) => V(lerp(18, 8, (t - 9.6) / 1.4), lerp(6, 2.5, (t - 9.6) / 1.4), 64 + (t - 9.6) * 6), at: () => V(0, 2, 80), fov: 50, push: 1.0, drift: [0, 0] });
@@ -95,7 +96,7 @@ function camera() {
   shot(12.8, 15, { rig: 'pov', from: (t) => V(lerp(10, 40, (t - 12.8) / 2.2), lerp(8, 60, (t - 12.8) / 2.2), lerp(60, 20, (t - 12.8) / 2.2)), at: () => V(0, 0, 82), fov: 52, push: 1.0, drift: [0, 0] });
 }
 // =================== RENDER ===================
-const composer = makeComposer({ sat: 1.42, con: 1.14, bloom: 0.16 }); const SKY = makeSky();
+const composer = makeComposer({ sat: 1.38, con: 1.16, bloom: 0.08 }); const SKY = makeSky();
 const look = (t, cpos) => { SKY.update(cpos, false, composer.grade); sun.color.setHex(0xffd8a8); sun.intensity = 2.5; hemi.color.setHex(0xbfe0ff); hemi.groundColor.setHex(0xc89a6a); hemi.intensity = 0.55; const tg = sun.target.position; sun.position.copy(tg).add(V(-55, 45, 40)); };
 const camOf = dynamicCam(CINE);
 makeRenderer({ CINE, camOf, setup, fx, look, composer, DURATION, impacts: [2.1, T.clash, T.clash + 0.3, 12.15], flash: (t) => (t > T.clash && t < T.clash + 0.05 ? 0.4 : 0) });

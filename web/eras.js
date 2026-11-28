@@ -4,7 +4,7 @@
 // rich materials (patterned tiles, gold, marble, cloth), life (water, fountains, flags, lanterns, trees, flowers).
 import * as THREE from 'three';
 import { scene, V, std, mesh, water, Burst } from './realkit.js';
-import { Batch, texMat, plain, boxUV, terrain, forest, flowers, scatter, grass } from './world3d.js';
+import { Batch, texMat, plain, boxUV, terrain, forest, flowers, scatter, grass, photoMat } from './world3d.js';
 import { pbr } from './realkit.js';
 
 const ctex = (w, h, fn, rep = [1, 1]) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...rep); t.anisotropy = 8; return t; };
@@ -24,12 +24,12 @@ const archShape = (w, h) => { const s = new THREE.Shape(); s.moveTo(-w / 2, 0); 
 // ================= MUGHAL / ROYAL PALACE KIT =================
 // o: { z (palace front), palette: {stone, marble, tile, tile2, tile3, cloth:[...], gold} }
 export function royalPalace(o = {}) { const P = { stone: '#c8583a', stone2: '#a8442a', marble: '#fbf3e4', tile: '#18a8b8', tile2: '#1a4a9a', tile3: '#f6f0e0', cloth: ['#e8282a', '#ffc23a'], ...o.palette };
-  const z0 = o.z ?? -58, B = new Batch(); const stone = mat({ color: P.stone, roughness: 0.62 }), stone2 = mat({ color: P.stone2, roughness: 0.7 }), marble = mat({ color: P.marble, roughness: 0.3, clearcoat: 0.6 }), gold = GOLD(), tile = TILE(P.tile, P.tile3, P.tile2, [10, 1]), dark = mat({ color: 0x2a1410, roughness: 0.9 });
+  const z0 = o.z ?? -58, B = new Batch(); const stone = photoMat('brick', { rep: 1 }), stone2 = pbr('red_sandstone_wall', [1, 1], { metal: 0, rough: 1 }), marble = pbr('sandstone_cracks', [1, 1], { metal: 0, rough: 0.9, tint: '#f0c890' }), gold = GOLD(), tile = TILE(P.tile, '#e8b870', P.tile2, [10, 1]), dark = mat({ color: 0x2a1410, roughness: 0.9 });
   // main hall: two stepped rounded blocks + marble cornices + tile friezes
-  B.add(rbox(58, 15, 14, 0.5), stone, 0, 7.5, z0 - 8); B.add(rbox(60, 1.2, 15.4, 0.3), marble, 0, 15.4, z0 - 8); B.add(new THREE.BoxGeometry(58.2, 1.6, 14.2), tile, 0, 13.6, z0 - 8 + 0.02);
-  B.add(rbox(30, 8, 12, 0.5), stone2, 0, 19.5, z0 - 9); B.add(new THREE.BoxGeometry(30.2, 1.2, 12.2), tile, 0, 22.4, z0 - 9); for (let i = -13; i <= 13; i++) B.add(rbox(1.1, 1.3, 1.1, 0.25), marble, i * 2.2, 16.6, z0 - 1.1);
+  B.add(boxUV(58, 15, 14, 2.2), stone, 0, 7.5, z0 - 8); B.add(boxUV(60, 1.2, 15.4, 2), marble, 0, 15.4, z0 - 8); B.add(new THREE.BoxGeometry(58.2, 1.6, 14.2), tile, 0, 13.6, z0 - 8 + 0.02);
+  B.add(boxUV(30, 8, 12, 3), stone2, 0, 19.5, z0 - 9); B.add(new THREE.BoxGeometry(30.2, 1.2, 12.2), tile, 0, 22.4, z0 - 9); for (let i = -13; i <= 13; i++) B.add(rbox(1.1, 1.3, 1.1, 0.25), marble, i * 2.2, 16.6, z0 - 1.1);
   // entrance iwan: tall marble frame with a dark arch and tile border
-  B.add(rbox(14, 17, 2.2, 0.4), marble, 0, 8.5, z0 - 0.6); B.add(new THREE.BoxGeometry(12, 15, 0.1), tile, 0, 8.3, z0 + 0.52); B.add(archShape(9, 13), dark, 0, 0.6, z0 + 0.6); B.add(archShape(9.8, 13.6), gold, 0, 0.3, z0 + 0.56);
+  B.add(boxUV(14, 17, 2.2, 3), stone2, 0, 8.5, z0 - 0.6); B.add(new THREE.BoxGeometry(12, 15, 0.1), tile, 0, 8.3, z0 + 0.52); B.add(archShape(9, 13), dark, 0, 0.6, z0 + 0.6); B.add(archShape(9.8, 13.6), gold, 0, 0.3, z0 + 0.56);
   // arcades left/right: marble-framed arches with gold edges
   for (let i = 1; i <= 5; i++) for (const sd of [-1, 1]) { const x = sd * (5.2 + i * 4.4); B.add(archShape(3.6, 7.6), marble, x, 1.1, z0 - 0.88); B.add(archShape(3.0, 6.8), dark, x, 1.2, z0 - 0.84); B.add(archShape(2.4, 4), dark, x, 9.0, z0 - 0.84); B.add(archShape(3.0, 4.6), marble, x, 8.7, z0 - 0.88); }
   // great golden onion dome on a tile drum + marble lotus base + gold finial
@@ -40,7 +40,7 @@ export function royalPalace(o = {}) { const P = { stone: '#c8583a', stone2: '#a8
   // striped minarets with balconies and gold caps
   for (const [x, z] of [[-33, z0 - 1], [33, z0 - 1], [-33, z0 - 15], [33, z0 - 15]]) { for (let k = 0; k < 10; k++) B.add(new THREE.CylinderGeometry(1.55 - k * 0.04, 1.6 - k * 0.04, 3.2, 20), k % 2 ? marble : stone, x, 1.6 + k * 3.2, z); for (const h of [11, 21, 31]) { B.add(new THREE.CylinderGeometry(2.6, 2.2, 0.6, 20), marble, x, h, z); B.add(new THREE.CylinderGeometry(2.6, 2.6, 0.9, 20, 1, true), tile, x, h + 0.75, z); } chhatri(x, 32, z, 0.75); }
   // throne platform: marble steps, gold throne with jewels, striped shamiana canopy on gold poles
-  const tz = z0 + 6; for (let k = 0; k < 4; k++) B.add(rbox(15 - k * 2.6, 0.55, 9 - k * 1.5, 0.15), k % 2 ? marble : stone, 0, 0.27 + k * 0.55, tz + k * 0.4);
+  const tz = z0 + 6; for (let k = 0; k < 4; k++) B.add(boxUV(15 - k * 2.6, 0.55, 9 - k * 1.5, 2), k % 2 ? marble : stone2, 0, 0.27 + k * 0.55, tz + k * 0.4);
   B.add(rbox(2.8, 0.9, 1.8, 0.2), gold, 0, 2.7, tz + 0.4); B.add(rbox(3.2, 4.6, 0.5, 0.2), gold, 0, 4.6, tz - 0.4); B.add(new THREE.SphereGeometry(0.7, 20, 14), mat({ color: 0xe8203a, roughness: 0.1, clearcoat: 1 }), 0, 7.2, tz - 0.4); for (const sx of [-1, 1]) B.add(new THREE.SphereGeometry(0.4, 16, 12), mat({ color: 0x18a8ff, roughness: 0.1, clearcoat: 1 }), sx * 1.4, 6.4, tz - 0.4);
   for (const sx of [-1, 1]) for (const dz of [-3, 3.2]) B.add(new THREE.CylinderGeometry(0.18, 0.22, 8, 12), gold, sx * 4, 6, tz + dz); const canopy = mesh(new THREE.ConeGeometry(6.6, 2.6, 4, 1, true), STRIPES(P.cloth, 12, [3, 1]), 0, 11.3, tz + 0.1); canopy.rotation.y = Math.PI / 4; scene.add(canopy);
   for (let k = 0; k < 16; k++) { const a = (k / 16) * Math.PI * 2; B.add(new THREE.ConeGeometry(0.35, 0.8, 6), mat({ color: P.cloth[k % 2] }), Math.cos(a) * 4.6, 9.7, tz + Math.sin(a) * 4.6, 0, Math.PI, 0); }
@@ -49,9 +49,9 @@ export function royalPalace(o = {}) { const P = { stone: '#c8583a', stone2: '#a8
 }
 // garden courtyard: marble+terracotta checker floor, central water channel with fountains, lawns, cypress rows, flower beds, lanterns
 export function mughalGarden(o = {}) { const z1 = o.z1 ?? -50, z2 = o.z2 ?? -4, W = o.w ?? 56; const zc = (z1 + z2) / 2, L = z2 - z1;
-  const floor = mesh(new THREE.PlaneGeometry(W, L + 6), CHECKER('#fbf3e4', '#d8704a', [W / 6, (L + 6) / 6]), 0, 0.02, zc, false); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  const floor = mesh(new THREE.PlaneGeometry(W, L + 6), pbr('sandstone_cracks', [W / 5, (L + 6) / 5], { metal: 0, rough: 0.95, tint: '#e8b888' }), 0, 0.02, zc, false); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
   for (const sd of [-1, 1]) { const lawn = mesh(new THREE.PlaneGeometry(W * 0.18, L - 4), pbr('aerial_grass_rock', [6, 10], { tint: '#6cd23c', rough: 1 }), sd * W * 0.38, 0.05, zc, false); lawn.rotation.x = -Math.PI / 2; lawn.receiveShadow = true; scene.add(lawn); }
-  const ch = water(3.4, L - 2, { color: 0x1ab8d8 }); ch.position.set(0, 0.12, zc); scene.add(ch); const B = new Batch(); const marble = mat({ color: 0xfbf3e4, roughness: 0.3, clearcoat: 0.6 });
+  const ch = water(3.4, L - 2, { color: 0x1ab8d8 }); ch.position.set(0, 0.12, zc); scene.add(ch); const B = new Batch(); const marble = pbr('red_sandstone_wall', [1, 1], { metal: 0, rough: 1 });
   for (const sd of [-1, 1]) B.add(rbox(0.5, 0.35, L - 1.4, 0.1), marble, sd * 1.95, 0.17, zc); const founts = [];
   for (let k = 0; k < 5; k++) { const z = z1 + 4 + k * ((L - 8) / 4); B.add(new THREE.CylinderGeometry(0.9, 1.1, 0.4, 20), marble, 0, 0.3, z); B.add(new THREE.CylinderGeometry(0.15, 0.2, 0.9, 10), GOLD(), 0, 0.7, z); founts.push(new Burst({ n: 30, dur: 1, life: 0.9, speed: [3.5, 4.5], dir: [0, 1, 0], spread: 0.12, g: -9.8, size: [0.08, 0.16], tex: 'splash', opacity: 0.8, seed: k * 7 })); founts[k].z = z; }
   // lanterns on marble posts
